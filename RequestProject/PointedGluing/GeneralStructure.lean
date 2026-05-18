@@ -1,6 +1,6 @@
 import Mathlib
 import RequestProject.PointedGluing.MaxFunLimitRank
-
+import RequestProject.PointedGluing.GeneralStructureHelpers.OrdinalArithmetic
 open scoped Topology
 open Set Function TopologicalSpace Classical
 
@@ -89,15 +89,6 @@ private lemma gRestrFun_CBRank_cofinal (B : Set (ℕ → ℕ)) (g : B → ℕ �
   exact hrank ▸ CBRank_le_of_CBLevel_empty g γ (gRestrFun_CBLevel_union_empty B g hgc γ h_empty)
 
 
-private lemma omega1_add_nat (η : Ordinal.{0}) (hη : η < omega1) (n : ℕ) :
-    η + ↑n < omega1 := by
-  induction n with
-  | zero => simpa
-  | succ n ih =>
-    calc η + (↑(n + 1) : Ordinal) = Order.succ (η + ↑n) := by
-          rw [Nat.cast_succ, ← Ordinal.add_one_eq_succ, add_assoc]
-    _ < omega1 :=
-          (Cardinal.isSuccLimit_ord (Cardinal.aleph0_le_aleph 1)).succ_lt ih
 
 private lemma cblevel_empty_of_le
     {A : Set (ℕ → ℕ)} (f : A → ℕ → ℕ) (hf_scat : ScatteredFun f)

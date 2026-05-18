@@ -363,3 +363,218 @@ theorem TwoBQO.lexSigma
     obtain ⟨k, hk⟩ := WellFounded.not_rel_apply_succ (r := (· < ·))
       (fun k => (f (e k) (e (k+1)) (he (Nat.lt_succ_self k))).1)
     exact hk (hstrict k)
+
+/-- The **lexicographic sum order along a quasi-order** on `Σ i, α i`:
+    `(i,x) ≤ (j,y)` iff `r i j` and `i ≠ j` (strictly above in r),
+    or `i = j` and `x ≤ y` in `t i`. -/
+def LexSumRelQO {ι : Type*} (r : ι → ι → Prop)
+    (s : ι → Type*) (t : ∀ i, s i → s i → Prop) :
+    (Σ i, s i) → (Σ i, s i) → Prop
+  | ⟨i, x⟩, ⟨j, y⟩ =>
+      (r i j ∧ i ≠ j) ∨
+      ∃ h : i = j, t i x (h ▸ y)
+
+variable {ι : Type*} (r : ι → ι → Prop)
+         (s : ι → Type*) (t : ∀ i, s i → s i → Prop)
+
+/-- `LexSumRelQO r s t` is reflexive whenever each `t i` is. -/
+lemma LexSumRelQO.refl
+    (ht_refl : ∀ i (x : s i), t i x x)
+    (σ : Σ i, s i) :
+    LexSumRelQO r s t σ σ := by
+  obtain ⟨i, x⟩ := σ
+  -- Use the right disjunct with the reflexivity proof h = rfl.
+  exact Or.inr ⟨rfl, ht_refl i x⟩
+
+/-! ### Transitivity -/
+
+/-- `LexSumRelQO r s t` is transitive whenever `r` is reflexive,
+antisymmetric, and transitive, and each `t i` is transitive. -/
+lemma LexSumRelQO.trans
+    (hr_refl    : ∀ i, r i i)
+    (hr_antisymm : ∀ i j, r i j → r j i → i = j)
+    (hr_trans   : ∀ i j k, r i j → r j k → r i k)
+    (ht_trans   : ∀ i (x y z : s i), t i x y → t i y z → t i x z)
+    {σ₁ σ₂ σ₃ : Σ i, s i}
+    (h₁₂ : LexSumRelQO r s t σ₁ σ₂)
+    (h₂₃ : LexSumRelQO r s t σ₂ σ₃) :
+    LexSumRelQO r s t σ₁ σ₃ := by
+  -- Destructure all three sigma values.
+  obtain ⟨i, x⟩ := σ₁
+  obtain ⟨j, y⟩ := σ₂
+  obtain ⟨k, z⟩ := σ₃
+  -- Unfold both hypotheses.
+  simp only [LexSumRelQO] at h₁₂ h₂₃ ⊢
+  rcases h₁₂ with ⟨hrij, hij_ne⟩ | ⟨hij, htxy⟩ <;>
+  rcases h₂₃ with ⟨hrjk, hjk_ne⟩ | ⟨hjk, htyz⟩
+  · -- (strict, strict): r i j, i ≠ j, r j k, j ≠ k  →  r i k, i ≠ k
+    left
+    refine ⟨hr_trans i j k hrij hrjk, ?_⟩
+    intro hik
+    -- If i = k then r k j and r j k give k = j, so i = j, contradiction.
+    have hrki : r k i := hik ▸ hr_refl i
+    have hrjk' := hrjk
+    -- r i j and r k i (= r i i since i=k) ... use antisymmetry on j and k:
+    -- We have r i j, r j k, i = k, so r k j and r j k → j = k, contradicting j ≠ k.
+    have hrkj : r k j := hik ▸ hrij
+    exact hjk_ne (hr_antisymm j k hrjk' hrkj)
+  · -- (strict, same): r i j, i ≠ j, j = k
+    left
+    exact ⟨hjk ▸ hrij, hjk ▸ hij_ne⟩
+  · -- (same, strict): i = j, r j k, j ≠ k
+    left
+    exact ⟨hij ▸ hrjk, hij ▸ hjk_ne⟩
+  · -- (same, same): i = j, j = k  →  i = k, compose t-steps
+    right
+    refine ⟨hij.trans hjk, ?_⟩
+    -- Transport z from s k to s i along hij.trans hjk.
+    -- htxy : t i x (hij ▸ y)   (y : s j = s i via hij)
+    -- htyz : t j y (hjk ▸ z)   (z : s k = s j via hjk)
+    -- We need: t i x ((hij.trans hjk) ▸ z)
+    -- First unify j with i via hij, then k with i via hij.trans hjk.
+    subst hij
+    -- Now j = i, htxy : t i x y, htyz : t i y (hjk ▸ z), goal: t i x (hjk ▸ z)
+    subst hjk
+    -- Now k = i, htyz : t i y z, goal: t i x z
+    exact ht_trans i x y z htxy htyz
+
+/-! **Sum theorem for 2-BQO along a quasi-order with antisymmetry.**
+
+If `r` on `ι` is 2-BQO, `r` is antisymmetric, and each `t i` on `s i`
+is 2-BQO, then `Σ i, s i` with `LexSumRelQO r s t` is 2-BQO. -/
+-- lemma TwoBQO.lexSigmaQO_reflect
+--     {ι : Type*}
+--     (r : ι → ι → Prop)
+--     (hr_antisymm : ∀ i j, r i j → r j i → i = j)
+--     (s : ι → Type*)
+--     (t : ∀ i, s i → s i → Prop)
+--     (f : PairSeq LexSumRelQO r s t)
+--     (hbad : BadPairSeq (LexSumRelQO r s t) f) :
+--     ∃ e : ℕ → ℕ, ∃ (he_mono : StrictMono e),
+--     BadPairSeq r (fun m n hmn => (f (e m) (e n) (he hmn)).1)
+--      ∨ ∃ i : ι, ∀ m n : ℕ, (hmn : m < n) →
+--         (f (e m) (e n) (he hmn)).1 = i ∧
+--         BadPairSeq (t i) (fun m n hmn => (f (e m) (e n) (he_mono hmn)).2) := by
+--   sorry
+/--
+The constructive content of the sum theorem for 2-BQO along a partial order.
+-/
+lemma TwoBQO.lexSigmaQO_reflect
+    {ι : Type*}
+    (r : ι → ι → Prop)
+    (hr_antisymm : ∀ i j, r i j → r j i → i = j)
+    (s : ι → Type*)
+    (t : ∀ i, s i → s i → Prop)
+    (f : PairSeq (Σ i, s i))
+    (hf_bad : BadPairSeq (LexSumRelQO r s t) f) :
+    ∃ (e : ℕ → ℕ) (he_mono : StrictMono e),
+      BadPairSeq r (fun m n hmn => (f (e m) (e n) (he_mono hmn)).1)
+      ∨
+      ∃ i : ι,
+        ∃ hmem : ∀ m n (hmn : m < n), (f (e m) (e n) (he_mono hmn)).1 = i,
+        BadPairSeq (t i)
+          (fun m n hmn => (hmem m n hmn) ▸ (f (e m) (e n) (he_mono hmn)).2) := by
+  let f₁ : PairSeq ι := fun m n h => (f m n h).1
+  obtain ⟨e, he, hperf | hbad₁⟩ := perfect_or_bad r f₁
+  · by_cases hconst :
+        ∀ m n l : ℕ, (hmn : m < n) → (hnl : n < l) →
+          (f (e m) (e n) (he hmn)).1 = (f (e n) (e l) (he hnl)).1
+    · set c := (f (e 0) (e 1) (he (by norm_num : (0 : ℕ) < 1))).1
+      have hmem : ∀ m n : ℕ, (hmn : m < n) →
+          (f (e m) (e n) (he hmn)).1 = c := by
+        have hsucc : ∀ n : ℕ,
+            (f (e n) (e (n + 1)) (he (Nat.lt_succ_self n))).1 = c := by
+          intro n
+          induction n with
+          | zero => rfl
+          | succ n ih =>
+            exact (hconst n (n + 1) (n + 2)
+              (Nat.lt_succ_self n) (Nat.lt_succ_self (n + 1))).symm.trans ih
+        intro m n hmn
+        exact (hconst m n (n + 1) hmn (Nat.lt_succ_self n)).trans (hsucc n)
+      let g : PairSeq (s c) :=
+        fun m n hmn => (hmem m n hmn) ▸ (f (e m) (e n) (he hmn)).2
+      have hg_bad : BadPairSeq (t c) g := by
+        intro m n l hmn hnl htrel
+        apply hf_bad (e m) (e n) (e l) (he hmn) (he hnl)
+        -- Name the two sigma values so we can subst their index components.
+        set σ_mn := f (e m) (e n) (he hmn) with hσ_mn
+        set σ_nl := f (e n) (e l) (he hnl) with hσ_nl
+        -- The index equalities in terms of the named sigma values.
+        have h_mn : σ_mn.1 = c := hmem m n hmn
+        have h_nl : σ_nl.1 = c := hmem n l hnl
+        -- Rewrite σ_mn and σ_nl as ⟨c, _⟩ using the index equalities.
+        -- We work with the Sigma.eta expansion and the equalities.
+        rw [show σ_mn = ⟨c, h_mn ▸ σ_mn.2⟩ from by ext <;> simp [h_mn]]
+        rw [show σ_nl = ⟨c, h_nl ▸ σ_nl.2⟩ from by ext <;> simp [h_nl]]
+        -- Goal is now: LexSumRelQO r s t ⟨c, h_mn ▸ σ_mn.2⟩ ⟨c, h_nl ▸ σ_nl.2⟩
+        -- and htrel : t c (hmem m n hmn ▸ σ_mn.2) (hmem n l hnl ▸ σ_nl.2)
+        -- These casts are the same (h_mn = hmem m n hmn etc.), so:
+        unfold LexSumRelQO
+        exact Or.inr ⟨rfl, htrel⟩
+      exact ⟨e, he, Or.inr ⟨c, hmem, hg_bad⟩⟩
+    · exfalso
+      push_neg at hconst
+      obtain ⟨m, n, l, hmn, hnl, hne⟩ := hconst
+      exact hf_bad (e m) (e n) (e l) (he hmn) (he hnl)
+        (Or.inl ⟨hperf m n l hmn hnl, hne⟩)
+  · exact ⟨e, he, Or.inl hbad₁⟩
+
+theorem TwoBQO.lexSigmaQO
+    {ι : Type*}
+    (r : ι → ι → Prop)
+    (hr : TwoBQO r)
+    (hr_antisymm : ∀ i j, r i j → r j i → i = j)
+    (s : ι → Type*)
+    (t : ∀ i, s i → s i → Prop)
+    (ht : ∀ i, TwoBQO (t i)) :
+    TwoBQO (LexSumRelQO r s t) := by
+  intro f
+  let f₁ : PairSeq ι := fun m n h => (f m n h).1
+  obtain ⟨e, he, hperf | hbad⟩ := perfect_or_bad r f₁
+  · -- PERFECT CASE: f₁ along e is non-decreasing under r.
+    by_cases hconst : ∀ m n l : ℕ, (hmn : m < n) → (hnl : n < l) →
+        (f (e m) (e n) (he hmn)).1 = (f (e n) (e l) (he hnl)).1
+    · -- CONSTANT CASE: index is constant = c along e.
+      set c := (f (e 0) (e 1) (he (by norm_num : (0:ℕ) < 1))).1
+      have hmem : ∀ m n : ℕ, (hmn : m < n) →
+          (f (e m) (e n) (he hmn)).1 = c := by
+        have hsucc : ∀ n : ℕ,
+            (f (e n) (e (n+1)) (he (Nat.lt_succ_self n))).1 = c := by
+          intro n
+          induction n with
+          | zero => rfl
+          | succ n ih =>
+            exact (hconst n (n+1) (n+2)
+              (Nat.lt_succ_self n) (Nat.lt_succ_self (n+1))).symm.trans ih
+        intro m n hmn
+        exact (hconst m n (n+1) hmn (Nat.lt_succ_self n)).trans (hsucc n)
+      let g : PairSeq (s c) :=
+        fun m n hmn => (hmem m n hmn) ▸ (f (e m) (e n) (he hmn)).2
+      obtain ⟨m, n, l, hmn, hnl, hrel⟩ := ht c g
+      refine ⟨e m, e n, e l, he hmn, he hnl, ?_⟩
+      show LexSumRelQO r s t (f (e m) (e n) (he hmn)) (f (e n) (e l) (he hnl))
+      unfold LexSumRelQO
+      apply Or.inr
+      have h_mn : (f (e m) (e n) (he hmn)).fst = c := hmem m n hmn
+      have h_nl : (f (e n) (e l) (he hnl)).fst = c := hmem n l hnl
+      use Eq.trans h_mn h_nl.symm
+      revert hrel
+      simp only [g]
+      intro hrel
+      convert hrel using 1 <;> simp
+    · -- STRICT INCREASE CASE: index strictly increases at some triple.
+      -- "Strictly increases" means: r i j but i ≠ j, i.e. not (r j i → i = j).
+      -- hperf gives r (f₁ m n) (f₁ n l), and hconst says they're not all equal.
+      -- So ∃ m n l with r (f₁ m n) (f₁ n l) and f₁ m n ≠ f₁ n l.
+      -- This gives the left disjunct of LexSumRelQO.
+      push_neg at hconst
+      obtain ⟨m, n, l, hmn, hnl, hne⟩ := hconst
+      refine ⟨e m, e n, e l, he hmn, he hnl, ?_⟩
+      show LexSumRelQO r s t (f (e m) (e n) (he hmn)) (f (e n) (e l) (he hnl))
+      exact Or.inl ⟨hperf m n l hmn hnl, hne⟩
+  · -- BAD CASE: f₁ along e is bad under r.
+    -- Contradicts hr (r is 2-BQO).
+    exfalso
+    rw [isTwoBQO_iff] at hr
+    exact hr ⟨restrictPairSeq f₁ e he, hbad⟩

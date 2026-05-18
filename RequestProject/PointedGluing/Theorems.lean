@@ -1,5 +1,6 @@
 import RequestProject.PointedGluing.MaxFunMaximum
-import RequestProject.Bqo.TwoBQO
+
+
 
 
 open scoped Topology
@@ -297,65 +298,62 @@ For all `f` and `g` in 𝒞: `2 · CB(f) < CB(g)` implies `f ≤ g`.
  it is theorem general_structure_theorem in PointedGluing.GeneralStructure
  -/
 
+/-!
+## The bullet order on ordinals
+
+`α ≤• β` is the ordinal version of the `2nLTm` relation on `ℕ`, extended
+lexicographically over the limit-plus-natural decomposition `α = λ + n`.
+-/
 
 
 
-/-- **Proposition (FGgivesBQO_2).**
-If `𝒞_β` is 2-BQO for all `β < α`, then `𝒞_{<α}` is 2-BQO.
 
 
-The proof defines the partial order `≤•` on ordinals by
-`α₀ ≤• α₁ iff α₀ = α₁ or 2α₀ < α₁`.
-This 2nLTm defined in Bqo.2nLTmIsTwoBQO.
-This is a BQO (as a sum of copies of `(ℕ, ≤•)` along the limit ordinals).
-The General Structure Theorem shows that the map `f ↦ (CB(f), f)` into the
-`≤•`-indexed sum of levels is a co-homomorphism for continuous reducibility.
-Since a co-homomorphic image of a BQO is BQO, `𝒞_{<α}` is BQO.
 
+-- /-! The key lemma: leBullet on CBRanks + same rank implies scatReduces
+-- -/
+-- lemma leBullet_to_scatReduces : ∀ F G : ScatFun,
+--       (Ordinal.leBullet (CBRank F.2.1) (CBRank G.2.1) ∧
+--        CBRank F.2.1 ≠ CBRank G.2.1) ∨
+--       (CBRank F.2.1 = CBRank G.2.1 ∧ scatReduces F G) →
+--       scatReduces F G := by
+--     intro F G h
+--     rcases h with ⟨hlt, hne⟩ | ⟨_, hrel⟩
+--     · simp only [Ordinal.leBullet] at hlt
+--       rcases hlt with hlim | ⟨hlimeq, hnat⟩
+--       · exact sorry -- general_structure_theorem: limitPart strict
+--       · rcases hnat with heqn | hnat2
+--         · exact absurd (by
+--             rw [Ordinal.eq_limitPart_add_natPart (CBRank F.2.1),
+--                 Ordinal.eq_limitPart_add_natPart (CBRank G.2.1), hlimeq, heqn]) hne
+--         · exact sorry -- general_structure_theorem: same limitPart, 2*natPart F < natPart G
+--     · exact hrel
 
-In particular, if each level is finitely generated (Theorem 1.3), then
-`𝒞` is BQO (Theorems 1.4 and 1.5). -/
-def ScatFun := Σ (A : Set (ℕ → ℕ)), { f : A → ℕ → ℕ // ScatteredFun f }
-
-def scatReduces (F G : ScatFun) : Prop :=
-  ContinuouslyReduces F.2.1 G.2.1
-
-/-- Any bad pair-sequence in ScatFun has all its CB-ranks bounded below ω₁,
-    and restricts to one concentrated on a single level β.
-    Sketch
-    we define a partial order $\leq^\bullet$ on $\omega_1$ by $\alpha_0\leq^\bullet \alpha_1$ if and only if $\alpha_0=\alpha_1$ or $2\alpha_0<\alpha_1$
-    As any ordinal $\alpha$ can be uniquely written as $\alpha=\lambda+n$ with $\lambda$ limit or null and $n\in\N$ and $2\alpha=\lambda+2n$, we have:
-    $\lambda_0+n_0 \leq^\bullet \lambda_1+n_1 \Lglra \lambda_0<\lambda_1\mbox{ or } \bigl(\lambda_0=\lambda_1\mbox{ and } n_0\leq^\bullet n_1 \bigr).$
-    This partial order is the sum of the BQO 2nLTm along ω_1, so it is 2-BQO by TwoBQO.lexSigma
-
-    Then the proof follows roughly TwoBQO.lexSigma (which could be generalized to a sum along a 2-BQO `partial` order, antisymmetry is crucial),
-    let fr = fun m n => CBRank f m n
-    by composing with a StrictMono this function is
-    either strictly increasing for the version of 2nLTm on omega1.
-      but then f is good by the general structure theorem
-    or constant equal to some ordinal β, as desired.
- -/
-theorem bad_pairseq_restricts_to_level
-    (f : PairSeq ScatFun)
-    (hbad : BadPairSeq scatReduces f) :
-    ∃ (β : Ordinal.{0}) (_ : β < omega1)
-      (e : ℕ → ℕ) (he : StrictMono e),
-      BadPairSeq scatReduces (restrictPairSeq f e he) ∧
-      ∀ m n (h : m < n), CBRank (restrictPairSeq f e he m n h).2.1 = β := by
-  sorry
-
-/-- If 𝒞_β is 2-BQO for all β < ω₁, then ScatFun is 2-BQO. -/
-theorem twoBQO_of_twoBQO_levels
-    (hlev : ∀ β : Ordinal.{0}, β < omega1 →
-      ¬ ∃ f : PairSeq ScatFun,
-        BadPairSeq scatReduces f ∧
-        ∀ m n h, CBRank (f m n h).2.1 = β) :
-    ¬ ∃ f : PairSeq ScatFun, BadPairSeq scatReduces f := by
-  intro ⟨f, hbad⟩
-  obtain ⟨β, hβ, e, he, hbad', hrank⟩ := bad_pairseq_restricts_to_level f hbad
-  exact hlev β hβ ⟨restrictPairSeq f e he, hbad', hrank⟩
-
-
+-- /-- If 𝒞_β is 2-BQO for all β < ω₁, then ScatFun is 2-BQO.
+-- PROVIDED SOLUTION
+-- Let's define for each beta < omega1 the quasi-order 
+-- ScatFun beta by retricting ScatFun to functions with
+-- CBRank =beta. By the assumption for all beta ScatFun beta
+-- is TwoBQO. Apply TwoBQO.lexSigmaQO to Ordinal.leBullet
+-- and the function beta => ScatFun beta, to get that Q,
+-- the lexicographic sum of ScatFun beta along Ordinal.leBullet,
+-- is TwoBQO. Then we define the  map phi from ScatFun to Q,
+-- fun f => (CBRank f, f). Then by TwoBQO.comap the pullback
+-- f\leq_P g iff (phi f \leq phi g in Q) is TwoBQO.
+-- Now by general_structure_theorem for all f,g in SctaFun 
+-- f \leq_P g implies ContinuouslyReduces f g.
+-- So ScatFun is TwoBQO by TwoBQO.mono which is our goal.
+-- -/
+-- theorem twoBQO_of_twoBQO_levels
+--     (hlev : ∀ β : Ordinal.{0}, β < omega1 →
+--       ¬ ∃ f : PairSeq ScatFun,
+--         BadPairSeq scatReduces f ∧
+--         ∀ m n h, CBRank (f m n h).2.1 = β) :
+--     ¬ ∃ f : PairSeq ScatFun, BadPairSeq scatReduces f := by
+--   intro ⟨f, hbad⟩
+--   have hbqo := (isTwoBQO_iff _).mp Ordinal.leBullet.TwoBQO
+--   apply hbqo
+--   sorry
 /-
 The pointed gluing of scattered functions is scattered.
 Given nonempty S, if S contains a non-zero element in block i, use ScatteredFun
