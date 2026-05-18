@@ -95,7 +95,8 @@ theorem bad_pairseq_restricts_to_level
   let f_lex : PairSeq (Σ β : Ordinal.{0}, ScatFun_level β) :=
     fun m n h => ⟨CBRank (f m n h).func, ⟨f m n h, rfl⟩⟩
   have limitPart_le : ∀ α : Ordinal.{0}, α.limitPart ≤ α := fun α => by
-    conv_rhs => rw [Ordinal.eq_limitPart_add_natPart α]; exact le_self_add
+    conv_rhs => rw [Ordinal.eq_limitPart_add_natPart α]
+    exact Ordinal.le_add_right α.limitPart ↑α.natPart
   -- ---------------------------------------------------------------
   -- Step 1.  `f_lex` is bad for `LexSumRelQO Ordinal.leBullet _ t`.
   -- ---------------------------------------------------------------
@@ -188,7 +189,7 @@ theorem bad_pairseq_restricts_to_level
   · -- Bad-index branch: `Ordinal.leBullet` is 2-BQO, contradiction.
     obtain ⟨m, n, l, hmn, hnl, hrel⟩ :=
       Ordinal.leBullet.TwoBQO (fun m n hmn => (f_lex (e m) (e n) (he hmn)).1)
-    exact hbad_idx m n l hmn hnl hrel
+    exact absurd hrel (hbad_idx m n l hmn hnl)
   · -- Constant-fibre branch: all pairs along `e` have CB-rank `β`.
     have hβ_lt : β < omega1 := by
       have h01 := hmem 0 1 (by norm_num)
