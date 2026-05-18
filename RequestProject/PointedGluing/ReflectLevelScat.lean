@@ -96,7 +96,7 @@ theorem bad_pairseq_restricts_to_level
     fun m n h => ⟨CBRank (f m n h).func, ⟨f m n h, rfl⟩⟩
   have limitPart_le : ∀ α : Ordinal.{0}, α.limitPart ≤ α := fun α => by
     conv_rhs => rw [Ordinal.eq_limitPart_add_natPart α]
-    exact Ordinal.le_add_right α.limitPart ↑α.natPart
+    exact le_self_add
   -- ---------------------------------------------------------------
   -- Step 1.  `f_lex` is bad for `LexSumRelQO Ordinal.leBullet _ t`.
   -- ---------------------------------------------------------------
@@ -210,3 +210,12 @@ theorem bad_pairseq_restricts_to_level
       have := hmem m n h
       simp only [f_lex] at this
       exact this
+
+/-!
+Here is the final step of the proof of `FGgivesBQO_2`:
+if there are no bad pair-sequences
+-/
+theorem no_bad_pairseq_level (β : Ordinal.{0}) (hβ : β < omega1)
+    (ih : ∀ γ < β, ¬ ∃ f : PairSeq (ScatFun_level γ), BadPairSeq scatReduces_level f)
+    : ¬ ∃ f : PairSeq (ScatFun_level β), BadPairSeq scatReduces_level f := by
+    sorry
