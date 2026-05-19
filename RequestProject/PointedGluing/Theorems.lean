@@ -1,4 +1,4 @@
-import RequestProject.PointedGluing.MaxFunMaximum
+import RequestProject.PointedGluing.MaxFun.Maximum
 
 
 
@@ -16,44 +16,7 @@ Theorems up to pointedGluing_upper_bound are in PointedGluingUpperBound.lean.
 The maxFun_is_maximum proof is in MaxFunMaximum.lean.
 -/
 
-/-
-**Corollary (Pgluingofraysasupperbound).**
-For any continuous `f : A → B` in 𝒞 and any `y ∈ B`,
-`f ≤ pgl_{i ∈ ℕ} Ray(f, y, i)`.
-
-This is a direct application of Pgluingasupperbound with the identity partition
-`I_j = {j}`.
--/
-theorem pointedGluing_rays_upper_bound
-    {A B : Set (ℕ → ℕ)}
-    (f : A → ℕ → ℕ) (hfB : ∀ a, f a ∈ B)
-    (_hf : Continuous f)
-    (y : ℕ → ℕ) (_hy : y ∈ B) :
-    ∃ (C D : ℕ → Set (ℕ → ℕ)) (h : ∀ i, C i → D i),
-      ContinuouslyReduces f
-        (fun (x : PointedGluingSet C) => PointedGluingFun C D h x) := by
-  use fun i => if h : i = 0 then A else ∅
-  use fun i => if i = 0 then B else ∅
-  use fun i a => ⟨f ⟨a.val, by
-    grind⟩, by
-    aesop⟩
-  generalize_proofs at *
-  refine ⟨?_, ?_, ?_⟩
-  use fun a => ⟨prependZerosOne 0 a.val, Or.inr <| Set.mem_iUnion.mpr ⟨0, a.val, a.property, rfl⟩⟩
-  · refine Continuous.subtype_mk ?_ ?_
-    exact continuous_prependZerosOne 0 |> Continuous.comp <| continuous_subtype_val
-  · refine ⟨?_, ?_, ?_⟩
-    use fun x => x ∘ fun n => n + 1
-    · fun_prop
-    · intro x; ext n; simp +decide [PointedGluingFun]
-      split_ifs <;> simp_all +decide [prependZerosOne]
-      · rename_i h; have := congr_fun h 0; simp_all +decide [prependZerosOne]
-      · congr
-      · simp_all +decide [firstNonzero, prependZerosOne]
-        unfold stripZerosOne at *; simp_all +decide [prependZerosOne]
-
-
-/-- **Corollary (SplittingaPgluingonatail).**
+/-! **Corollary (SplittingaPgluingonatail).**
 For continuous `(f_i)_i` in 𝒞 and all `n ∈ ℕ`:
 `pgl_i f_i ≡ (⊔_{i<n} f_i) ⊔_bin (pgl_{i≥n} f_i)`.
 
@@ -62,15 +25,15 @@ The forward direction uses Pgluingasupperbound with `y = 0^ω`.
 The backward uses Gluingaslowerbound with the clopen partition
 `{N_{(0)^i(1)}}_{i<n} ∪ {N_{(0)^n}}`.
 Formal statement does not match the memoir.  -/
-theorem splitting_pointedGluing_tail
-    (A B : ℕ → Set (ℕ → ℕ))
-    (f : ∀ i, A i → B i)
-    (_hf : ∀ i, Continuous (f i))
-    (_n : ℕ) :
-    ContinuouslyEquiv
-      (fun (x : PointedGluingSet A) => PointedGluingFun A B f x)
-      (fun (x : PointedGluingSet A) => PointedGluingFun A B f x) := by
-  exact ContinuouslyEquiv.refl _
+-- theorem splitting_pointedGluing_tail
+--     (A B : ℕ → Set (ℕ → ℕ))
+--     (f : ∀ i, A i → B i)
+--     (_hf : ∀ i, Continuous (f i))
+--     (_n : ℕ) :
+--     ContinuouslyEquiv
+--       (fun (x : PointedGluingSet A) => PointedGluingFun A B f x)
+--       (fun (x : PointedGluingSet A) => PointedGluingFun A B f x) := by
+--   exact ContinuouslyEquiv.refl _
 
 
 /-!
@@ -309,7 +272,6 @@ lexicographically over the limit-plus-natural decomposition `α = λ + n`.
 
 
 
-
 -- /-! The key lemma: leBullet on CBRanks + same rank implies scatReduces
 -- -/
 -- lemma leBullet_to_scatReduces : ∀ F G : ScatFun,
@@ -396,6 +358,7 @@ FIX STATEMENT using MinFun α = k_{α+1}
 
 /-! **Corollary (ConsequencesGeneralStructureThm) — Item 2.**
 If `CB(f) ≥ λ + 2` for a limit ordinal `λ`, then `pgl ℓ_λ ≤ f`.
+
 
 
 The proof uses the General Structure Theorem: `ℓ_λ ≤ k_{λ+1}` (since

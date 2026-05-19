@@ -11,8 +11,8 @@ import RequestProject.PointedGluing.CBRankSimpleHelpers
 import RequestProject.PointedGluing.UpperBoundHelpers
 import RequestProject.PointedGluing.ContinuousOnTau
 import RequestProject.PointedGluing.Theorems
-import RequestProject.PointedGluing.MaxMinHelpers
-import RequestProject.PointedGluing.MinFunHelpers
+import RequestProject.PointedGluing.MaxFun.Helpers
+import RequestProject.PointedGluing.MinFun.Helpers
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

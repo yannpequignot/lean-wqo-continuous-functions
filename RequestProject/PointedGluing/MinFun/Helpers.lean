@@ -1,4 +1,4 @@
-import RequestProject.PointedGluing.MaxMinHelpers
+import RequestProject.PointedGluing.MaxFun.Helpers
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

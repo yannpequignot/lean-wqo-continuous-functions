@@ -1,6 +1,9 @@
 import Mathlib
-import RequestProject.PointedGluing.MaxFunLimitRank
-import RequestProject.PointedGluing.GeneralStructureHelpers.OrdinalArithmetic
+import RequestProject.PointedGluing.MaxFun.LimitRank
+import RequestProject.PointedGluing.Basics.OrdinalArithmetic
+import RequestProject.PointedGluing.Basics.GluingInjection
+import RequestProject.PointedGluing.MinFun.Theorems
+
 open scoped Topology
 open Set Function TopologicalSpace Classical
 

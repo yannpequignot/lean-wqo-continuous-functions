@@ -2,7 +2,7 @@ import Mathlib
 import RequestProject.PrelimMemo.Basic
 import RequestProject.Bqo.Ramsey
 import RequestProject.Bqo.TwoBQO
-import RequestProject.PointedGluing.GeneralStructureHelpers.OrdinalArithmetic
+import RequestProject.PointedGluing.Basics.OrdinalArithmetic
 
 open Set
 

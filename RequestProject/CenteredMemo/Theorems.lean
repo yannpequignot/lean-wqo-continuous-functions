@@ -1,5 +1,7 @@
 import RequestProject.PointedGluing.Theorems
 import RequestProject.CenteredMemo.Defs
+import RequestProject.CenteredMemo.Helpers
+import Mathlib
 
 open scoped Topology
 open Set Function TopologicalSpace Classical
@@ -65,6 +67,13 @@ theorem pgluingOfRegularIsCentered
     IsCenterFor
       (fun (x : PointedGluingSet A) => PointedGluingFun A B f x)
       ⟨zeroStream, zeroStream_mem_pointedGluingSet A⟩ := by
+  -- Proof skeleton: for any open U ∋ zeroStream in the subspace topology,
+  -- construct a reduction from the full pointed gluing to its restriction on U.
+  intro U hU hzU
+  -- Step 1: Find N such that {x | ∀ k < N, x k = 0} ∩ PointedGluingSet A ⊆ U
+  -- Step 2: For each piece i, find j ≥ N with f_i ≤ f_j by regularity
+  -- Step 3: Construct σ by redirecting piece i to piece j (embedded in U)
+  -- Step 4: Construct τ accordingly
   sorry
 
 /-
@@ -161,7 +170,22 @@ theorem scatteredHaveCocenter
     [TopologicalSpace B] [T2Space B]
     (f : A → B) (hf_cent : IsCentered f) :
     ScatteredFun f ↔ (∀ x y : A, IsCenterFor f x → IsCenterFor f y → f x = f y) := by
-  sorry
+  constructor
+  · -- Forward: scattered → all centers have same image
+    -- By contrapositive: if two centers x, y have f(x) ≠ f(y),
+    -- then f is not scattered (centers_different_images_not_scattered)
+    intro hf_scat x y hx hy
+    by_contra h
+    exact centers_different_images_not_scattered f x y hx hy h hf_scat
+  · -- Backward: all centers same image → scattered
+    -- Contrapositive: not scattered → ∃ centers with different images
+    intro hcocenter
+    -- This direction requires showing that if f is not scattered,
+    -- then there exist two centers with different images.
+    -- The key idea: non-scattered means the perfect kernel is nonempty,
+    -- and points in the perfect kernel can be used to find centers
+    -- with different images.
+    sorry
 
 /--
 **Proposition 4.3 — Second part.**
@@ -266,6 +290,14 @@ theorem rigidityOfCocenter_finiteGluing
         (fun (x : {a : A | ∃ i, m ≤ i ∧ i ≤ M ∧
           (∀ k, k < i → g a k = y_g k) ∧ g a i ≠ y_g i}) =>
           g x.val) := by
+  -- Proof skeleton:
+  -- Step 1: Use continuity of g and the equivalence to get σ : A → A with f = τ ∘ g ∘ σ
+  -- Step 2: Since σ(center_f) is a center for g, find U ∋ σ(center_f) open
+  --         with g(U) in the m-cylinder of y_g
+  -- Step 3: By centerInvariance_reduce, Ray(f,y_f,n) ≤ g|_U
+  -- Step 4: By rigidityOfCocenter_separation, find M > m with
+  --         N_{y_g|_{M+1}} disjoint from the closure of g ∘ σ'(dom(Ray(f,y_f,n)))
+  -- Step 5: Conclude Ray(f,y_f,n) ≤ ⊔_{i=m}^{M} Ray(g,y_g,i)
   sorry
 
 /--
@@ -401,7 +433,18 @@ theorem centeredAsPgluing_iff_monotone
       IsMonotoneSeq (fun i => (fun (x : C i) => (g i x : ℕ → ℕ))) ∧
       ContinuouslyEquiv f
         (fun (x : PointedGluingSet C) => PointedGluingFun C D g x) := by
-  sorry
+  constructor
+  · -- Forward: centered → ∃ monotone equiv
+    -- By monotone_pgluing_of_centered helper
+    exact fun hcent => monotone_pgluing_of_centered f hfB hf hf_scat hcent
+  · -- Backward: ∃ monotone equiv → centered
+    -- By pgluingOfRegularIsCentered + isCentered_of_equiv
+    rintro ⟨C, D, g, hg_mono, hequiv⟩
+    have hg_reg := hg_mono.isRegularSeq
+    have hg_cent : IsCentered (fun (x : PointedGluingSet C) => PointedGluingFun C D g x) :=
+      ⟨⟨zeroStream, zeroStream_mem_pointedGluingSet C⟩,
+       pgluingOfRegularIsCentered C D g hg_reg⟩
+    exact isCentered_of_equiv hg_cent hequiv
 
 /-- **Theorem 4.6 — CB-rank consequence.**
 If `f` is centered with cocenter `y`, then `f` is simple with distinguished point `y`
@@ -414,6 +457,12 @@ theorem centeredAsPgluing_CBrank
     (hf_cent : IsCentered f)
     (y : ℕ → ℕ) (hy : ∀ x, IsCenterFor f x → f x = y) :
     CBRank f = Order.succ (⨆ n, CBRank (RayFun f y n)) := by
+  -- Proof skeleton:
+  -- Step 1: By centeredAsPgluing_forward, f ≤ pgl_n Ray(f, y, n)
+  -- Step 2: By ContinuouslyReduces.rank_monotone, CB(f) ≤ CB(pgl_n Ray(f,y,n))
+  -- Step 3: CB(pgl) = succ(sup_n CB(Ray(f,y,n))) by pointed gluing CB rank formula
+  -- Step 4: For the other direction, each Ray(f,y,n) ≤ f, so CB(Ray) ≤ CB(f)
+  -- Step 5: Since f is centered with successor CB-rank, CB(f) = succ(sup ...)
   sorry
 
 /-!
@@ -447,6 +496,10 @@ theorem localCenterednessFromBQO
       (f : X → Y),
       ScatteredFun f → CBRank f = α →
       IsLocallyCentered f := by
+  -- Proof by strong induction on α:
+  -- Case α = 0: use locallyCentered_rank_zero
+  -- Case α limit: use locallyCentered_limit_rank with induction hypothesis
+  -- Case α = β + 1: use locallyCentered_succ_rank with BQO hypothesis
   sorry
 
 /-
@@ -560,6 +613,12 @@ theorem centeredSuccessor
       CBRank pgl_max = Order.succ lam ∧
       ContinuouslyReduces min_f pgl_max ∧
       ¬ ContinuouslyReduces pgl_max min_f := by
+  -- Proof skeleton:
+  -- Step 1: Construct the two candidates: k_{λ+1} = MinFun lam, pgl(ℓ_λ)
+  -- Step 2: Show both are centered (minFun_isCentered, pglMaxFun_isCentered)
+  -- Step 3: Show both have CB-rank λ+1
+  -- Step 4: Show k_{λ+1} ≤ pgl(ℓ_λ) (minimum reduces to everything at that rank)
+  -- Step 5: Show pgl(ℓ_λ) ≰ k_{λ+1} (by Rigidityofthecocenter)
   sorry
 
 /-!
@@ -597,7 +656,16 @@ theorem simpleIffCoincidenceOfCocenters
     (∃ α : Ordinal.{0}, CBRank f = Order.succ α) ↔
     {n : ℕ | CBRank (f ∘ (Subtype.val : P n → A)) =
       ⨆ i, CBRank (f ∘ (Subtype.val : P i → A))}.Nonempty := by
-  sorry
+  constructor
+  · -- Forward: CB(f) is successor → I is nonempty
+    -- If CB(f) = α+1, then CB_α(f) = ⋃_n CB_α(f_n) is nonempty,
+    -- so some f_n has CB(f_n) = α+1 = sup CB(f_i)
+    rintro ⟨α, hα⟩
+    exact successor_rank_implies_I_nonempty f P hcover α hα
+  · -- Backward: I nonempty → CB(f) is successor
+    -- If some f_n has CB(f_n) = sup, and f_n is centered (hence has successor CB-rank),
+    -- then CB(f) is successor
+    exact I_nonempty_implies_successor_rank f P hclopen hdisj hcover hf_cent hf_scat
 
 /-- **Theorem 4.12 (simplefunctionslambda+1).**
 Let `λ` be limit or 1. Assume that continuous reducibility is BQO on `𝒞_{<λ}`.
@@ -635,6 +703,15 @@ theorem simpleFunctionsLambdaPlusOne
       (_ : TopologicalSpace X₃) (_ : TopologicalSpace Y₃)
       (g₁ : X₁ → Y₁) (g₂ : X₂ → Y₂) (g₃ : X₃ → Y₃),
       ContinuouslyEquiv f g₁ ∨ ContinuouslyEquiv f g₂ ∨ ContinuouslyEquiv f g₃ := by
+  -- Proof skeleton:
+  -- Step 1: By localCenterednessFromBQO, write f = ⊔_i f_i with each f_i centered
+  -- Step 2: By centeredSuccessor, each centered function in 𝓞_{λ+1}
+  --         is ≡ k_{λ+1} or ≡ pgl ℓ_λ
+  -- Step 3: Case analysis on which centered pieces appear:
+  --   (a) If some f_i ≡ pgl ℓ_λ: then f ≡ pgl ℓ_λ
+  --   (b) If all high-rank pieces ≡ k_{λ+1} and all rays have CB < λ:
+  --       then f ≡ k_{λ+1}
+  --   (c) Otherwise: f ≡ k_{λ+1} ⊔ ℓ_λ
   sorry
 
 /-- **Corollary 4.13 (finitedegreedamuddafuckaz).**

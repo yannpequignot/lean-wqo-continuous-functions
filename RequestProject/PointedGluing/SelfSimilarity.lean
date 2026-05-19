@@ -1,4 +1,4 @@
-import RequestProject.PointedGluing.MaxMinHelpers
+import RequestProject.PointedGluing.MaxFun.Helpers
 
 /-!
 # Self-similarity of pointed gluing structures

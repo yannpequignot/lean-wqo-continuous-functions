@@ -1,5 +1,5 @@
-import RequestProject.PointedGluing.MaxFunLimitRank.ClopenRestriction
-import RequestProject.PointedGluing.MaxFunLimitRank.TreeArgument
+import RequestProject.PointedGluing.MaxFun.LimitRankHelpers.ClopenRestriction
+import RequestProject.PointedGluing.MaxFun.LimitRankHelpers.TreeArgument
 
 /-!
 # MaxFun Limit Rank

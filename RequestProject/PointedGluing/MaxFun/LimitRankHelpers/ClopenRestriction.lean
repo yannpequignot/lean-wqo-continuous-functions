@@ -1,7 +1,10 @@
 import Mathlib
-import RequestProject.PointedGluing.GeneralStructureHelpers
+-- import RequestProject.PointedGluing.GeneralStructureHelpers.Helpers
+import RequestProject.PrelimMemo.Gluing
+import RequestProject.PrelimMemo.Scattered
 import RequestProject.BaireSpace.Basics
-import RequestProject.PointedGluing.MaxFunLimitRankHelpers
+import RequestProject.PointedGluing.MaxFun.Helpers
+import RequestProject.PointedGluing.MaxFun.LimitRankHelpers.Helpers
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

@@ -1,6 +1,4 @@
 import RequestProject.PointedGluing.Theorems
-import RequestProject.PointedGluing.MinFunHelpers
-import RequestProject.PointedGluing.MinFunLowerBound
 import RequestProject.PointedGluing.Defs
 import RequestProject.PointedGluing.CBRankSimpleHelpers
 import RequestProject.BaireSpace.GenRedProp

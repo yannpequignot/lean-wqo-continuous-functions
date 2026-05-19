@@ -1,11 +1,11 @@
 import RequestProject.PointedGluing.Theorems
-import RequestProject.PointedGluing.MinFunHelpers
-import RequestProject.PointedGluing.MinFunLowerBound
 import RequestProject.PointedGluing.Defs
 import RequestProject.BaireSpace.GenRedProp
-import RequestProject.PointedGluing.LowerBoundLemma
+-- import RequestProject.PointedGluing.LowerBoundLemma
 import RequestProject.PrelimMemo.Scattered.Decomposition
-import RequestProject.PointedGluing.MaxMinHelpers
+import RequestProject.PointedGluing.MaxFun.Helpers
+import RequestProject.PointedGluing.MinFun.Helpers
+import RequestProject.PointedGluing.MinFun.LowerBound
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

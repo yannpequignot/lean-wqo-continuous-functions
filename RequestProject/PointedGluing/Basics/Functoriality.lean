@@ -1,4 +1,4 @@
-import RequestProject.PointedGluing.MinFun
+import RequestProject.PointedGluing.MinFun.Theorems
 import Mathlib
 
 open scoped Topology

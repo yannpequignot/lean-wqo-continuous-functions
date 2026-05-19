@@ -1,5 +1,5 @@
-import RequestProject.PointedGluing.GeneralStructureHelpers.Functoriality
-import RequestProject.PointedGluing.GeneralStructureHelpers.OrdinalArithmetic
+import RequestProject.PointedGluing.Basics.Functoriality
+import RequestProject.PointedGluing.Basics.OrdinalArithmetic
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

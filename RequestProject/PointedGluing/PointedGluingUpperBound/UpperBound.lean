@@ -83,6 +83,46 @@ theorem sufficient_cond_continuity
 ## Section 3: Pointed Gluing as an Upper Bound (Proposition 3.5, Corollaries 3.6–3.7)
 -/
 
+
+/-
+**Corollary (Pgluingofraysasupperbound).**
+For any continuous `f : A → B` in 𝒞 and any `y ∈ B`,
+`f ≤ pgl_{i ∈ ℕ} Ray(f, y, i)`.
+
+This is a direct application of Pgluingasupperbound with the identity partition
+`I_j = {j}`.
+-/
+theorem pointedGluing_rays_upper_bound
+    {A B : Set (ℕ → ℕ)}
+    (f : A → ℕ → ℕ) (hfB : ∀ a, f a ∈ B)
+    (_hf : Continuous f)
+    (y : ℕ → ℕ) (_hy : y ∈ B) :
+    ∃ (C D : ℕ → Set (ℕ → ℕ)) (h : ∀ i, C i → D i),
+      ContinuouslyReduces f
+        (fun (x : PointedGluingSet C) => PointedGluingFun C D h x) := by
+  use fun i => if h : i = 0 then A else ∅
+  use fun i => if i = 0 then B else ∅
+  use fun i a => ⟨f ⟨a.val, by
+    grind⟩, by
+    aesop⟩
+  generalize_proofs at *
+  refine ⟨?_, ?_, ?_⟩
+  use fun a => ⟨prependZerosOne 0 a.val, Or.inr <| Set.mem_iUnion.mpr ⟨0, a.val, a.property, rfl⟩⟩
+  · refine Continuous.subtype_mk ?_ ?_
+    exact continuous_prependZerosOne 0 |> Continuous.comp <| continuous_subtype_val
+  · refine ⟨?_, ?_, ?_⟩
+    use fun x => x ∘ fun n => n + 1
+    · fun_prop
+    · intro x; ext n; simp +decide [PointedGluingFun]
+      split_ifs <;> simp_all +decide [prependZerosOne]
+      · rename_i h; have := congr_fun h 0; simp_all +decide [prependZerosOne]
+      · congr
+      · simp_all +decide [firstNonzero, prependZerosOne]
+        unfold stripZerosOne at *; simp_all +decide [prependZerosOne]
+
+
+
+
 /-
 **Proposition (Pgluingasupperbound). Pointed gluing as upper bound.**
 Let `f ∈ 𝒞` be continuous and `(g_i)_{i ∈ ℕ}` a sequence in 𝒞.

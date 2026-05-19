@@ -1,4 +1,5 @@
-import RequestProject.PointedGluing.MaxFunLimitRank.ClopenRestriction
+import RequestProject.PointedGluing.MaxFun.LimitRankHelpers.ClopenRestriction
+import RequestProject.PointedGluing.MaxFun.Maximum
 
 open scoped Topology
 open Set Function TopologicalSpace Classical
