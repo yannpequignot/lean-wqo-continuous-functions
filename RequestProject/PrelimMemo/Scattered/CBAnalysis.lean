@@ -593,9 +593,10 @@ theorem ContinuouslyReduces.rank_monotone {X X' Y Y' : Type*}
     - `Cardinal.isRegular_aleph_one` : aleph 1 is a regular cardinal
     - `TopologicalSpace.exists_countable_basis` : A has a countable basis
     TODO: complete this proof. -/
-axiom CBRank_lt_omega1
+theorem CBRank_lt_omega1
     {A : Set (ℕ → ℕ)} {f : A → ℕ → ℕ}
     (hf : ScatteredFun f) :
-    CBRank f < omega1
+    CBRank f < omega1 := by
+  sorry
 
 end ReductionAndCB

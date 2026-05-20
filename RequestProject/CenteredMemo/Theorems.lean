@@ -166,7 +166,7 @@ values `f(x₀) ≠ f(x₁)`, then by induction both belong to every `CB_α(f)`,
 so the perfect kernel is nonempty and `f` is not scattered. -/
 theorem scatteredHaveCocenter
     {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A]
+    [TopologicalSpace A] [MetrizableSpace A] [Small.{0} A]
     [TopologicalSpace B] [T2Space B]
     (f : A → B) (hf_cent : IsCentered f) :
     ScatteredFun f ↔ (∀ x y : A, IsCenterFor f x → IsCenterFor f y → f x = f y) := by
@@ -194,7 +194,7 @@ distinguished point.
 -/
 theorem scatteredCentered_isSimple
     {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A]
+    [TopologicalSpace A] [MetrizableSpace A] [Small.{0} A]
     [TopologicalSpace B] [T2Space B]
     (f : A → B) (hf_scat : ScatteredFun f)
     (hf_cent : IsCentered f) :
@@ -469,7 +469,8 @@ theorem centeredAsPgluing_CBrank
 ## Section 2: Centered Functions and Structure of Continuous Reducibility (§4.2)
 -/
 
-/-- **Theorem 4.7 (LocalCenterednessFromBQO).**
+/-
+**Theorem 4.7 (LocalCenterednessFromBQO).**
 For all `α < ω₁`, if `𝒞_{<α}` is BQO, then every function in `𝒞_α` is locally
 centered.
 
@@ -483,7 +484,8 @@ centered.
   For each `n`, `(Ray(f, ȳ, i)|_{N_{x|_n}})_{i ∈ ℕ}` lies in `𝒞_{<α}`.
   Since `𝒞_{<α}` is WQO, choose `(j_n)_n` with `ρ_n` regular.
   Since `𝒞_{<α}` is BQO, `(ρ_n)_n` stabilizes. Find `m` with `f|_U ≡ pgl ρ_m`,
-  which is centered by Pgluingofregulariscentered. -/
+  which is centered by Pgluingofregulariscentered.
+-/
 theorem localCenterednessFromBQO
     (α : Ordinal.{0}) (hα : α < omega1)
     (hbqo : ∀ (X : ℕ → Type) (Y : ℕ → Type)
@@ -500,7 +502,40 @@ theorem localCenterednessFromBQO
   -- Case α = 0: use locallyCentered_rank_zero
   -- Case α limit: use locallyCentered_limit_rank with induction hypothesis
   -- Case α = β + 1: use locallyCentered_succ_rank with BQO hypothesis
-  sorry
+  intro X Y _ _ f hf_scat hf_rank
+  have h_ind : ∀ β < α, ∀ (X' Y' : Type) [TopologicalSpace X'] [TopologicalSpace Y'] (g : X' → Y'), ScatteredFun g → CBRank g = β → IsLocallyCentered g := by
+    intros β hβ X' Y' _ _ g hg_scat hg_rank
+    induction' β using Ordinal.induction with β ih generalizing X' Y' g;
+    by_cases hβ_limit : Order.IsSuccLimit β ∧ β ≠ 0;
+    · apply locallyCentered_limit_rank g hg_scat β hβ_limit.left hβ_limit.right hg_rank;
+      exact fun γ hγ X' Y' _ _ g hg_scat hg_rank => ih γ hγ ( lt_trans hγ hβ ) X' Y' g hg_scat hg_rank;
+    · by_cases hβ_zero : β = 0;
+      · convert locallyCentered_rank_zero g hg_scat ( by aesop );
+      · -- Since β is not a limit ordinal and not zero, it must be a successor ordinal.
+        obtain ⟨γ, rfl⟩ : ∃ γ, β = Order.succ γ := by
+          contrapose! hβ_limit;
+          refine' ⟨ ⟨ _, _ ⟩, hβ_zero ⟩;
+          · exact fun h => hβ_zero <| h.eq_bot;
+          · intro γ hγ;
+            exact hβ_limit γ hγ.succ_eq.symm;
+        apply locallyCentered_succ_rank γ (by
+        exact lt_of_le_of_lt ( Order.le_succ _ ) ( lt_of_lt_of_le hβ ( le_of_lt hα ) )) (by
+        exact fun X Y _ _ seq hseq hseq' => hbqo X Y seq hseq fun n => lt_trans ( hseq' n ) hβ) g hg_scat hg_rank (by
+        grind +qlia);
+  by_cases hα_succ : ∃ γ, α = Order.succ γ;
+  · obtain ⟨γ, rfl⟩ := hα_succ
+    exact locallyCentered_succ_rank γ (by
+    exact lt_of_le_of_lt ( Order.le_succ _ ) hα) (by
+    convert hbqo using 1) f hf_scat hf_rank h_ind;
+  · cases' eq_or_ne α 0 with hα_zero hα_nonzero <;> simp_all +decide;
+    · convert locallyCentered_rank_zero f hf_scat hf_rank;
+    · apply locallyCentered_limit_rank f hf_scat α (by
+      constructor;
+      · exact fun h => hα_nonzero <| h.eq_bot;
+      · intro x hx;
+        exact hα_succ x hx.succ_eq.symm) (by
+      grind) hf_rank (by
+      exact h_ind)
 
 /-
 **Proposition 4.8 (FinitegenerationandPgluing) — Item 1.**

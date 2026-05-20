@@ -54,26 +54,112 @@ lemma regularSeq_large_index {X Y : ℕ → Type*}
 ### Helpers for Proposition 4.3 (scatteredHaveCocenter)
 -/
 
-/-- A center for f belongs to every nonempty CB level. That is, if x is a center
-for f and CBLevel f β is nonempty, then x ∈ CBLevel f β. -/
+/-
+If x is a center for f, x ∈ CBLevel f γ, and f is constant on V ∩ CBLevel f γ
+for some open V containing x, then f is constant on all of CBLevel f γ.
+-/
+lemma center_const_on_CBLevel {A B : Type*}
+    [TopologicalSpace A] [MetrizableSpace A]
+    [TopologicalSpace B] [T2Space B]
+    (f : A → B) (x : A) (hx : IsCenterFor f x)
+    (γ : Ordinal.{0}) (hx_in : x ∈ CBLevel f γ)
+    (V : Set A) (hV : IsOpen V) (hxV : x ∈ V)
+    (hconst : ∀ y ∈ V ∩ CBLevel f γ, f y = f x) :
+    ∀ a ∈ CBLevel f γ, f a = f x := by
+  obtain ⟨σ, hσ, τ, hτ, h⟩ := hx V hV hxV;
+  -- By ContinuouslyReduces.cb_monotone, we have σ '' (CBLevel f γ) ⊆ CBLevel (f ∘ Subtype.val : V → B) γ.
+  have h_image : σ '' (CBLevel f γ) ⊆ CBLevel (fun x : { x // x ∈ V } => f x.val) γ := by
+    apply_rules [ ContinuouslyReduces.cb_monotone ];
+  -- By local_cb_derivative, we have CBLevel (f ∘ Subtype.val : V → B) γ = CBLevel f γ ∩ V.
+  have h_local : CBLevel (fun x : { x // x ∈ V } => f x.val) γ = CBLevel f γ ∩ V := by
+    convert local_cb_derivative V hV γ using 1;
+    infer_instance;
+  grind
+
+/-
+A center for f belongs to every nonempty CB level. That is, if x is a center
+for f and CBLevel f β is nonempty, then x ∈ CBLevel f β.
+-/
 lemma center_in_CBLevel {A B : Type*}
     [TopologicalSpace A] [MetrizableSpace A]
     [TopologicalSpace B] [T2Space B]
     (f : A → B) (x : A) (hx : IsCenterFor f x)
     (β : Ordinal.{0}) (hne : (CBLevel f β).Nonempty) :
     x ∈ CBLevel f β := by
-  sorry
+  induction' β using Ordinal.limitRecOn with β ih; simp_all +decide [ CBLevel ] ;
+  · have h_not_isolated : ¬x ∈ isolatedLocus f (CBLevel f β) := by
+      intro h
+      obtain ⟨U, hU_open, hxU, hU_const⟩ := h
+      have h_const : ∀ a ∈ CBLevel f β, f a = f x := by
+        grind +suggestions
+      have h_empty : CBLevel f (Order.succ β) = ∅ := by
+        have h_empty : isolatedLocus f (CBLevel f β) = CBLevel f β := by
+          ext y; simp [isolatedLocus];
+          exact fun hy => ⟨ Set.univ, isOpen_univ, trivial, fun z hz hz' => by rw [ h_const z hz', h_const y hy ] ⟩;
+        simp +decide [ CBLevel_succ', h_empty ]
+      exact hne.ne_empty h_empty;
+    have h_nonempty : (CBLevel f β).Nonempty := by
+      exact hne.mono ( CBLevel_antitone f ( Order.le_succ β ) );
+    grind +suggestions;
+  · rename_i o ho ih;
+    have h_inter : ∀ o' < o, x ∈ CBLevel f o' := by
+      intro o' ho';
+      apply ih o' ho';
+      exact hne.mono ( CBLevel_antitone f ho'.le );
+    unfold CBLevel at *; aesop;
 
-/-- If two centers of a scattered function have different images, then the
-perfect kernel is nonempty — contradicting scatteredness. -/
-lemma centers_different_images_not_scattered {A B : Type*}
+/-
+If x and y are both centers of f with f(x) ≠ f(y), and both belong to
+CBLevel f γ, then neither x nor y is in the isolated locus of CBLevel f γ.
+-/
+lemma center_not_in_isolatedLocus_of_diff_images {A B : Type*}
+    [TopologicalSpace A] [MetrizableSpace A]
+    [TopologicalSpace B] [T2Space B]
+    (f : A → B) (x y : A)
+    (hx : IsCenterFor f x) (_hy : IsCenterFor f y)
+    (hne : f x ≠ f y)
+    (γ : Ordinal.{0}) (hx_in : x ∈ CBLevel f γ) (hy_in : y ∈ CBLevel f γ) :
+    x ∉ isolatedLocus f (CBLevel f γ) := by
+  contrapose! hne;
+  -- Since x is in the isolated locus of the CBLevel at γ, there exists an open set V containing x such that f is constant on V ∩ CBLevel f γ.
+  obtain ⟨V, hV_open, hxV, h_const⟩ : ∃ V : Set A, IsOpen V ∧ x ∈ V ∧ ∀ z ∈ V ∩ CBLevel f γ, f z = f x := by
+    exact hne.2;
+  exact Eq.symm ( center_const_on_CBLevel f x hx γ hx_in V hV_open hxV h_const y hy_in )
+
+/-
+If x and y are both centers with f(x) ≠ f(y), then both belong to every
+CB level (i.e., they are in the perfect kernel).
+-/
+lemma centers_in_all_CBLevels {A B : Type*}
     [TopologicalSpace A] [MetrizableSpace A]
     [TopologicalSpace B] [T2Space B]
     (f : A → B) (x y : A)
     (hx : IsCenterFor f x) (hy : IsCenterFor f y)
     (hne : f x ≠ f y) :
+    ∀ α : Ordinal.{0}, x ∈ CBLevel f α ∧ y ∈ CBLevel f α := by
+  intro α
+  induction' α using Ordinal.limitRecOn with α hα;
+  · exact ⟨ CBLevel_zero f ▸ Set.mem_univ x, CBLevel_zero f ▸ Set.mem_univ y ⟩;
+  · simp_all +decide [ CBLevel_succ' ];
+    exact ⟨ center_not_in_isolatedLocus_of_diff_images f x y hx hy hne α hα.1 hα.2, center_not_in_isolatedLocus_of_diff_images f y x hy hx ( Ne.symm hne ) α hα.2 hα.1 ⟩;
+  · simp_all +decide [ CBLevel ]
+
+/-
+If two centers of a scattered function have different images, then the
+perfect kernel is nonempty — contradicting scatteredness.
+-/
+lemma centers_different_images_not_scattered {A B : Type*}
+    [TopologicalSpace A] [MetrizableSpace A] [Small.{0} A]
+    [TopologicalSpace B] [T2Space B]
+    (f : A → B) (x y : A)
+    (hx : IsCenterFor f x) (hy : IsCenterFor f y)
+    (hne : f x ≠ f y) :
     ¬ ScatteredFun f := by
-  sorry
+  -- By definition of scatteredFun, if f is scattered, then its perfect kernel is empty.
+  by_contra h_scattered
+  have h_perfect_kernel_empty : perfectKernelCB f = ∅ := by
+    exact (scattered_iff_empty_perfectKernel_general f).mp h_scattered;
+  exact Set.notMem_empty x ( h_perfect_kernel_empty ▸ Set.mem_iInter.mpr ( fun α => ( centers_in_all_CBLevels f x y hx hy hne ) α |>.1 ) )
 
 /-- If all centers of f have the same image and f is centered,
 then f is scattered if and only if f is always scattered (tautological direction
@@ -136,25 +222,171 @@ lemma monotone_pgluing_of_centered
 ### Helpers for Theorem 4.7 (localCenterednessFromBQO)
 -/
 
-/-- Base case: any function with CB-rank 0 is locally centered
-(vacuously, since it must be empty or locally constant). -/
+/-
+Base case: any function with CB-rank 0 is locally centered
+(vacuously, since it must be empty or locally constant).
+-/
 lemma locallyCentered_rank_zero {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y]
+    [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
     (f : X → Y) (_hf_scat : ScatteredFun f) (hf_rank : CBRank f = 0) :
     IsLocallyCentered f := by
-  sorry
+  -- By CBLevel_eq_empty_at_rank (which needs Small.{0} X and ScatteredFun f):
+  -- CBLevel f (CBRank f) = ∅.
+  have h_empty : CBLevel f (CBRank f) = ∅ := by
+    exact CBLevel_eq_empty_at_rank f _hf_scat;
+  simp_all +decide [ CBLevel_zero ];
+  exact fun x => False.elim ( h_empty.elim x )
 
-/-- Limit case: if f has limit CB-rank, then f is locally of lower rank,
-hence locally centered by induction. -/
-lemma locallyCentered_limit_rank {X Y : Type*}
+/-
+Restriction to an open set preserves scatteredness.
+-/
+lemma scatteredFun_restrict_open {X Y : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y]
+    {f : X → Y} (hf : ScatteredFun f) (U : Set X) :
+    ScatteredFun (f ∘ (Subtype.val : U → X)) := by
+  exact scattered_restrict f hf U
+
+/-- Homeomorphism between nested subtypes and intersection subtypes. -/
+def subtypeSubtypeHomeomorph {X : Type*} [TopologicalSpace X] (U W : Set X) :
+    {u : U // u.val ∈ W} ≃ₜ {x : X // x ∈ U ∩ W} :=
+  Homeomorph.mk ⟨fun ⟨⟨x, hU⟩, hW⟩ => ⟨x, ⟨hU, hW⟩⟩,
+    fun ⟨x, hx⟩ => ⟨⟨x, hx.1⟩, hx.2⟩, fun ⟨⟨_, _⟩, _⟩ => rfl, fun ⟨_, _⟩ => rfl⟩
+    (Continuous.subtype_mk (continuous_subtype_val.comp continuous_subtype_val) _)
+    (Continuous.subtype_mk (Continuous.subtype_mk continuous_subtype_val _) _)
+
+/-
+IsCentered is preserved by homeomorphism of the domain.
+-/
+lemma isCentered_of_homeomorph {X X' Y : Type*}
+    [TopologicalSpace X] [TopologicalSpace X'] [TopologicalSpace Y]
+    (f : X → Y) (g : X' → Y) (φ : X' ≃ₜ X)
+    (h : ∀ x, g x = f (φ x)) (hc : IsCentered f) : IsCentered g := by
+  obtain ⟨ c, hc ⟩ := hc;
+  -- Take c' = φ⁻¹ c as center for g.
+  use φ.symm c;
+  intro U hU hcu
+  obtain ⟨σ, τ, hσ, hτ, hfg⟩ := hc (φ '' U) (by
+  exact φ.isOpen_image.mpr hU) (by
+  exact ⟨ _, hcu, φ.apply_symm_apply c ⟩);
+  refine' ⟨ _, _, _ ⟩;
+  exact fun x => ⟨ φ.symm ( σ ( φ x ) |>.1 ), by obtain ⟨ y, hy, hy' ⟩ := σ ( φ x ) |>.2; simpa [ ← hy' ] using hy ⟩;
+  · fun_prop;
+  · refine' ⟨ hσ, _, _ ⟩;
+    · refine' hτ.mono _;
+      rintro _ ⟨ x, rfl ⟩ ; simp +decide [ h ] ;
+    · grind +suggestions
+
+/-
+IsCentered transfers from nested subtypes to flat intersection subtype.
+-/
+lemma isCentered_subtypeSubtype {X Y : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) (U : Set X) (hU : IsOpen U) (V : Set U) (hV : IsOpen V) :
+    IsCentered ((f ∘ Subtype.val) ∘ (Subtype.val : V → U)) →
+    IsCentered (f ∘ (Subtype.val : (U ∩ (Subtype.val '' V) : Set X) → X)) := by
+  rintro ⟨ c, hc ⟩;
+  refine' ⟨ ⟨ c.val.val, ⟨ c.val.prop, _ ⟩ ⟩, _ ⟩;
+  exact ⟨ c, c.prop, rfl ⟩;
+  intro W hW hcW;
+  -- Let $W'$ be the preimage of $W$ under the inclusion map from $V$ to $U \cap \text{image}(V)$.
+  set W' : Set V := {v : V | ⟨v.val.val, ⟨v.val.prop, ⟨v.val, v.prop, rfl⟩⟩⟩ ∈ W} with hW';
+  have hW'_open : IsOpen W' := by
+    convert hW.preimage _;
+    fun_prop;
+  have := hc W' hW'_open ( by aesop );
+  obtain ⟨ τ, hτ₁, hτ₂ ⟩ := this;
+  obtain ⟨ σ, hσ₁, hσ₂ ⟩ := hτ₂;
+  refine' ⟨ _, _, _ ⟩;
+  use fun x => ⟨ ⟨ τ ⟨ ⟨ x.val, by
+    exact x.2.1 ⟩, by
+    grind ⟩ |>.1 |>.1, by
+    grind ⟩, by
+    all_goals generalize_proofs at *;
+    exact τ ⟨ ⟨ x, by assumption ⟩, by assumption ⟩ |>.2 ⟩
+  all_goals generalize_proofs at *;
+  · fun_prop (disch := solve_by_elim);
+  · use σ;
+    refine' ⟨ _, _ ⟩;
+    · convert hσ₁ using 1;
+      ext; simp [Function.comp];
+      exact ⟨ fun ⟨ a, ⟨ b, c ⟩, d ⟩ => ⟨ a, b, c, d ⟩, fun ⟨ a, b, c, d ⟩ => ⟨ a, ⟨ b, c ⟩, d ⟩ ⟩;
+    · grind
+
+/-
+If f|_U is locally centered and x ∈ U (U open), then there exists
+an open V ⊆ U with x ∈ V and f|_V centered.
+-/
+lemma isLocallyCentered_restrict_open {X Y : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) (U : Set X) (hU : IsOpen U)
+    (hlc : IsLocallyCentered (f ∘ (Subtype.val : U → X)))
+    (x : X) (hxU : x ∈ U) :
+    ∃ V : Set X, IsOpen V ∧ x ∈ V ∧ IsCentered (f ∘ (Subtype.val : V → X)) := by
+  have := hlc ⟨ x, hxU ⟩;
+  obtain ⟨ V, hV₁, hV₂, hV₃ ⟩ := this;
+  refine' ⟨ U ∩ ( Subtype.val '' V ), _, _, _ ⟩;
+  · obtain ⟨ t, ht₁, ht₂ ⟩ := hV₁;
+    convert hU.inter ht₁ using 1 ; ext ; aesop;
+  · grind +splitImp;
+  · convert isCentered_subtypeSubtype f U hU V hV₁ hV₃
+
+/-
+CB levels are closed sets. Proved by transfinite induction:
+- Base: `CBLevel f 0 = univ` is closed.
+- Successor: `CBLevel f (β+1) = CBLevel f β \ isolatedLocus f (CBLevel f β)`. Since
+  `isolatedLocus` is relatively open in `CBLevel f β` and `CBLevel f β` is closed (by IH),
+  the difference is closed.
+- Limit: intersection of closed sets is closed.
+-/
+lemma CBLevel_closed' {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) (β : Ordinal.{0}) : IsClosed (CBLevel f β) := by
+  induction' β using Ordinal.limitRecOn with β ih;
+  · -- The base case is when β = 0. The CB level at 0 is the entire space X, which is closed.
+    simp [CBLevel];
+  · rw [ CBLevel_succ' ];
+    refine' isClosed_iff_nhds.2 fun x hx => _;
+    refine' ⟨ _, _ ⟩;
+    · contrapose! hx;
+      exact ⟨ ( CBLevel f β ) ᶜ, IsOpen.mem_nhds ( isOpen_compl_iff.mpr ih ) hx, by aesop ⟩;
+    · contrapose! hx;
+      obtain ⟨ U, hUo, hxU, hU ⟩ := hx;
+      refine' ⟨ hUo, hxU.mem_nhds hU.1, _ ⟩;
+      simp +decide [ Set.ext_iff, isolatedLocus ];
+      exact fun y hy hy' => ⟨ hUo, hxU, hy, fun z hz hz' => hU.2 z ⟨ hz, hz' ⟩ ▸ hU.2 y ⟨ hy, hy' ⟩ ▸ rfl ⟩;
+  · simp +decide [ CBLevel, * ];
+    exact isClosed_iInter fun γ => isClosed_iInter fun hγ => by solve_by_elim;
+
+/-
+Limit case: if f has limit CB-rank, then f is locally of lower rank,
+hence locally centered by induction.
+-/
+lemma locallyCentered_limit_rank {X Y : Type}
     [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (hf_scat : ScatteredFun f)
-    (α : Ordinal.{0}) (hα_limit : Order.IsSuccLimit α) (hα_ne : α ≠ 0)
+    (α : Ordinal.{0}) (hα_limit : Order.IsSuccLimit α) (_hα_ne : α ≠ 0)
     (hf_rank : CBRank f = α)
     (ih : ∀ β < α, ∀ (X' Y' : Type) [TopologicalSpace X'] [TopologicalSpace Y']
       (g : X' → Y'), ScatteredFun g → CBRank g = β → IsLocallyCentered g) :
     IsLocallyCentered f := by
-  sorry
+  intro x;
+  -- Since $x$ is in $CBLevel f α$, there exists a $\beta < α$ such that $x$ is not in $CBLevel f β$.
+  obtain ⟨β, hβ_lt, hβ_not_in⟩ : ∃ β < α, x ∉ CBLevel f β := by
+    -- By definition of CBRank, since α is the CB-rank of f, we have CBLevel f α = ∅.
+    have h_cblevel_empty : CBLevel f α = ∅ := by
+      have := CBLevel_eq_empty_at_rank f hf_scat; aesop;
+    contrapose! h_cblevel_empty; simp_all +decide [ CBLevel ] ;
+    exact ⟨ x, h_cblevel_empty ⟩;
+  -- Since $x$ is not in $CBLevel f β$, there exists an open neighborhood $U$ of $x$ such that $U \cap CBLevel f β = ∅$.
+  obtain ⟨U, hU_open, hxU, hU_disjoint⟩ : ∃ U : Set X, IsOpen U ∧ x ∈ U ∧ U ∩ CBLevel f β = ∅ := by
+    exact ⟨ ( CBLevel f β ) ᶜ, isOpen_compl_iff.mpr ( CBLevel_closed' f β ), hβ_not_in, by simp +decide ⟩;
+  -- Since $U$ is open and disjoint from $CBLevel f β$, the CB-rank of $f|_U$ is less than or equal to $β$.
+  have h_cb_rank_le_beta : CBRank (f ∘ (Subtype.val : U → X)) ≤ β := by
+    apply CBRank_le_of_CBLevel_empty;
+    have h_cb_rank_le_beta : Subtype.val '' CBLevel (f ∘ (Subtype.val : U → X)) β ⊆ CBLevel f β := by
+      grind +suggestions;
+    simp_all +decide [ Set.ext_iff ];
+    exact fun x hx hx' => hU_disjoint x hx <| h_cb_rank_le_beta hx';
+  grind +suggestions
 
 /-- Successor case: if f has successor CB-rank α+1 and 𝒞_{<α+1} is BQO,
 then f is locally centered. -/
@@ -166,7 +398,7 @@ lemma locallyCentered_succ_rank
       (∀ n, ScatteredFun (seq n)) →
       (∀ n, CBRank (seq n) < Order.succ α) →
       ∃ m n, m < n ∧ ContinuouslyReduces (seq m) (seq n))
-    {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (hf_scat : ScatteredFun f)
     (hf_rank : CBRank f = Order.succ α)
     (ih : ∀ β < Order.succ α, ∀ (X' Y' : Type) [TopologicalSpace X'] [TopologicalSpace Y']
