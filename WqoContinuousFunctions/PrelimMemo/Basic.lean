@@ -333,23 +333,37 @@ end ContRedonEmbed
 section HomeomorphicFunctions
 
 /-- Two functions are homeomorphic if there are homeomorphisms `σ` and `τ` such that
-`f = τ ∘ f' ∘ σ`. -/
+`f = τ ∘ f' ∘ σ`. 
+-/
 def HomeomorphicFun {X X' Y Y' : Type*}
     [TopologicalSpace X] [TopologicalSpace X']
     [TopologicalSpace Y] [TopologicalSpace Y']
     (f : X → Y) (f' : X' → Y') : Prop :=
-  ∃ (σ : X ≃ₜ X') (τ : Y' ≃ₜ Y), ∀ x, f x = τ (f' (σ x))
+  ∃ (σ : X ≃ₜ X') (τ : Y' → Y),
+    ContinuousOn τ (Set.range f') ∧
+    ∃ (τ_inv : Y → Y'), ContinuousOn τ_inv (Set.range f) ∧
+      (∀ y' ∈ Set.range f', τ_inv (τ y') = y') ∧
+      (∀ y ∈ Set.range f, τ (τ_inv y) = y) ∧
+      ∀ x, f x = τ (f' (σ x))
 
 theorem HomeomorphicFun.continuouslyEquiv {X X' Y Y' : Type*}
     [TopologicalSpace X] [TopologicalSpace X']
     [TopologicalSpace Y] [TopologicalSpace Y']
     {f : X → Y} {f' : X' → Y'}
     (h : HomeomorphicFun f f') : ContinuouslyEquiv f f' := by
-  obtain ⟨σ, τ, hred⟩ := h
+  obtain ⟨σ, τ, hτ_cont, τ_inv, hτ_inv_cont, hτ_inv_left, hτ_inv_right, hred⟩ := h
   constructor
-  · exact ⟨σ, σ.continuous, τ, τ.continuous.continuousOn, hred⟩
-  · refine ⟨σ.symm, σ.symm.continuous, τ.symm, τ.symm.continuous.continuousOn, fun x' => ?_⟩
-    have := hred (σ.symm x'); simp at this; rw [this]; simp
+  · refine ⟨σ, σ.continuous, τ, ?_, hred⟩
+    exact hτ_cont.mono (Set.range_comp_subset_range σ f')
+  · refine ⟨σ.symm, σ.symm.continuous, τ_inv, ?_, fun x' => ?_⟩
+    · exact hτ_inv_cont.mono (Set.range_comp_subset_range σ.symm f)
+    · have hmem : f (σ.symm x') ∈ Set.range f := Set.mem_range_self _
+      have hfx' : f (σ.symm x') = τ (f' x') := by
+        have := hred (σ.symm x')
+        simp only [σ.apply_symm_apply] at this
+        exact this
+      rw [hfx', hτ_inv_left (f' x') (Set.mem_range_self _)]
+
 
 end HomeomorphicFunctions
 

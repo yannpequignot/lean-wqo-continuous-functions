@@ -215,7 +215,7 @@ theorem bad_pairseq_restricts_to_level
   · -- Constant-fibre branch: all pairs along e have CB-rank β.
     have hβ_lt : β < omega1 := by
       have h01 := hmem 0 1 (by norm_num)
-      simp only [f_lex, ScatFun.toLevel] at h01
+      simp only [f_lex] at h01
       rw [← h01]
       exact CBRank_lt_omega1 (f (e 0) (e 1) (he (by norm_num))).hScat
     refine ⟨β, hβ_lt, e, he, ?_, ?_⟩
@@ -227,7 +227,7 @@ theorem bad_pairseq_restricts_to_level
     · -- Every pair along e has CB-rank β.
       intro m n h
       have := hmem m n h
-      simp only [f_lex, ScatFun.toLevel] at this
+      simp only [f_lex] at this
       exact this
 
 /-!
