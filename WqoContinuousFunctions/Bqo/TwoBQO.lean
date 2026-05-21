@@ -441,28 +441,13 @@ lemma LexSumRelQO.trans
 /-! **Sum theorem for 2-BQO along a quasi-order with antisymmetry.**
 
 If `r` on `ι` is 2-BQO, `r` is antisymmetric, and each `t i` on `s i`
-is 2-BQO, then `Σ i, s i` with `LexSumRelQO r s t` is 2-BQO. -/
--- lemma TwoBQO.lexSigmaQO_reflect
---     {ι : Type*}
---     (r : ι → ι → Prop)
---     (hr_antisymm : ∀ i j, r i j → r j i → i = j)
---     (s : ι → Type*)
---     (t : ∀ i, s i → s i → Prop)
---     (f : PairSeq LexSumRelQO r s t)
---     (hbad : BadPairSeq (LexSumRelQO r s t) f) :
---     ∃ e : ℕ → ℕ, ∃ (he_mono : StrictMono e),
---     BadPairSeq r (fun m n hmn => (f (e m) (e n) (he hmn)).1)
---      ∨ ∃ i : ι, ∀ m n : ℕ, (hmn : m < n) →
---         (f (e m) (e n) (he hmn)).1 = i ∧
---         BadPairSeq (t i) (fun m n hmn => (f (e m) (e n) (he_mono hmn)).2) := by
---   sorry
-/--
+is 2-BQO, then `Σ i, s i` with `LexSumRelQO r s t` is 2-BQO.
+
 The constructive content of the sum theorem for 2-BQO along a partial order.
 -/
 lemma TwoBQO.lexSigmaQO_reflect
     {ι : Type*}
     (r : ι → ι → Prop)
-    (hr_antisymm : ∀ i j, r i j → r j i → i = j)
     (s : ι → Type*)
     (t : ∀ i, s i → s i → Prop)
     (f : PairSeq (Σ i, s i))

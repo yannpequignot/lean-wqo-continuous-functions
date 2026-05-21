@@ -6,27 +6,12 @@ open Set Function TopologicalSpace
 set_option autoImplicit false
 
 /-!
-# Formalization of `1_intro_memo.tex`
+# Formalization of main theorems
 
-This file formalizes the key definitions and theorem statements from the introduction
-of the memoir on continuous reducibility between functions.
+This file should eventually contain all the main theorems
+with proofs by importing the relevant lemmas from the repo. 
 
-## Main definitions
-
-* `ContinuouslyReduces f g` — `f` continuously reduces to `g`, i.e., there exist
-  continuous maps `σ` and `τ` such that `f = τ ∘ g ∘ σ`.
-* `ContinuouslyEquiv f g` — `f` and `g` are continuously equivalent (`f ≤ g ∧ g ≤ f`).
-* `StrictlyContinuouslyReduces f g` — `f < g`, i.e., `f ≤ g` but `¬(g ≤ f)`.
-* `ScatteredFun f` — the function `f` is scattered: every nonempty subset of its domain
-  contains a nonempty open set on which `f` is constant.
-* `IsBetterQuasiOrder` — a quasi-order is a better-quasi-order (no bad multisequences).
-
-## Main results (proved)
-
-* `ContinuouslyReduces.refl` — continuous reducibility is reflexive.
-* `ContinuouslyReduces.trans` — continuous reducibility is transitive.
-
-## Main theorem statements (stated, not proved)
+## Main theorem statements
 
 * `MainTheorem1` — Continuous reducibility is a WQO on continuous functions from an
   analytic zero-dimensional space to a separable metrizable space.
@@ -36,8 +21,7 @@ of the memoir on continuous reducibility between functions.
   from a zero-dimensional separable metrizable space to a metrizable space.
 * `scatteredIffEmptyKernel` — A continuous function from a metrizable domain to a
   Hausdorff codomain is scattered iff it has empty perfect kernel.
-* `bqo_continuous_functions` — Strengthening of Main Theorems 1 and 2 to BQO.
-* `bqo_scattered_continuous_functions` — BQO on scattered continuous functions.
+  `scatteredIffEmptyKernel` is proved in WqoContinuousFunctions/PrelimMemo/Scattered/CBAnalysis.lean
 * `levels_finitely_generated` — Each CB-rank level is finitely generated.
 -/
 
@@ -130,6 +114,8 @@ section BetterQuasiOrder
 /-!
 ## Better-Quasi-Orders
 
+We should only need the notion of 2-BQO formalized in Bqo.TwoBQO.
+
 The *Ellentuck space* `[ℕ]^ω` is the space of all infinite subsets of `ℕ`, identified
 with their increasing enumerations. Given `Z ∈ [ℕ]^ω`, the *shift* of `Z` is
 `Z \ {min Z}`.
@@ -141,28 +127,8 @@ A quasi-order `(Q, ≤)` is a *better-quasi-order (BQO)* if there is no *bad*
 Every BQO is a WQO.
 -/
 
-/-- The Ellentuck space: infinite subsets of `ℕ`, represented as strictly increasing
-functions `ℕ → ℕ`. -/
-def EllentuckSpace : Type := {f : ℕ → ℕ // StrictMono f}
 
-instance : TopologicalSpace EllentuckSpace :=
-  instTopologicalSpaceSubtype
-
-/-- The shift operation on the Ellentuck space: drop the first element. -/
-def EllentuckSpace.shift (Z : EllentuckSpace) : EllentuckSpace :=
-  ⟨fun n => Z.val (n + 1), Z.property.comp (fun _ _ h => Nat.add_lt_add_right h 1)⟩
-
-/-- A quasi-order `(Q, ≤)` is a *better-quasi-order* if there is no bad multisequence.
-We say a function `φ : EllentuckSpace → Q` is *bad* if `¬ r (φ Z) (φ (shift Z))` for
-all `Z`. A BQO has no bad locally constant multisequences. -/
-def IsBetterQuasiOrder (Q : Type*) (r : Q → Q → Prop) : Prop :=
-  ∀ (φ : EllentuckSpace → Q),
-    LocallyConstant EllentuckSpace Q →
-    ∃ Z : EllentuckSpace, r (φ Z) (φ Z.shift)
-
-
-
-/-- **Theorem (BQO strengthening).** Continuous reducibility is a BQO on the class of
+/-- **Theorem (2-BQO strengthening).** Continuous reducibility is a BQO on the class of
 continuous functions from a zero-dimensional separable metrizable space to a metrizable
 space, provided either the domain is analytic or the codomain is countable.
 
@@ -175,9 +141,17 @@ theorem bqo_strengthening : True := by trivial
 class of scattered continuous functions from a zero-dimensional separable metrizable
 space to a metrizable space.
 
-This is Theorem 1.5 of the memoir, strengthening Main Theorem 3. -/
-theorem bqo_scattered_strengthening : True := by trivial
-
+This is the 2-BQO version of Theorem 1.5 of the memoir, strengthening Main Theorem 3. -/
+theorem MainTheorem3_2BQO_Baire
+    (X : ℕ → Type*) (Y : ℕ → Type*)
+    [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
+    [∀ n, SeparableSpace (X n)] [∀ n, MetrizableSpace (X n)]
+    [∀ n, TotallyDisconnectedSpace (X n)]
+    [∀ n, MetrizableSpace (Y n)]
+    (f : ∀ n, X n → Y n) (hf : ∀ n, Continuous (f n))
+    (hsc : ∀ n, ScatteredFun (f n)) :
+    ∃ m n : ℕ, m < n ∧ ContinuouslyReduces (f m) (f n) := by
+  sorry
 end BetterQuasiOrder
 
 section FiniteGeneration

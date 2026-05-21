@@ -1,4 +1,3 @@
--- import WqoContinuousFunctions.IntroMemo
 import WqoContinuousFunctions.BaireSpace.Basics
 open scoped Topology
 open Set Function TopologicalSpace
@@ -333,7 +332,7 @@ end ContRedonEmbed
 section HomeomorphicFunctions
 
 /-- Two functions are homeomorphic if there are homeomorphisms `σ` and `τ` such that
-`f = τ ∘ f' ∘ σ`. 
+`f = τ ∘ f' ∘ σ`.
 -/
 def HomeomorphicFun {X X' Y Y' : Type*}
     [TopologicalSpace X] [TopologicalSpace X']

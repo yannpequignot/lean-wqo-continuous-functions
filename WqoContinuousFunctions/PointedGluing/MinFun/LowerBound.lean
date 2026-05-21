@@ -1,5 +1,4 @@
 import Mathlib
-import WqoContinuousFunctions.IntroMemo
 import WqoContinuousFunctions.PrelimMemo.Basic
 import WqoContinuousFunctions.BaireSpace.GenRedProp
 import WqoContinuousFunctions.PrelimMemo.Scattered
