@@ -4,7 +4,7 @@
 build/
 .rsyncignore
 *.tex
-RequestProject/PrelimMemo/blackboard.lean
+WqoContinuousFunctions/PrelimMemo/blackboard.lean
 .venv/
 .claude/
 CLAUDE.md
