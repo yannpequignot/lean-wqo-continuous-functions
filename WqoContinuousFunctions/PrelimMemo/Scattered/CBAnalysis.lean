@@ -636,8 +636,8 @@ theorem ContinuouslyReduces.scattered {X X' Y Y' : Type*}
 
 lemma CoRestrict_scattered (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
     (hg : ScatteredFun g) (C : Set (ℕ → ℕ)) :
-    ScatteredFun (CoRestrict B g C) := by
-  have : ContinuouslyReduces (CoRestrict B g C) g :=
+    ScatteredFun (CoRestrict' B g C) := by
+  have : ContinuouslyReduces (CoRestrict' B g C) g :=
     ⟨fun x => ⟨x.val, x.prop.choose⟩,
      Continuous.subtype_mk continuous_subtype_val _,
      id, continuousOn_id, fun x => rfl⟩

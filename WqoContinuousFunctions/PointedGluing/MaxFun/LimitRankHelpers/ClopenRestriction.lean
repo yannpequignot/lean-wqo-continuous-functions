@@ -36,7 +36,7 @@ noncomputable section
 private lemma extract_B_map
     (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ))
     {A : Set (ℕ → ℕ)}
-    (hred : ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) (CoRestrict B g C)) :
+    (hred : ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) (CoRestrict' B g C)) :
     ∃ (σ : A → B) (τ : (ℕ → ℕ) → (ℕ → ℕ)),
       Continuous σ ∧
       ContinuousOn τ (Set.range (g ∘ σ)) ∧
@@ -53,7 +53,7 @@ private lemma extract_B_map
 private lemma piece_reduces_to_g
     (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
     (C : Set (ℕ → ℕ)) {A : Set (ℕ → ℕ)}
-    (hred : ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) (CoRestrict B g C)) :
+    (hred : ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) (CoRestrict' B g C)) :
     ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) g := by
   exact hred.trans ⟨fun x => ⟨x.val, x.prop.choose⟩,
     Continuous.subtype_mk continuous_subtype_val _,
@@ -183,7 +183,7 @@ lemma gluing_via_codomain_partition
     (p : ℕ → ℕ) (hp : Function.Injective p)
     (hred : ∀ n, ContinuouslyReduces
         (Subtype.val : MaxDom (enumBelow η n) → ℕ → ℕ)
-        (CoRestrict B g (C (p n)))) :
+        (CoRestrict' B g (C (p n)))) :
     ContinuouslyReduces (MaxFun η) g := by
   -- Step 1: Extract block reductions via extract_B_map
   have hred' := fun n => extract_B_map B g (C (p n)) (hred n)

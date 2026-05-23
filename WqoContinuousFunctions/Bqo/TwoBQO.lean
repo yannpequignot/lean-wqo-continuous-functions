@@ -443,6 +443,10 @@ lemma LexSumRelQO.trans
 If `r` on `ι` is 2-BQO, `r` is antisymmetric, and each `t i` on `s i`
 is 2-BQO, then `Σ i, s i` with `LexSumRelQO r s t` is 2-BQO.
 
+Antisymmetry of `r` is needed to ensure transitivity of `LexSumRelQO r s t`,
+which is needed to apply the perfect-or-bad dichotomy to it.
+
+
 The constructive content of the sum theorem for 2-BQO along a partial order.
 -/
 lemma TwoBQO.lexSigmaQO_reflect
@@ -509,7 +513,7 @@ theorem TwoBQO.lexSigmaQO
     {ι : Type*}
     (r : ι → ι → Prop)
     (hr : TwoBQO r)
-    (hr_antisymm : ∀ i j, r i j → r j i → i = j)
+    -- (hr_antisymm : ∀ i j, r i j → r j i → i = j)
     (s : ι → Type*)
     (t : ∀ i, s i → s i → Prop)
     (ht : ∀ i, TwoBQO (t i)) :

@@ -229,7 +229,7 @@ theorem intertwine_reductions
     -- For each g ∈ G, infinitely many y with g ≤ f↾V for all V ∋ y
     (hG : ∀ (i : Fin (n + 1)),
       Set.Infinite {y : ℕ → ℕ | ∀ (V : Set (ℕ → ℕ)), IsOpen V → y ∈ V →
-        ContinuouslyReduces (G i) (CoRestrict' f V)}) :
+        ContinuouslyReduces (G i) (CoRestrict f V)}) :
     -- ω G ≤ f (i.e., the infinite gluing of the G_i reduces to f)
     ContinuouslyReduces
       (OmegaFun (fun x => prepend (x 0) (G ⟨x 0 % (n + 1), Nat.mod_lt _ (by omega)⟩ (unprepend x))))
@@ -335,7 +335,7 @@ theorem diagonal_for_lambda_plus_one
       -- The wedge reduces to corestrictions
       (∀ U : Set (ℕ → ℕ), IsClopen U → y 0 ∈ U →
         ContinuouslyReduces (WedgeFun 0 f_v f_d)
-          (CoRestrict' (fun x => prepend (x 0) (f (x 0) (unprepend x))) U)) := by
+          (CoRestrict (fun x => prepend (x 0) (f (x 0) (unprepend x))) U)) := by
   sorry
 
 /-!

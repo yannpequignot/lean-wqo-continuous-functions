@@ -162,11 +162,11 @@ theorem vertical_theorem
           -- (1) f|_{A⁰} ≤ some H-related function ≤ f↾W
           (∃ (w : (ℕ → ℕ) → (ℕ → ℕ)),
             ContinuouslyReduces (f ∘ (Subtype.val : A₀ → ℕ → ℕ)) w ∧
-            ContinuouslyReduces w (CoRestrict' f W)) ∧
+            ContinuouslyReduces w (CoRestrict f W)) ∧
           -- (2) f|_{A¹} ≤ g ≤ f↾V for all clopen V ∋ y
           ContinuouslyReduces (f ∘ (Subtype.val : A₁ → ℕ → ℕ)) g ∧
           (∀ (V : Set (ℕ → ℕ)), IsClopen V → hpc.y ∈ V →
-            ContinuouslyReduces g (CoRestrict' f V))) ∧
+            ContinuouslyReduces g (CoRestrict f V))) ∧
       -- (3) f ≤ g ⊔ g (i.e., f reduces to the gluing of two copies of g)
       ContinuouslyReduces f
         (fun (x : ℕ → ℕ) => prepend (x 0) (g (unprepend x))) := by
@@ -201,7 +201,7 @@ theorem diagonal_theorem
         ContinuouslyReduces
           (fun x => prepend (x 0)
             (if h : x 0 < m then gs ⟨x 0, h⟩ (unprepend x) else unprepend x))
-          (CoRestrict' f U)) := by
+          (CoRestrict f U)) := by
   sorry
 
 /-!
@@ -263,7 +263,7 @@ theorem solvable_lambda_plus_one
         ContinuouslyReduces
           (fun x => prepend (x 0)
             (if h : x 0 < m then gs ⟨x 0, h⟩ (unprepend x) else unprepend x))
-          (CoRestrict' f U)) := by
+          (CoRestrict f U)) := by
   sorry
 
 /-!
@@ -295,7 +295,7 @@ theorem FG_for_solvable
         ContinuouslyReduces
           (fun x => prepend (x 0)
             (if h : x 0 < m then gs ⟨x 0, h⟩ (unprepend x) else unprepend x))
-          (CoRestrict' f U)) := by
+          (CoRestrict f U)) := by
   sorry
 
 /-!

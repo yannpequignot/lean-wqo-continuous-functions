@@ -181,12 +181,12 @@ def PreImageEquiv (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ 
   continuous_invFun := Continuous.subtype_mk (Continuous.subtype_mk continuous_subtype_val _) _
 
 lemma CoRestrict_eq_comp (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ)) :
-    CoRestrict B g C = (fun x : {b : B | g b ∈ C} => g x.val) ∘ (PreImageEquiv B g C).symm := by
+    CoRestrict' B g C = (fun x : {b : B | g b ∈ C} => g x.val) ∘ (PreImageEquiv B g C).symm := by
   ext ⟨x, hx⟩
-  simp [CoRestrict, PreImageEquiv]
+  simp [CoRestrict', PreImageEquiv]
 
 lemma CoRestrict_CBRank_eq : ∀ (C : Set (ℕ → ℕ)), IsClopen C →
-    CBRank (CoRestrict B g C) = CBRank (fun x : {b : B | g b ∈ C} => g x.val) := by
+    CBRank (CoRestrict' B g C) = CBRank (fun x : {b : B | g b ∈ C} => g x.val) := by
   intro C _
   rw [CoRestrict_eq_comp]
   exact CBRank_comp_homeomorph _ _
@@ -309,7 +309,7 @@ lemma exists_disjoint_clopen_with_cofinal_ranks
       Function.Injective p ∧
       (∀ n, IsClopen (C n)) ∧
       (∀ i j, i ≠ j → Disjoint (C i) (C j)) ∧
-      ∀ n, δ n < CBRank (CoRestrict B g (C (p n))) := by
+      ∀ n, δ n < CBRank (CoRestrict' B g (C (p n))) := by
   -- Step 1: Build the tree T
   let T_prop : ∀ n : ℕ, (Fin n → ℕ) → Prop :=
     fun _ s => CBRank (fun x : {b : B | g b ∈ BaNbhd s} => g x.val) = η

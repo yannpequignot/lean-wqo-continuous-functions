@@ -98,14 +98,6 @@ of the Baire space. The backward direction is trivial since each piece of a clop
 partition is itself clopen.
 -/
 
-/-- A function `f : X → Y` is a disjoint union of the sequence `(fᵢ)` over a clopen
-partition `(Aᵢ)` of `X`. (Duplicated from Gluing.lean to avoid circular import.) -/
-def IsDisjointUnion' {X Y : Type*} [TopologicalSpace X]
-    {I : Type*} (f : X → Y) (A : I → Set X) (fi : ∀ i, A i → Y) : Prop :=
-  (∀ i, IsClopen (A i)) ∧
-  (∀ i j, i ≠ j → Disjoint (A i) (A j)) ∧
-  (⋃ i, A i) = univ ∧
-  (∀ i (x : A i), f x.val = fi i x)
 
 /--
 **Proposition 2.14 (0dimanddisjointunion).**
@@ -116,7 +108,7 @@ theorem disjoint_union_implies_locally
     {X Y : Type*} [TopologicalSpace X]
     (f : X → Y) (F : (S : Set X) → (S → Y) → Prop)
     {I : Type*} (P : I → Set X) (fi : ∀ i, P i → Y)
-    (hdu : IsDisjointUnion' f P fi)
+    (hdu : IsDisjointUnion f P fi)
     (hF : ∀ i, F (P i) (fi i)) :
     IsLocallyInClass f F := by
   -- For any $x \in X$, there exists $i \in I$ such that $x \in P_i$.
@@ -146,7 +138,7 @@ theorem locally_implies_disjoint_union_baire
     (hF_restrict : ∀ (C D : Set A), D ⊆ C → IsClopen D →
       F C (fun a => f a.val) → F D (fun a => f a.val)) :
     ∃ (I : Type) (P : I → Set A) (fi : ∀ i, P i → Baire),
-      IsDisjointUnion' f P fi ∧ ∀ i, F (P i) (fi i) := by
+      IsDisjointUnion f P fi ∧ ∀ i, F (P i) (fi i) := by
   choose C hC hc using hloc
   -- use Lindelof property to get a countable subcover
   obtain ⟨I, hI⟩ : ∃ I : Set A, Set.Countable I ∧ ⋃ x ∈ I, C x = Set.univ := by
@@ -158,7 +150,7 @@ theorem locally_implies_disjoint_union_baire
   by_cases hI_empty : I.Nonempty
   · obtain ⟨g, hg⟩ : ∃ g : ℕ → A, I = Set.range g := by
       exact this hI_empty
-    refine ⟨ℕ, fun n => disjointed (fun n => C (g n)) n, fun n => fun a => f a.val, ?_, ?_⟩ <;> simp_all +decide [IsDisjointUnion']
+    refine ⟨ℕ, fun n => disjointed (fun n => C (g n)) n, fun n => fun a => f a.val, ?_, ?_⟩ <;> simp_all +decide [IsDisjointUnion]
     · refine ⟨?_, ?_, ?_⟩
       · exact fun i => disjointed_clopen (fun n => C (g n)) (fun n => hC (↑(g n)) (g n).property) i
       · exact fun i j hij => disjoint_disjointed _ hij
@@ -170,7 +162,7 @@ theorem locally_implies_disjoint_union_baire
       · exact disjointed_clopen _ (fun n => hC _ _) _
       · exact hc _ _ |>.2
   · simp_all +decide [Set.not_nonempty_iff_eq_empty.mp hI_empty]
-    simp_all +decide [IsDisjointUnion']
+    simp_all +decide [IsDisjointUnion]
     exact ⟨PEmpty, fun _ => ∅, by aesop⟩
 
 end ZeroDimAndDisjointUnion

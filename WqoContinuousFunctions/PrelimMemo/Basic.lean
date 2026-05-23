@@ -159,7 +159,7 @@ end EquivAndStrict
 section CoRestriction
 
 /-- The co-restriction of `f : X → Y` to `B ⊆ Y` is the restriction of `f` to `f⁻¹(B)`. -/
-def CoRestrict' {X Y : Type*} (f : X → Y) (B : Set Y) : f ⁻¹' B → Y :=
+def CoRestrict {X Y : Type*} (f : X → Y) (B : Set Y) : f ⁻¹' B → Y :=
   f ∘ Subtype.val
 
 /-- Domain restriction of `g` to the preimage of a set `C` in the codomain. -/
@@ -167,13 +167,13 @@ def PreImage (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → �
   {x : ℕ → ℕ | ∃ (h : x ∈ B), g ⟨x, h⟩ ∈ C}
 
 /-- Function `g` restricted to the preimage of `C` in the codomain. -/
-def CoRestrict (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ)) :
+def CoRestrict' (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ)) :
     PreImage B g C → ℕ → ℕ :=
   fun ⟨x, hx⟩ => g ⟨x, hx.choose⟩
 
 lemma CoRestrict_continuous (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
     (hgc : Continuous g) (C : Set (ℕ → ℕ)) :
-    Continuous (CoRestrict B g C) :=
+    Continuous (CoRestrict' B g C) :=
   hgc.comp (Continuous.subtype_mk continuous_subtype_val _)
 
 

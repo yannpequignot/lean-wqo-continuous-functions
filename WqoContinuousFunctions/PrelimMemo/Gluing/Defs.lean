@@ -27,7 +27,7 @@ along with the continuity theorem for relative clopen partitions.
 section DisjointUnion
 
 /-- A function `f : X → Y` is a disjoint union of the sequence `(fᵢ)` over a clopen
-partition `(Aᵢ)` of `X`. -/
+partition `(Aᵢ)` of `X`. (Duplicated from Gluing.lean to avoid circular import.) -/
 def IsDisjointUnion {X Y : Type*} [TopologicalSpace X]
     {I : Type*} (f : X → Y) (A : I → Set X) (fi : ∀ i, A i → Y) : Prop :=
   (∀ i, IsClopen (A i)) ∧

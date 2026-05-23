@@ -269,7 +269,7 @@ private lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
       (fun n => α' n + 2 * ↑(m n)) (fun n => hδ n)
   have hred : ∀ n, ContinuouslyReduces
       (Subtype.val : MaxDom (enumBelow η n) → ℕ → ℕ)
-      (CoRestrict B g (C (p n))) := by
+      (CoRestrict' B g (C (p n))) := by
     intro n
     have hα'_lt_ω1 : α' n < omega1 := by
       calc α' n ≤ α' n + ↑(m n) := le_self_add
@@ -282,11 +282,11 @@ private lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
     have h_cont := CoRestrict_continuous B g hgc (C (p n))
     have h_cast : (2 : Ordinal.{0}) * ↑(m n) = ↑(2 * m n) := by push_cast; ring_nf
     have hmin_g : ContinuouslyReduces (MinFun (α' n + 2 * ↑(m n)))
-        (CoRestrict B g (C (p n))) :=
+        (CoRestrict' B g (C (p n))) :=
       minFun_is_minimum (α' n + 2 * ↑(m n))
         (by rw [h_cast]; exact lt_trans (by rw [← h_cast]; exact hδ n) hη)
         (PreImage B g (C (p n)))
-        (CoRestrict B g (C (p n)))
+        (CoRestrict' B g (C (p n)))
         h_cont h_scat
         (CBLevel_nonempty_below_rank _ h_scat _ (hC_bound n))
     exact hmax_min.trans hmin_g

@@ -36,16 +36,6 @@ disconnected). A fully faithful formalization would require a notion of reductio
 -/
 
 /-
-The original statement below is FALSE as formalized — `TopologicallyEmbedsFun (@id ℚ) f`
-   requires an injective `τ : Y → ℚ`, which cannot exist when `Y` is uncountable.
-   For example, `fun x => x^2 : ℝ → ℝ` is not scattered, but there is no injection `ℝ → ℚ`.
-
-theorem nonscattered_embeds_idQ {X Y : Type*}
-    [TopologicalSpace X] [MetrizableSpace X]
-    [TopologicalSpace Y] [T2Space Y]
-    {f : X → Y} (hf : Continuous f) (hns : ¬ ScatteredFun f) :
-    TopologicallyEmbedsFun (@id ℚ) f
-
 **Splitting Lemma.** If `g` is continuous and NLC from a pseudo-metric space to a
 T₂ space, then any metric ball can be split into two smaller sub-balls with disjoint
 closures whose g-images lie in disjoint open sets.
