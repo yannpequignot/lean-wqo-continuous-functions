@@ -116,7 +116,7 @@ private structure PairSeqState (f : PairSeq ℕ) where
           (∀ x ∈ succ, ∀ y ∈ succ, ∀ (hx : vert < x) (hy : vert < y),
             x < y → 2 * f vert x hx < f vert y hy)
 
-theorem TwoLT.PairSeqCanon_weak (f : PairSeq ℕ) :
+theorem TwoLT.pairSeqCanon_weak (f : PairSeq ℕ) :
     ∃ e : ℕ → ℕ, ∃ he : StrictMono e,
     ∀ n : ℕ,
       (∃ k : ℕ, ∀ m (hmn : n < m), f (e n) (e m) (he hmn) = k) ∨
@@ -199,13 +199,13 @@ theorem TwoLT.PairSeqCanon_weak (f : PairSeq ℕ) :
       hd _ (I5 n m hnm) _ (I5 n l (hnm.trans hml))
         (verts_mono hnm) (verts_mono (hnm.trans hml)) (verts_mono hml)
 
-theorem TwoLT.PairSeqCanon (f : PairSeq ℕ) :
+theorem TwoLT.pairSeqCanon (f : PairSeq ℕ) :
     ∃ e : ℕ → ℕ, ∃ he : StrictMono e,
     (∀ n : ℕ, ∃ k : ℕ, ∀ m (hmn : n < m), f (e n) (e m) (he hmn) = k) ∨
     (∀ n : ℕ, ∀ m l (hnm : n < m) (hml : m < l),
         2 * f (e n) (e m) (he hnm) < f (e n) (e l) (he (hnm.trans hml))) := by
   -- Apply the weak version
-  obtain ⟨e, he, hcanon⟩ := PairSeqCanon_weak f
+  obtain ⟨e, he, hcanon⟩ := pairSeqCanon_weak f
   -- Color each n with 0 if fan is constant, 1 if doubling
   let color : ℕ → Fin 2 := fun n =>
     if (∃ k, ∀ m (hmn : n < m), f (e n) (e m) (he hmn) = k) then 0 else 1
@@ -239,9 +239,9 @@ theorem TwoLT.PairSeqCanon (f : PairSeq ℕ) :
         · exact hdouble (idx m) (idx l) (hidx hnm) (hidx hml)
       · exact hdouble (idx m) (idx l) (hidx hnm) (hidx hml)
 
-theorem TwoLT.TwoBQO : TwoBQO TwoLT := by
+theorem TwoLT.isTwoBQO : TwoBQO TwoLT := by
   intro f
-  obtain ⟨e, he, hall | hdouble⟩ := PairSeqCanon f
+  obtain ⟨e, he, hall | hdouble⟩ := pairSeqCanon f
   · -- All fans constant: define g n = constant value of fan at n
     let g : ℕ → ℕ := fun n => (hall n).choose
     have hg : ∀ n m (h : n < m), f (e n) (e m) (he h) = g n :=
@@ -368,18 +368,18 @@ noncomputable def Ordinal.toBulletRepr (α : Ordinal.{0}) :
   ⟨⟨α.limitPart, α.limitPart_isLimit_or_zero⟩, α.natPart⟩
 
 /-- leBullet coincides with LexSumRel on the sigma type. -/
-theorem Ordinal.leBullet.TwoBQO : TwoBQO Ordinal.leBullet := by
-  rw [isTwoBQO_iff]
+theorem Ordinal.leBullet.isTwoBQO : TwoBQO Ordinal.leBullet := by
+  rw [TwoBQO.iff_noBad]
   intro ⟨f, hbad⟩
   let f_lim : PairSeq LimitOrdinal :=
     fun m n h => ⟨(f m n h).limitPart, (f m n h).limitPart_isLimit_or_zero⟩
   obtain ⟨e, he, hperf | hbad_lim⟩ :=
-    perfect_or_bad (fun (a b : LimitOrdinal) => a.val ≤ b.val) f_lim
+    PairSeq.perfect_or_bad (fun (a b : LimitOrdinal) => a.val ≤ b.val) f_lim
   · by_cases hconst : ∀ m n l (hmn : m < n) (hnl : n < l),
         (f (e m) (e n) (he hmn)).limitPart = (f (e n) (e l) (he hnl)).limitPart
     · let f_nat : PairSeq ℕ :=
         fun m n h => (f (e m) (e n) (he h)).natPart
-      obtain ⟨m, n, l, hmn, hnl, hrel⟩ := TwoLT.TwoBQO f_nat
+      obtain ⟨m, n, l, hmn, hnl, hrel⟩ := TwoLT.isTwoBQO f_nat
       refine absurd ?_ (hbad (e m) (e n) (e l) (he hmn) (he hnl))
       exact Or.inr ⟨hconst m n l hmn hnl, hrel⟩
     · push_neg at hconst

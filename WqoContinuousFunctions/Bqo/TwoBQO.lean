@@ -33,7 +33,9 @@ Goals of this file (following Pequignot, EMS Surveys 2017):
 /-- A **pair-sequence** in `α` assigns a value to every pair `(m, n)` with `m < n`. -/
 abbrev PairSeq (α : Type*) := ∀ (m n : ℕ), m < n → α
 
-def restrictPairSeq {α : Type*} (f : PairSeq α) (e : ℕ → ℕ) (he_mono : StrictMono e) :
+namespace PairSeq
+
+def restrict {α : Type*} (f : PairSeq α) (e : ℕ → ℕ) (he_mono : StrictMono e) :
     PairSeq α :=
   fun m n hmn => f (e m) (e n) (he_mono hmn)
 
@@ -42,32 +44,18 @@ def restrictPairSeq {α : Type*} (f : PairSeq α) (e : ℕ → ℕ) (he_mono : S
 
     This is the specialisation of Pequignot's "bad super-sequence" to the
     rank-2 front `[ℕ]²`. -/
-def BadPairSeq {α : Type*} (r : α → α → Prop) (f : PairSeq α) : Prop :=
+def IsBad {α : Type*} (r : α → α → Prop) (f : PairSeq α) : Prop :=
   ∀ (m n l : ℕ), ∀ (hmn : m < n) (hnl : n < l),
     ¬ r (f m n hmn) (f n l hnl)
 
-def PerfectPairSeq {α : Type*} (r : α → α → Prop) (f : PairSeq α) : Prop :=
+def IsPerfect {α : Type*} (r : α → α → Prop) (f : PairSeq α) : Prop :=
   ∀ (m n l : ℕ), ∀ (hmn : m < n) (hnl : n < l),
     r (f m n hmn) (f n l hnl)
 
-
-/-- `r` is **2-BQO** if there is no bad pair-sequence for `r`. -/
-def TwoBQO_n {α : Type*} (r : α → α → Prop) : Prop :=
-  ¬ ∃ f : PairSeq α, BadPairSeq r f
-
-def TwoBQO {α : Type*} (r : α → α → Prop) : Prop :=
-  ∀ (f : PairSeq α), ∃ m n l : ℕ, ∃ (hmn : m < n) (hnl : n < l),
-    r (f m n hmn) (f n l hnl)
-
-theorem isTwoBQO_iff {α : Type*} (r : α → α → Prop) :
-    TwoBQO r ↔ TwoBQO_n r := by
-  simp [TwoBQO_n, BadPairSeq, not_exists, not_forall]
-  exact Iff.symm (Eq.to_iff rfl)
-
 theorem perfect_or_bad {α : Type*} (r : α → α → Prop)
     (f : PairSeq α) : ∃ e : ℕ → ℕ, ∃ (he_mono : StrictMono e),
-    (PerfectPairSeq r (restrictPairSeq f e he_mono)
-     ∨ BadPairSeq r (restrictPairSeq f e he_mono)) := by
+    (IsPerfect r (restrict f e he_mono)
+     ∨ IsBad r (restrict f e he_mono)) := by
   obtain ⟨e, he_mono, k, hk⟩ := @infinite_ramsey_triples Bool inferInstance
     (fun h i j (hs : h < i ∧ i < j) => decide (r (f h i hs.1) (f i j hs.2)))
   refine ⟨e, he_mono, ?_⟩
@@ -82,6 +70,22 @@ theorem perfect_or_bad {α : Type*} (r : α → α → Prop)
     have h_color := hk h i j ⟨hs, ht⟩
     rw [hk_true] at h_color
     simpa [decide_eq_true_eq] using h_color
+
+end PairSeq
+
+
+/-- `r` is **2-BQO** if there is no bad pair-sequence for `r`. -/
+private def TwoBQO_n {α : Type*} (r : α → α → Prop) : Prop :=
+  ¬ ∃ f : PairSeq α, PairSeq.IsBad r f
+
+def TwoBQO {α : Type*} (r : α → α → Prop) : Prop :=
+  ∀ (f : PairSeq α), ∃ m n l : ℕ, ∃ (hmn : m < n) (hnl : n < l),
+    r (f m n hmn) (f n l hnl)
+
+theorem TwoBQO.iff_noBad {α : Type*} (r : α → α → Prop) :
+    TwoBQO r ↔ TwoBQO_n r := by
+  simp [TwoBQO_n, PairSeq.IsBad, not_exists, not_forall]
+  exact Iff.symm (Eq.to_iff rfl)
 
 /-!
 ## §3  2-BQO implies WQO
@@ -106,7 +110,7 @@ theorem TwoBQO.wellQuasiOrdered {α : Type*} {r : α → α → Prop}
 is strictly decreasing, contradicting well-foundedness. -/
 theorem TwoBQO.of_wellFoundedLT {α : Type*} [LinearOrder α] [WellFoundedLT α] :
     TwoBQO (α := α) (· ≤ ·) := by
-  rw [isTwoBQO_iff]
+  rw [TwoBQO.iff_noBad]
   intro ⟨f, hbad⟩
   have hstrict : ∀ n, f (n+1) (n+2) (Nat.lt_succ_self _)
                         < f n (n+1) (Nat.lt_succ_self _) :=
@@ -138,13 +142,13 @@ and `r` on `α` is 2-BQO, then the pullback of `r` along `φ` is 2-BQO. -/
 theorem TwoBQO.comap {α β : Type*} {r : α → α → Prop}
     (h : TwoBQO r) (φ : β → α) :
     TwoBQO (fun a b => r (φ a) (φ b)) := by
-  rw [isTwoBQO_iff] at h ⊢
+  rw [TwoBQO.iff_noBad] at h ⊢
   intro ⟨f, hbad⟩
   exact h ⟨fun m n hmn => φ (f m n hmn),
     fun m n l hmn hnl hrel => hbad m n l hmn hnl hrel⟩
 
 /-- **Subtype closure.** -/
-theorem IsTwoBQO.subtype {α : Type*} {r : α → α → Prop}
+theorem TwoBQO.subtype {α : Type*} {r : α → α → Prop}
     (h : TwoBQO r) (p : α → Prop) :
     TwoBQO (fun a b : Subtype p => r a.val b.val) :=
   h.comap Subtype.val
@@ -153,7 +157,7 @@ theorem TwoBQO.mono {α : Type*} {r s : α → α → Prop}
     (h : TwoBQO r)
     (hincl : ∀ a b, r a b → s a b) :
     TwoBQO s := by
-  rw [isTwoBQO_iff] at h ⊢
+  rw [TwoBQO.iff_noBad] at h ⊢
   intro ⟨f, hbad⟩
   exact h ⟨f, fun m n l hmn hnl hrel => hbad m n l hmn hnl (hincl _ _ hrel)⟩
 
@@ -193,17 +197,17 @@ If `r` on `α` and `s` on `β` are 2-BQO, then the componentwise product
 theorem TwoBQO.prod {α β : Type*} {r : α → α → Prop} {s : β → β → Prop}
     (hr : TwoBQO r) (hs : TwoBQO s) :
     TwoBQO (fun x y : α × β => r x.1 y.1 ∧ s x.2 y.2) := by
-  rw [isTwoBQO_iff] at hr hs ⊢
+  rw [TwoBQO.iff_noBad] at hr hs ⊢
   intro ⟨f, hbad⟩
   -- f₁ : PairSeq α  is the first-coordinate projection
   let f₁ : PairSeq α := fun m n h => (f m n h).1
-  -- Apply perfect_or_bad to f₁ under r
-  obtain ⟨e₁, he₁, hperf₁ | hbad₁⟩ := perfect_or_bad r f₁
+  -- Apply PairSeq.perfect_or_bad to f₁ under r
+  obtain ⟨e₁, he₁, hperf₁ | hbad₁⟩ := PairSeq.perfect_or_bad r f₁
   · -- f₁ is perfect along e₁: r holds on every consecutive pair.
     -- Look at the second coordinate of f restricted to e₁.
-    let f₂ : PairSeq β := fun m n h => (restrictPairSeq f e₁ he₁ m n h).2
-    -- Apply perfect_or_bad to f₂ under s
-    obtain ⟨e₂, he₂, hperf₂ | hbad₂⟩ := perfect_or_bad s f₂
+    let f₂ : PairSeq β := fun m n h => (PairSeq.restrict f e₁ he₁ m n h).2
+    -- Apply PairSeq.perfect_or_bad to f₂ under s
+    obtain ⟨e₂, he₂, hperf₂ | hbad₂⟩ := PairSeq.perfect_or_bad s f₂
     · -- Both coordinates perfect: derive a contradiction from hbad.
       -- At the triple (e₁(e₂ 0), e₁(e₂ 1), e₁(e₂ 2)), r and s both hold,
       -- but hbad says the product never holds.
@@ -212,9 +216,9 @@ theorem TwoBQO.prod {α β : Type*} {r : α → α → Prop} {s : β → β → 
         ⟨hperf₁ (e₂ 0) (e₂ 1) (e₂ 2) (he₂ (by norm_num : 0 < 1)) (he₂ (by norm_num : 1 < 2)),
          hperf₂ 0 1 2 (by norm_num : 0 < 1) (by norm_num : 1 < 2)⟩
     · -- f₂ restricted to e₂ is bad for s: contradicts hs
-      exact hs ⟨restrictPairSeq f₂ e₂ he₂, hbad₂⟩
+      exact hs ⟨PairSeq.restrict f₂ e₂ he₂, hbad₂⟩
   · -- f₁ restricted to e₁ is bad for r: contradicts hr
-    exact hr ⟨restrictPairSeq f₁ e₁ he₁, hbad₁⟩
+    exact hr ⟨PairSeq.restrict f₁ e₁ he₁, hbad₁⟩
 
 /-- **Iterated finite product.** For a Fintype index `ι`, the product
 `∀ i, α i` with pointwise quasi-order is 2-BQO when each component is. -/
@@ -304,7 +308,7 @@ theorem TwoBQO.lexSigma
     TwoBQO (LexSumRel s t) := by
   intro f
   let f₁ : PairSeq α := fun m n h => (f m n h).1
-  obtain ⟨e, he, hperf | hbad⟩ := perfect_or_bad (α := α) (· ≤ ·) f₁
+  obtain ⟨e, he, hperf | hbad⟩ := PairSeq.perfect_or_bad (α := α) (· ≤ ·) f₁
   · -- PERFECT CASE: f₁ along e is non-decreasing.
     -- Sub-case on whether the index is ever strictly increasing.
     by_cases hconst : ∀ m n l : ℕ, (hmn : m < n) → (hnl : n < l) →
@@ -364,6 +368,8 @@ theorem TwoBQO.lexSigma
       (fun k => (f (e k) (e (k+1)) (he (Nat.lt_succ_self k))).1)
     exact hk (hstrict k)
 
+namespace TwoBQO
+
 /-- The **lexicographic sum order along a quasi-order** on `Σ i, α i`:
     `(i,x) ≤ (j,y)` iff `r i j` and `i ≠ j` (strictly above in r),
     or `i = j` and `x ≤ y` in `t i`. -/
@@ -377,8 +383,10 @@ def LexSumRelQO {ι : Type*} (r : ι → ι → Prop)
 variable {ι : Type*} (r : ι → ι → Prop)
          (s : ι → Type*) (t : ∀ i, s i → s i → Prop)
 
+namespace LexSumRelQO
+
 /-- `LexSumRelQO r s t` is reflexive whenever each `t i` is. -/
-lemma LexSumRelQO.refl
+lemma refl
     (ht_refl : ∀ i (x : s i), t i x x)
     (σ : Σ i, s i) :
     LexSumRelQO r s t σ σ := by
@@ -390,7 +398,7 @@ lemma LexSumRelQO.refl
 
 /-- `LexSumRelQO r s t` is transitive whenever `r` is reflexive,
 antisymmetric, and transitive, and each `t i` is transitive. -/
-lemma LexSumRelQO.trans
+lemma trans
     (hr_refl    : ∀ i, r i i)
     (hr_antisymm : ∀ i j, r i j → r j i → i = j)
     (hr_trans   : ∀ i j k, r i j → r j k → r i k)
@@ -438,6 +446,10 @@ lemma LexSumRelQO.trans
     -- Now k = i, htyz : t i y z, goal: t i x z
     exact ht_trans i x y z htxy htyz
 
+end LexSumRelQO
+
+end TwoBQO
+
 /-! **Sum theorem for 2-BQO along a quasi-order with antisymmetry.**
 
 If `r` on `ι` is 2-BQO, `r` is antisymmetric, and each `t i` on `s i`
@@ -455,16 +467,16 @@ lemma TwoBQO.lexSigmaQO_reflect
     (s : ι → Type*)
     (t : ∀ i, s i → s i → Prop)
     (f : PairSeq (Σ i, s i))
-    (hf_bad : BadPairSeq (LexSumRelQO r s t) f) :
+    (hf_bad : PairSeq.IsBad (TwoBQO.LexSumRelQO r s t) f) :
     ∃ (e : ℕ → ℕ) (he_mono : StrictMono e),
-      BadPairSeq r (fun m n hmn => (f (e m) (e n) (he_mono hmn)).1)
+      PairSeq.IsBad r (fun m n hmn => (f (e m) (e n) (he_mono hmn)).1)
       ∨
       ∃ i : ι,
         ∃ hmem : ∀ m n (hmn : m < n), (f (e m) (e n) (he_mono hmn)).1 = i,
-        BadPairSeq (t i)
+        PairSeq.IsBad (t i)
           (fun m n hmn => (hmem m n hmn) ▸ (f (e m) (e n) (he_mono hmn)).2) := by
   let f₁ : PairSeq ι := fun m n h => (f m n h).1
-  obtain ⟨e, he, hperf | hbad₁⟩ := perfect_or_bad r f₁
+  obtain ⟨e, he, hperf | hbad₁⟩ := PairSeq.perfect_or_bad r f₁
   · by_cases hconst :
         ∀ m n l : ℕ, (hmn : m < n) → (hnl : n < l) →
           (f (e m) (e n) (he hmn)).1 = (f (e n) (e l) (he hnl)).1
@@ -483,7 +495,7 @@ lemma TwoBQO.lexSigmaQO_reflect
         exact (hconst m n (n + 1) hmn (Nat.lt_succ_self n)).trans (hsucc n)
       let g : PairSeq (s c) :=
         fun m n hmn => (hmem m n hmn) ▸ (f (e m) (e n) (he hmn)).2
-      have hg_bad : BadPairSeq (t c) g := by
+      have hg_bad : PairSeq.IsBad (t c) g := by
         intro m n l hmn hnl htrel
         apply hf_bad (e m) (e n) (e l) (he hmn) (he hnl)
         -- Name the two sigma values so we can subst their index components.
@@ -499,7 +511,7 @@ lemma TwoBQO.lexSigmaQO_reflect
         -- Goal is now: LexSumRelQO r s t ⟨c, h_mn ▸ σ_mn.2⟩ ⟨c, h_nl ▸ σ_nl.2⟩
         -- and htrel : t c (hmem m n hmn ▸ σ_mn.2) (hmem n l hnl ▸ σ_nl.2)
         -- These casts are the same (h_mn = hmem m n hmn etc.), so:
-        unfold LexSumRelQO
+        unfold TwoBQO.LexSumRelQO
         exact Or.inr ⟨rfl, htrel⟩
       exact ⟨e, he, Or.inr ⟨c, hmem, hg_bad⟩⟩
     · exfalso
@@ -517,10 +529,10 @@ theorem TwoBQO.lexSigmaQO
     (s : ι → Type*)
     (t : ∀ i, s i → s i → Prop)
     (ht : ∀ i, TwoBQO (t i)) :
-    TwoBQO (LexSumRelQO r s t) := by
+    TwoBQO (TwoBQO.LexSumRelQO r s t) := by
   intro f
   let f₁ : PairSeq ι := fun m n h => (f m n h).1
-  obtain ⟨e, he, hperf | hbad⟩ := perfect_or_bad r f₁
+  obtain ⟨e, he, hperf | hbad⟩ := PairSeq.perfect_or_bad r f₁
   · -- PERFECT CASE: f₁ along e is non-decreasing under r.
     by_cases hconst : ∀ m n l : ℕ, (hmn : m < n) → (hnl : n < l) →
         (f (e m) (e n) (he hmn)).1 = (f (e n) (e l) (he hnl)).1
@@ -542,8 +554,8 @@ theorem TwoBQO.lexSigmaQO
         fun m n hmn => (hmem m n hmn) ▸ (f (e m) (e n) (he hmn)).2
       obtain ⟨m, n, l, hmn, hnl, hrel⟩ := ht c g
       refine ⟨e m, e n, e l, he hmn, he hnl, ?_⟩
-      show LexSumRelQO r s t (f (e m) (e n) (he hmn)) (f (e n) (e l) (he hnl))
-      unfold LexSumRelQO
+      show TwoBQO.LexSumRelQO r s t (f (e m) (e n) (he hmn)) (f (e n) (e l) (he hnl))
+      unfold TwoBQO.LexSumRelQO
       apply Or.inr
       have h_mn : (f (e m) (e n) (he hmn)).fst = c := hmem m n hmn
       have h_nl : (f (e n) (e l) (he hnl)).fst = c := hmem n l hnl
@@ -560,10 +572,10 @@ theorem TwoBQO.lexSigmaQO
       push_neg at hconst
       obtain ⟨m, n, l, hmn, hnl, hne⟩ := hconst
       refine ⟨e m, e n, e l, he hmn, he hnl, ?_⟩
-      show LexSumRelQO r s t (f (e m) (e n) (he hmn)) (f (e n) (e l) (he hnl))
+      show TwoBQO.LexSumRelQO r s t (f (e m) (e n) (he hmn)) (f (e n) (e l) (he hnl))
       exact Or.inl ⟨hperf m n l hmn hnl, hne⟩
   · -- BAD CASE: f₁ along e is bad under r.
     -- Contradicts hr (r is 2-BQO).
     exfalso
-    rw [isTwoBQO_iff] at hr
-    exact hr ⟨restrictPairSeq f₁ e he, hbad⟩
+    rw [TwoBQO.iff_noBad] at hr
+    exact hr ⟨PairSeq.restrict f₁ e he, hbad⟩
