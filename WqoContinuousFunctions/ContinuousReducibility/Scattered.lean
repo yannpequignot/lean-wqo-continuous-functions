@@ -1,6 +1,6 @@
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
-import WqoContinuousFunctions.PrelimMemo.Scattered.NonScattered
-import WqoContinuousFunctions.PrelimMemo.Scattered.Decomposition
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.NonScattered
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.Decomposition
 /-!
 # Scattered Functions — Re-export Module
 

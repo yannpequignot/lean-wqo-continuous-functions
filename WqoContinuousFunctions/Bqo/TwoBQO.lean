@@ -1,7 +1,7 @@
 
 import Mathlib
-import WqoContinuousFunctions.PrelimMemo.Basic
-import WqoContinuousFunctions.Bqo.Ramsey
+import WqoContinuousFunctions.ContinuousReducibility.Defs
+import WqoContinuousFunctions.BQO.Ramsey
 open Set
 
 set_option autoImplicit false

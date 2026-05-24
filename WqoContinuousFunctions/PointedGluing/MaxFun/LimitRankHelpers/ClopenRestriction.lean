@@ -1,7 +1,7 @@
 import Mathlib
 -- import WqoContinuousFunctions.PointedGluing.GeneralStructureHelpers.Helpers
-import WqoContinuousFunctions.PrelimMemo.Gluing
-import WqoContinuousFunctions.PrelimMemo.Scattered
+import WqoContinuousFunctions.ContinuousReducibility.Gluing
+import WqoContinuousFunctions.ContinuousReducibility.Scattered
 import WqoContinuousFunctions.BaireSpace.Basics
 import WqoContinuousFunctions.PointedGluing.MaxFun.Helpers
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.Helpers

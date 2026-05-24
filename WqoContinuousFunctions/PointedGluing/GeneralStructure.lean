@@ -1,5 +1,5 @@
 import Mathlib
-import WqoContinuousFunctions.Ordinals.Arithmetic
+import WqoContinuousFunctions.BQO.OrdinalBQO
 import WqoContinuousFunctions.PointedGluing.Basics.GluingInjection
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.ClopenRestriction
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.TreeArgument
@@ -242,7 +242,6 @@ Then, by \cref{CBbasics0}~\cref{CBbasicsfromJSL2},  $\CB_{\beta}(g)\cap g^{-1}(N
 and so $\CB_{\beta}(g)\subseteq g^{-1}([T])$.
 But as $[T]$ is finite, we have $\CB_{\beta+1}(g)=\empty$ and so $\CB(g)\leq \beta+1$, a contradiction.
  -/
-set_option maxHeartbeats 8000000 in
 private lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
     (hlam : Order.IsSuccLimit η)
     (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (hgc : Continuous g) (hg : ScatteredFun g)

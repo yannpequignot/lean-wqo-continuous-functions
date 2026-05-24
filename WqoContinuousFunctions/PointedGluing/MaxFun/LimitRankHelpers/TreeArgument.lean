@@ -1,5 +1,5 @@
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
-import WqoContinuousFunctions.PrelimMemo.Basic
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
+import WqoContinuousFunctions.ContinuousReducibility.Defs
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.Helpers
 import WqoContinuousFunctions.PointedGluing.CBRank.SimpleHelpers
 

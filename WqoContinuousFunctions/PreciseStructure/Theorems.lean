@@ -1,5 +1,5 @@
-import WqoContinuousFunctions.PreciseStructMemo.Defs
-import WqoContinuousFunctions.PrelimMemo.Scattered.Decomposition
+import WqoContinuousFunctions.PreciseStructure.Defs
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.Decomposition
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

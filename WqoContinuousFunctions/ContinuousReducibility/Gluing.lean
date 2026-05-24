@@ -1,6 +1,6 @@
-import WqoContinuousFunctions.PrelimMemo.Gluing.Defs
-import WqoContinuousFunctions.PrelimMemo.Gluing.UpperBound
-import WqoContinuousFunctions.PrelimMemo.Gluing.LocallyConstant
+import WqoContinuousFunctions.ContinuousReducibility.Gluing.Defs
+import WqoContinuousFunctions.ContinuousReducibility.Gluing.UpperBound
+import WqoContinuousFunctions.ContinuousReducibility.Gluing.LocallyConstant
 
 /-!
 # Formalization of `2_prelim_memo.tex` — Disjoint Union and Gluing

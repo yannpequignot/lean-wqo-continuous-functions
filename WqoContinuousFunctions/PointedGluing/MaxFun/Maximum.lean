@@ -1,5 +1,5 @@
 import WqoContinuousFunctions.PointedGluing.ClopenPartitionReduces
-import WqoContinuousFunctions.PrelimMemo.Scattered.Decomposition
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.Decomposition
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

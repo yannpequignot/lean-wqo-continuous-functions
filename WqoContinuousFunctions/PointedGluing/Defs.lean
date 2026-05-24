@@ -1,4 +1,4 @@
-import WqoContinuousFunctions.PrelimMemo.Gluing
+import WqoContinuousFunctions.ContinuousReducibility.Gluing
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

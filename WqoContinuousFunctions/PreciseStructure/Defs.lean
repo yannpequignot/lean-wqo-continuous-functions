@@ -1,4 +1,4 @@
-import WqoContinuousFunctions.CenteredMemo.Theorems
+import WqoContinuousFunctions.CenteredFunctions.Theorems
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

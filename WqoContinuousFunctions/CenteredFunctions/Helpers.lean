@@ -1,5 +1,5 @@
-import WqoContinuousFunctions.CenteredMemo.Defs
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
+import WqoContinuousFunctions.CenteredFunctions.Defs
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
 import WqoContinuousFunctions.PointedGluing.CBRank.SimpleHelpers
 
 import Mathlib

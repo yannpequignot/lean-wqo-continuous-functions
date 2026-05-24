@@ -1,9 +1,9 @@
 import Mathlib
-import WqoContinuousFunctions.PrelimMemo.Basic
+import WqoContinuousFunctions.ContinuousReducibility.Defs
 import WqoContinuousFunctions.BaireSpace.GenRedProp
-import WqoContinuousFunctions.PrelimMemo.Scattered
-import WqoContinuousFunctions.PrelimMemo.Gluing
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
+import WqoContinuousFunctions.ContinuousReducibility.Scattered
+import WqoContinuousFunctions.ContinuousReducibility.Gluing
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
 import WqoContinuousFunctions.PointedGluing.Defs
 import WqoContinuousFunctions.PointedGluing.CBRank.Helpers
 import WqoContinuousFunctions.PointedGluing.CBRank.SimpleHelpers

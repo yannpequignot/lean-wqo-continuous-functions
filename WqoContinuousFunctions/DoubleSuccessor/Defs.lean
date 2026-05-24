@@ -1,4 +1,4 @@
-import WqoContinuousFunctions.PreciseStructMemo.Theorems
+import WqoContinuousFunctions.PreciseStructure.Theorems
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

@@ -1,4 +1,4 @@
-import WqoContinuousFunctions.PrelimMemo.Gluing.Defs
+import WqoContinuousFunctions.ContinuousReducibility.Gluing.Defs
 open scoped Topology
 open Set Function TopologicalSpace
 

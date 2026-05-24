@@ -1,5 +1,5 @@
-import WqoContinuousFunctions.CenteredMemo.Defs
-import WqoContinuousFunctions.CenteredMemo.Helpers
+import WqoContinuousFunctions.CenteredFunctions.Defs
+import WqoContinuousFunctions.CenteredFunctions.Helpers
 import WqoContinuousFunctions.PointedGluing.UpperBound.Theorem
 import Mathlib
 

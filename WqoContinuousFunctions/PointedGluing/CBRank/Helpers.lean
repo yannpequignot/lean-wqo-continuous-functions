@@ -1,5 +1,5 @@
 import WqoContinuousFunctions.PointedGluing.Defs
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

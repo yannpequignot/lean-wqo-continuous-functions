@@ -2,7 +2,7 @@
 import WqoContinuousFunctions.PointedGluing.Defs
 import WqoContinuousFunctions.BaireSpace.GenRedProp
 import WqoContinuousFunctions.PointedGluing.LowerBoundLemma
-import WqoContinuousFunctions.PrelimMemo.Scattered.Decomposition
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.Decomposition
 
 
 import WqoContinuousFunctions.PointedGluing.MinFun.Helpers

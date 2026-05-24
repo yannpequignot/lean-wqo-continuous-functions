@@ -1,4 +1,4 @@
-import WqoContinuousFunctions.DoubleSuccMemo.Defs
+import WqoContinuousFunctions.DoubleSuccessor.Defs
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

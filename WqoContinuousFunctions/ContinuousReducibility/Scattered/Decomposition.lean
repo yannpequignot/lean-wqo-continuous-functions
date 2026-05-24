@@ -1,7 +1,7 @@
-import WqoContinuousFunctions.PrelimMemo.Scattered.NonScattered
-import WqoContinuousFunctions.PrelimMemo.Gluing
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
-import WqoContinuousFunctions.PrelimMemo.Scattered.CBAnalysis
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.NonScattered
+import WqoContinuousFunctions.ContinuousReducibility.Gluing
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
+import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
 import WqoContinuousFunctions.BaireSpace.Basics
 
 open scoped Topology

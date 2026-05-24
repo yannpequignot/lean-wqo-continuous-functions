@@ -1,5 +1,5 @@
 import WqoContinuousFunctions.PointedGluing.Basics.Functoriality
-import WqoContinuousFunctions.Ordinals.Arithmetic
+import WqoContinuousFunctions.BQO.OrdinalBQO
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

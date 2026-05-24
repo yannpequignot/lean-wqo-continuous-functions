@@ -1,5 +1,5 @@
 import WqoContinuousFunctions.BaireSpace.GenRedProp
-import WqoContinuousFunctions.PrelimMemo.Basic
+import WqoContinuousFunctions.ContinuousReducibility.Defs
 open scoped Topology
 open Set Function TopologicalSpace
 

@@ -1,5 +1,5 @@
 import WqoContinuousFunctions.PointedGluing.SelfSimilarity
-import WqoContinuousFunctions.PrelimMemo.Gluing.UpperBound
+import WqoContinuousFunctions.ContinuousReducibility.Gluing.UpperBound
 
 open scoped Topology
 open Set Function TopologicalSpace Classical
