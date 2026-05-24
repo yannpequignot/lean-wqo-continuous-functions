@@ -35,13 +35,14 @@ disconnected). A fully faithful formalization would require a notion of reductio
 `τ` is only defined on a subset of `Y`.
 -/
 
+set_option maxHeartbeats 8000000 in
 /-
 **Splitting Lemma.** If `g` is continuous and NLC from a pseudo-metric space to a
 T₂ space, then any metric ball can be split into two smaller sub-balls with disjoint
 closures whose g-images lie in disjoint open sets.
 -/
 lemma splitting_lemma_nlc {X Y : Type*}
-    [PseudoMetricSpace X] [TopologicalSpace Y] [T2Space Y]
+    [MetricSpace X] [TopologicalSpace Y] [T2Space Y]
     {g : X → Y} (hg : Continuous g) (hnlc : NowhereLocallyConstant g)
     (x : X) (ε : ℝ) (hε : 0 < ε) :
     ∃ (x' : X) (ε' : ℝ),
@@ -68,8 +69,17 @@ lemma splitting_lemma_nlc {X Y : Type*}
   obtain ⟨ε', hε'_pos, hε'_lt⟩ : ∃ ε' > 0, ε' < ε ∧ ε' < δ₁ ∧ ε' < δ₂ ∧ ε' < (ε - dist x x') / 2 ∧ ε' < dist x x' / 3 := by
     obtain ⟨ε', hε'_pos, hε'_lt⟩ : ∃ ε' > 0, ε' < min (min (min ε δ₁) δ₂) (min ((ε - dist x x') / 2) (dist x x' / 3)) := by
       refine exists_between ?_
-      simp_all +decide [Set.subset_def]
-      grind +suggestions
+      -- The lower bound 0 is strictly below the min of all five quantities.
+      -- dist x x' > 0 because g x ≠ g x' implies x ≠ x' (MetricSpace).
+      -- dist x x' < ε because x' ∈ ball(x, ε).
+      -- mem_ball gives dist x' x (member first); dist_pos gives dist x x'.
+      -- Supply dist_comm to linarith so it can bridge the two orderings.
+      have hd    : dist x' x < ε := Metric.mem_ball.mp hx'.1
+      have hdpos : 0 < dist x x' := dist_pos.mpr (fun hh => hx'.2 (congrArg g hh))
+      simp only [lt_min_iff]
+      exact ⟨⟨⟨hε, hδ₁_pos⟩, hδ₂_pos⟩,
+             by linarith [dist_comm x' x],
+             by linarith [dist_comm x' x]⟩
     exact ⟨ε', hε'_pos, by aesop⟩
   refine ⟨x', ε', hε'_pos, hε'_lt.1, ?_, ?_, ?_, ?_⟩ <;> simp_all +decide [Set.disjoint_left]
   · exact fun y hy => Metric.mem_ball.mpr (lt_of_le_of_lt (Metric.mem_closedBall.mp hy) hε'_lt.1)
@@ -327,6 +337,7 @@ lemma sigma_in_closedBall_res {X : Type*} [MetricSpace X]
     simp +decide [h_center_eq]
     exact le_of_lt (hr_pos _)
 
+set_option maxHeartbeats 8000000 in
 /--
 The σ map is continuous from CantorRat to X.
 -/
@@ -351,13 +362,15 @@ lemma cantor_sigma_continuous {X : Type*} [MetricSpace X]
     convert mul_le_mul_of_nonneg_left (scheme_radius_bound hr_half (PiNat.res x.val n)) zero_le_two using 1 ; ring_nf
     simp +decide
   have h_open : IsOpen {y : CantorEventuallyZero | PiNat.res y.val n = PiNat.res x.val n} := by
-    have h_open : IsOpen (PiNat.cylinder x.val n) := by
-      grind +suggestions
+    have h_open : IsOpen (PiNat.cylinder x.val n) :=
+      PiNat.isOpen_cylinder (E := fun _ => Fin 2) x.val n
     convert h_open.preimage _ using 1
     rotate_left
     use fun y => y.val
     · exact continuous_subtype_val
-    · grind +suggestions
+    · -- Goal: {y : CantorEventuallyZero | PiNat.res y.val n = PiNat.res x.val n} =
+      --       Subtype.val ⁻¹' PiNat.cylinder x.val n
+      ext y; simp [PiNat.cylinder_eq_res]
   have h_cont : ∀ y : CantorEventuallyZero, PiNat.res y.val n = PiNat.res x.val n → dist (c (cantorRatPrefix y)) (c (cantorRatPrefix x)) < ε := by
     intro y hy
     have h_dist : dist (c (cantorRatPrefix y)) (c (cantorRatPrefix x)) ≤ 2 * r (PiNat.res x.val n) := by
@@ -369,6 +382,7 @@ lemma cantor_sigma_continuous {X : Type*} [MetricSpace X]
   rfl)) (by
   exact fun y hy => h_cont y hy)
 
+set_option maxHeartbeats 8000000 in
 /--
 The embedding property of σ : CantorRat → X.
 Given a Cantor scheme with the standard properties, the map
@@ -460,7 +474,16 @@ lemma cantor_sigma_isEmbedding {X Y : Type*}
       use I.sup id + 1
       intro y hy
       refine ht₁ ?_
-      grind +suggestions
+      -- Goal: ↑y ∈ s. Since hu₂ : (↑I).pi u ⊆ s, it suffices to show ↑y ∈ (↑I).pi u.
+      -- For each i ∈ I, i ≤ I.sup id, so i < I.sup id + 1. From hy (res equality),
+      -- y.val i = x.val i. Since hu₁ gives x.val i ∈ u i, we get y.val i ∈ u i.
+      apply hu₂
+      simp only [Set.mem_pi, Finset.mem_coe]
+      intro i hi
+      have hle : i ≤ I.sup id := Finset.le_sup (f := id) hi
+      have heq : y.val i = x.val i := PiNat.res_eq_res.mp hy (Nat.lt_succ_of_le hle)
+      rw [heq]
+      exact (hu₁ i hi).2
     exact Exists.elim (h_embedding x n) fun V hV => ⟨V, hV.1, fun y hy => hn (hV.2 y hy)⟩
   refine ⟨?_, ?_⟩
   · refine Topology.isInducing_iff_nhds.2 fun x => ?_
@@ -551,7 +574,14 @@ lemma cantor_g_sigma_isEmbedding {X Y : Type*}
         use I.sup id + 1
         intro y hy
         refine hs (ht₁ (hu₂ ?_))
-        grind +suggestions
+        -- Goal: ↑y ∈ (↑I).pi u. For each i ∈ I, i ≤ I.sup id < I.sup id + 1,
+        -- so from hy (res equality) y.val i = x.val i, and hu₁ gives x.val i ∈ u i.
+        simp only [Set.mem_pi, Finset.mem_coe]
+        intro i hi
+        have hle : i ≤ I.sup id := Finset.le_sup (f := id) hi
+        have heq : y.val i = x.val i := PiNat.res_eq_res.mp hy (Nat.lt_succ_of_le hle)
+        rw [heq]
+        exact (hu₁ i hi).2
       refine ⟨⋂ k ∈ Finset.range n, U (PiNat.res x.val (k + 1)), ?_, ?_⟩
       · refine IsOpen.mem_nhds ?_ ?_
         · refine isOpen_biInter_finset fun k hk => ?_

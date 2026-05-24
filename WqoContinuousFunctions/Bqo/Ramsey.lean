@@ -1,5 +1,10 @@
 
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Data.Set.Basic
+import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Nat.Find
+import Mathlib.Order.Monotone.Basic
+import Mathlib.Logic.Function.Basic
 
 open Set
 

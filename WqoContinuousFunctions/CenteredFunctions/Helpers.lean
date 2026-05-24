@@ -2,7 +2,12 @@ import WqoContinuousFunctions.CenteredFunctions.Defs
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
 import WqoContinuousFunctions.PointedGluing.CBRank.SimpleHelpers
 
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
+import Mathlib.Topology.Separation.Basic
+import Mathlib.Topology.MetricSpace.Basic
+import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.Order.SuccPred.Basic
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

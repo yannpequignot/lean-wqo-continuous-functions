@@ -1,7 +1,12 @@
 import WqoContinuousFunctions.CenteredFunctions.Defs
 import WqoContinuousFunctions.CenteredFunctions.Helpers
 import WqoContinuousFunctions.PointedGluing.UpperBound.Theorem
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
+import Mathlib.Topology.Separation.Basic
+import Mathlib.Topology.MetricSpace.Basic
+import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.Order.SuccPred.Basic
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

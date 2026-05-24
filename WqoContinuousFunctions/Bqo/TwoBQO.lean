@@ -1,5 +1,11 @@
 
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Order.WellQuasiOrder
+import Mathlib.Order.WellFoundedSet
+import Mathlib.Order.WellFounded
+import Mathlib.Order.RelClasses
+import Mathlib.Data.Bool.Basic
+import Mathlib.SetTheory.Ordinal.Basic
 import WqoContinuousFunctions.ContinuousReducibility.Defs
 import WqoContinuousFunctions.BQO.Ramsey
 open Set

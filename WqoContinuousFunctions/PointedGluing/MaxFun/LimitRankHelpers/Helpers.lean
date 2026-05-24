@@ -1,4 +1,8 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Data.Set.Basic
+import Mathlib.Data.Finset.Basic
+import Mathlib.Logic.Function.Basic
+import Mathlib.Order.Monotone.Basic
 import WqoContinuousFunctions.BaireSpace.Basics
 
 open scoped Topology

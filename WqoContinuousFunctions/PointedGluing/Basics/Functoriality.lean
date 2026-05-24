@@ -1,5 +1,6 @@
 import WqoContinuousFunctions.PointedGluing.MinFun.Theorems
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

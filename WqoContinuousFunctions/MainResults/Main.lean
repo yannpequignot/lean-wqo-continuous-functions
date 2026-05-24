@@ -1,4 +1,9 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
+import Mathlib.Topology.MetricSpace.Polish
+import Mathlib.Topology.Separation.Basic
+import Mathlib.Topology.MetricSpace.Basic
+import Mathlib.Order.WellQuasiOrder
 import WqoContinuousFunctions.ContinuousReducibility.Defs
 open scoped Topology
 open Set Function TopologicalSpace

@@ -1,4 +1,7 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.SetTheory.Ordinal.Arithmetic
+import Mathlib.Order.SuccPred.Basic
 import WqoContinuousFunctions.BQO.OrdinalBQO
 import WqoContinuousFunctions.PointedGluing.Basics.GluingInjection
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.ClopenRestriction

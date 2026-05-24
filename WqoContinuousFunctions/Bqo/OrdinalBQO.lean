@@ -1,4 +1,10 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.SetTheory.Ordinal.Arithmetic
+import Mathlib.SetTheory.Cardinal.Basic
+import Mathlib.SetTheory.Cardinal.Cofinality
+import Mathlib.Order.SuccPred.Basic
+import Mathlib.Data.Nat.Basic
 import WqoContinuousFunctions.ContinuousReducibility.Defs
 import WqoContinuousFunctions.BQO.Ramsey
 import WqoContinuousFunctions.BQO.TwoBQO

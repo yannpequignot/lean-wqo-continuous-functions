@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.SetTheory.Ordinal.Basic
 import WqoContinuousFunctions.PointedGluing.GeneralStructure
 
 open scoped Topology

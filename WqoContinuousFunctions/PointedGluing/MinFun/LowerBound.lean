@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
+import Mathlib.Topology.Separation.Basic
 import WqoContinuousFunctions.ContinuousReducibility.Defs
 import WqoContinuousFunctions.BaireSpace.GenRedProp
 import WqoContinuousFunctions.ContinuousReducibility.Scattered

@@ -1,4 +1,14 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
+import Mathlib.Topology.Bases
+import Mathlib.Topology.Separation.Basic
+import Mathlib.Topology.Order
+import Mathlib.Topology.Constructions
+import Mathlib.Topology.NatEmbedding
+import Mathlib.Data.Set.Basic
+import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Fin.Basic
+import Mathlib.Order.Disjointed
 open scoped Topology
 open Set Function TopologicalSpace
 

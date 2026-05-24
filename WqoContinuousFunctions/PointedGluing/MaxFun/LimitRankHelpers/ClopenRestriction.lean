@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Basic
 -- import WqoContinuousFunctions.PointedGluing.GeneralStructureHelpers.Helpers
 import WqoContinuousFunctions.ContinuousReducibility.Gluing
 import WqoContinuousFunctions.ContinuousReducibility.Scattered
