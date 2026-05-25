@@ -40,7 +40,6 @@ flowchart LR
     style B fill:transparent,stroke-width:0px,stroke-dasharray:0
 ```
 
-<!--<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">-->
 
 The main result states that this quasi-order is a WQO on a large class of functions
 
