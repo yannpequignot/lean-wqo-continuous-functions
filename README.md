@@ -56,7 +56,7 @@ Because WQOs lack closure properties under infintary operations, this is achieve
 
 ### Most Advanced Formally Verified Result
 
-The screenshot below shows Lean 4's kernel accepting the proof of `ScatFun.Reduces.isTwoBQO` — that continuous reducibility is a **2-BQO on scattered functions** — which is the central claim of the project:
+The screenshot below shows Lean 4's kernel accepting the proof of `ScatFun.Reduces.isTwoBQO` — that continuous reducibility is a **2-BQO on scattered functions** — which is the central claim of the project (fully proved up to `ScatFun.Level.no_bad: by sorry`, the topic of the last chapters yet to be formalized):
 
 ![Lean 4 proof of ScatFun.Reduces.isTwoBQO](proof_isTwoBQO.png)
 
