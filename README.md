@@ -1,4 +1,4 @@
-# Formal Verification of Function Well-Quasi-Orders in Lean 4
+# Formal Verification of Well-Quasi-Orders of Continuous Functions
 
 ![Lean 4](https://img.shields.io/badge/Lean-4-purple.svg)
 ![Status](https://img.shields.io/badge/Status-Active-success.svg)
@@ -24,10 +24,23 @@ A **well-quasi-ordering** (WQO) is a quasi-order where any infinite sequence of 
 
 The paper formalized here deals with the following quasi-order on functions:
 
-**Definition** A function `f : X → Y'` **continuously reduces** to `g : X' → Y'` if there is a continuous `σ : X → X'` and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
+**Definition** A function `f : X → Y'` **continuously reduces** to `g : X' → Y'`, written `f ≤ g`, if there is a continuous `σ : X → X'` and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
 such that `f(x) = τ(g(σ(x)))` for all `x` in `X`.
 
-<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">
+```mermaid
+flowchart LR
+    A(" ") -. σ .-> C
+    C(" ") -- g --> D(" ")
+    D -. τ .-> B
+    A -- f --> B(" ")
+
+    style C stroke-width:0px,stroke-dasharray:0,fill:transparent
+    style D fill:transparent,stroke-width:0px,stroke-dasharray:0
+    style A fill:transparent,stroke-width:0px,stroke-dasharray:0
+    style B fill:transparent,stroke-width:0px,stroke-dasharray:0
+```
+
+<!--<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">-->
 
 The main result states that this quasi-order is a WQO on a large class of functions
 
@@ -86,5 +99,5 @@ This formalization is a direct implementation of the mathematical research prese
 1. **[Raphaël Carroy, Yann Pequignot] (2024).** *"[A well-quasi-order for continuous functions]"*. arXiv:2410.13150.  
    [Read the paper on arXiv](https://arxiv.org/abs/2410.13150)
 
-2. **[Yann Pequignot] (Année).** *"[Towards better: A motivated introduction to better-quasi-orders]"*. EMS Surveys in Mathematical Sciences.  
+2. **[Yann Pequignot] (2017).** *"[Towards better: A motivated introduction to better-quasi-orders]"*. EMS Surveys in Mathematical Sciences.  
    [Read the article on EMS Press](https://ems.press/journals/emss/articles/15096)
