@@ -1,83 +1,90 @@
-# func_wqo_lean
+# Formal Verification of Function Well-Quasi-Orders in Lean 4
 
-A Lean 4 formalization of the memoir [*Continuous Reducibility is a Well-Quasi-Order on Continuous Functions*](https://arxiv.org/abs/2410.13150) by Raphaël Carroy and Yann Pequignot. 
+![Lean 4](https://img.shields.io/badge/Lean-4-purple.svg)
+![Status](https://img.shields.io/badge/Status-Active-success.svg)
+![Math](https://img.shields.io/badge/Domain-Mathematics%20%2F%20Order%20Theory-blue.svg)
 
-## Overview
+This repository contains the ongoing formal verification of mathematical results presented in the preprint **[A well-quasi-order for continuous functions](https://arxiv.org/abs/2410.13150)**, developed using the **Lean 4**. 
 
-This project formalizes the main results of a memoir in descriptive set theory, proving that **continuous reducibility is a well-quasi-order (WQO)** — and in fact a **better-quasi-order (BQO)** — on natural classes of continuous functions.
 
-**Continuous reducibility** is the quasi-order where `f ≤ g` if there exist continuous maps `σ` and `τ` such that `f = τ ∘ g ∘ σ`. It generalizes Wadge reducibility (where functions are characteristic functions of sets) to arbitrary continuous functions.
+## 🎯 Motivation: From Hilbert to AI Safety
 
-### Main theorems
+The original motivation for formalizing the concept of a program (or algorithm) was to answer Hilbert's *Entscheidungsproblem* regarding the provability of mathematical statements. While this endeavor culminated in Gödel's incompleteness theorems—establishing fundamental limits on what algorithms can do regarding mathematical truth—it also yielded one of computer science's greatest triumphs: **while a program cannot prove every truth, it *can* definitively decide if a formalized reasoning is sound.**
 
-| Theorem | Statement |
-|---------|-----------|
-| **Main Theorem 1** | Continuous reducibility is WQO on continuous functions from an analytic zero-dimensional space to a separable metrizable space. |
-| **Main Theorem 2** | Continuous reducibility is WQO on continuous functions from a separable metrizable zero-dimensional space to a countable metrizable space. |
-| **Main Theorem 3** | Continuous reducibility is WQO on *scattered* continuous functions from a zero-dimensional separable metrizable space to a metrizable space. |
-| **BQO theorem** | All three main theorems hold with BQO in place of WQO. |
+Less than a century later, we are witnessing a paradigm shift. Data-driven approaches, trained on natural language—one of humanity's greatest achievements and an incredibly compressed way to model the world using a small vocabulary of tokens—have reached a level where they can help formalize mathematics, bridge gaps in proofs, and generate meaningful mathematical reasoning. It is a tremendously exciting time.
 
-The central structural result driving the proof is:
+However, as AI models become increasingly complex and are deployed in ever-broader contexts, guaranteeing their reliability is paramount. We must ensure that the reasoning they output is fundamentally sound. Formal languages for mathematics, like **Lean 4**, implement a rigorous way to automatically verify reasoning.
 
-> **Finite Generation:** For every countable ordinal `α`, the class `𝒞_α` of scattered continuous functions with Cantor–Bendixson rank exactly `α` is *finitely generated* under continuous equivalence and the gluing operation.
 
-## Repository structure
+At this critical intersection of AI and mathematics, formalized reasoning provides a unique and necessary pathway for verifying LLM outputs. To put this philosophy into practice, I am actively collaborating with frontier AI assistants—including **Claude Code**, **Gemini Pro**, and **Aristotle**—throughout this formalization exercise. By leveraging these models to accelerate the translation of mathematical intuition into Lean 4 code, I am directly exploring the synergistic loop between AI-generated reasoning and machine-verified soundness.
 
-The Lean source files in `RequestProject/` mirror the chapters of the memoir:
+## 🧠 Mathematical Overview
 
-| Directory / File | Content |
-|-----------------|---------|
-| `IntroMemo.lean` | Core definitions (`ContinuouslyReduces`, `ScatteredFun`, `IsBetterQuasiOrder`) and statements of all main theorems |
-| `PrelimMemo/` | Preliminary results: basics, the gluing operation, scattered spaces |
-| `BaireSpace/` | General results about the Baire space `ℕ → ℕ`; generalised reducibility properties |
-| `Bqo/` | BQO theory: Ramsey-type theorems, two-element BQO lemmas |
-| `PointedGluing/` | The core of the proof — pointed gluing operation, General Structure theorem, max/min functions and their CB-rank bounds |
-| `CenteredMemo/` | Centered functions and local centeredness |
-| `PreciseStructMemo/` | Precise structure theorem for successor of limit ordinals |
-| `DoubleSuccMemo/` | Double-successor case of finite generation |
+A **well-quasi-ordering** (WQO) is a quasi-order where any infinite sequence of elements contains an increasing pair ($x_i \le x_j$ with $i < j$). This concept is ubiquitous in mathematics, fundamental in termination proofs and logic.
 
-The corresponding informal proofs are in the `.tex` files at the root of the repository (`1_intro_memo.tex` through `6_double_successor_memo.tex`).
+The paper formalized here deals with the following quasi-order on functions:
 
-## Key concepts
+**Definition** A function `f : X → Y'` **continuously reduces** to `g : X' → Y'` if there is a continuous `σ : X → X'` and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
+such that `f(x) = τ(g(σ(x)))` for all `x` in `X`.
 
-- **Cantor–Bendixson (CB) rank of a function:** The ordinal index at which the iterated CB derivative (restricting to points where `f` is not locally constant) stabilizes to the empty set. Scattered functions are exactly those with finite CB rank level sets.
-- **Gluing:** The natural disjoint-union operation on functions (on both domain and codomain), used to build complex functions from simpler ones.
-- **Pointed Gluing:** A refinement of gluing that "points" the pieces; the central operation in proving upper and lower bound results.
-- **Max/Min functions:** Canonical representatives `MaxFun α` and `MinFun α` that are respectively maximum and minimum among functions of CB rank `α`.
-- **General Structure theorem:** For a scattered function `g` with `CBRank g = η`, any scattered `f` with `CBRank f ≤ η` satisfies `f ≤ g`.
+![A diagram to help visualize the continuous reduction](ContinuouslyReducesDiagram.png)
 
-## Current proof status
+The main result states that this quasi-order is a WQO on a large class of functions
 
-The General Structure theorem (`PointedGluing/GeneralStructure.lean`) is fully formalized. This is the main result from Raphaël Carroy Carroy, *A quasi-order on continuous functions* (JSL, 2013).
+**Theorem (Main Theorem 3)** Continuous reducibility is a well-quasi-order on the class of scattered continuous functions from a zero-dimensional separable metrizable space to a metrizable space.
 
-The proof of twoBQO_of_twoBQO_levels that states that 
-````
-If 𝒞_β is 2-BQO for all β < ω₁, then ScatFun is 2-BQO
+This is achieved by proving a stronger property, that of better-quasi-ordering (BQO). 
+
+
+## 🚀 Current Status
+
+- [x] **Core Definitions:** Formalized the foundational structures of 2-BQO an strengthening of WQO which is enough.
+- [x] **Preliminary Lemmas:** Proved intermediate results concerning [Insert concept, e.g., finite antichains / specific mappings].
+- [ ] **Main Theorem:** Currently formalizing the core convergence/preservation theorem from the original paper.
+
+## 💻 Code Highlight
+
+Here is a snippet demonstrating how the core property is elegantly formalized in Lean 4:
+
+```lean
+/--
+A function `f` continuously reduces to `g` if there is a continuous `σ : X → X'`
+and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
+such that `f(x) = τ(g(σ(x)))` for all `x`.
+-/
+def ContinuouslyReduces {X Y X' Y' : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y]
+    [TopologicalSpace X'] [TopologicalSpace Y']
+    (f : X → Y) (g : X' → Y') : Prop :=
+  ∃ σ : X → X', Continuous σ ∧
+  ∃ τ : Y' → Y, ContinuousOn τ (Set.range (g ∘ σ)) ∧
+    ∀ x : X, f x = τ (g (σ x))
+    
+/-- A function `f : X → Y` is *scattered* if every nonempty subset `S` of `X`
+contains a nonempty relatively open subset on which `f` is constant.
+-/
+def ScatteredFun {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) : Prop :=
+  ∀ S : Set X, S.Nonempty → ∃ U : Set X, IsOpen U ∧ (U ∩ S).Nonempty ∧
+    ∀ x ∈ U ∩ S, ∀ x' ∈ U ∩ S, f x = f x'
+    
+theorem MainTheorem3
+    (X : ℕ → Type*) (Y : ℕ → Type*)
+    [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
+    [∀ n, SeparableSpace (X n)] [∀ n, MetrizableSpace (X n)]
+    [∀ n, TotallyDisconnectedSpace (X n)]
+    [∀ n, MetrizableSpace (Y n)]
+    (f : ∀ n, X n → Y n) (hf : ∀ n, Continuous (f n))
+    (hsc : ∀ n, ScatteredFun (f n)) :
+    ∃ m n : ℕ, m < n ∧ ContinuouslyReduces (f m) (f n) := by
+  sorry
+
 ```
-still needs to be formalized. It uses General Structure theorem and results on 2-BQOs about 2nLTm.
+## 📄 References
+This formalization is a direct implementation of the mathematical research presented in my published papers:
 
-## Building
+1. **[Raphaël Carroy, Yann Pequignot] (2024).** *"[A well-quasi-order for continuous functions]"*. arXiv:2410.13150.  
+   [Read the paper on arXiv](https://arxiv.org/abs/2410.13150)
 
-This project requires [Lean 4](https://leanprover.github.io/) and [Lake](https://github.com/leanprover/lake). It depends on [Mathlib4](https://github.com/leanprover-community/mathlib4) at `v4.28.0`.
-
-```bash
-# Install elan (Lean version manager) if needed
-curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
-
-# Fetch Mathlib cache (strongly recommended — avoids rebuilding Mathlib from source)
-lake exe cache get
-
-# Build the project
-lake build
-```
-
-The Lean toolchain version is specified in `lean-toolchain` (`leanprover/lean4:v4.28.0`).
-
-
-## Collaboration
-
-Parts of this formalization were developed with assistance from [Aristotle (Harmonic)](https://aristotle.harmonic.fun) and  [Claude Code](https://claude.com/claude-code).
-
-## License
-
-See [LICENSE](LICENSE).
+2. **[Yann Pequignot] (Année).** *"[Towards better: A motivated introduction to better-quasi-orders]"*. EMS Surveys in Mathematical Sciences.  
+   [Read the article on EMS Press](https://ems.press/journals/emss/articles/15096)
