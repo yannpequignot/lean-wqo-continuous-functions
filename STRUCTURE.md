@@ -303,8 +303,7 @@ ScatFun.Level.no_bad  (β : Ordinal, β < ω₁)                  [★ SORRY ★
 | Baire space topology | ✓ fully proved | `BaireSpace/Basics.lean` |
 | Core reducibility defs | ✓ fully proved | `ContinuousReducibility/Defs.lean` |
 | CB analysis (CB rank, CB derivative) | ✓ mostly proved | `Scattered/CBAnalysis.lean` |
-| `CBRank_lt_omega1` | ✗ sorry | `Scattered/CBAnalysis.lean` |
-| `scattered_imp_locallyConstantLocus_univ` | ✗ sorry | `Scattered/CBAnalysis.lean` |
+| `CBRank_lt_omega1` | ✓ fully proved | `Scattered/CBAnalysis.lean` |
 | Non-scattered ⟹ ℚ embeds (Thm 2.5) | ✓ fully proved | `Scattered/NonScattered.lean` |
 | Locally-simple decomposition (Lem 2.15) | ✓ fully proved | `Scattered/Decomposition.lean` |
 | First Reduction Theorem (Thm 2.12) | ✗ sorry | `Scattered/Decomposition.lean` |
@@ -405,7 +404,7 @@ theorem ScatFun.Level.no_bad (β : Ordinal) (hβ : β < omega1)
   sorry
 ```
 
-Filling this requires three chapters of mathematical work:
+Proving this result is the purpose of the three last chapters of  the memoir:
 
 1. **Centered functions** (`CenteredFunctions/Theorems.lean`):
    - `IsCentered f`: the function `f` is centered — it is a pointed gluing of its ray functions.
@@ -414,13 +413,14 @@ Filling this requires three chapters of mathematical work:
      (classification of simple functions at level λ+1).
 
 2. **Precise Structure Theorem** (`PreciseStructure/Theorems.lean`):
-   - Every function at level β is continuously equivalent to a finite gluing of
-     `MaxFun(β)` and finitely many "centered" generator functions.
-   - This requires the double-successor case (`DoubleSuccessor/Theorems.lean`):
-     the vertical and diagonal theorems showing that functions at level α+2 decompose
-     via a "gobbling" argument.
-
-3. **From finite generation to BQO** (`ScatFun/ReflectLevel.lean`):
+   - The last operation the Wedge Operation
+   - Finite generation at successors of limit ordinals `\lambda +1`
+   - definition of the FINITE set of generators at each level.
+  
+3. **Double successors**
+   - Prove that the finite set of generators indeed generates each double successor `\alpha+2` levels (`DoubleSuccessor/Theorems.lean`).
+  
+**From finite generation to BQO** (`ScatFun/ReflectLevel.lean`):
    - Once Level β is finitely generated, `Level β` injects into a finite product
      of 2-BQOs (the generators at lower levels, which are 2-BQO by induction).
    - `TwoBQO.prod` (Dickson's lemma) then gives the 2-BQO conclusion.

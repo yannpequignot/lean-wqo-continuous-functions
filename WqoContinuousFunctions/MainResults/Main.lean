@@ -14,7 +14,7 @@ set_option autoImplicit false
 # Formalization of main theorems
 
 This file should eventually contain all the main theorems
-with proofs by importing the relevant lemmas from the repo. 
+with proofs by importing the relevant lemmas from the repo.
 
 ## Main theorem statements
 
@@ -24,9 +24,7 @@ with proofs by importing the relevant lemmas from the repo.
   separable metrizable zero-dimensional space to a countable metrizable space.
 * `MainTheorem3` — Continuous reducibility is a WQO on scattered continuous functions
   from a zero-dimensional separable metrizable space to a metrizable space.
-* `scatteredIffEmptyKernel` — A continuous function from a metrizable domain to a
-  Hausdorff codomain is scattered iff it has empty perfect kernel.
-  `scatteredIffEmptyKernel` is proved in WqoContinuousFunctions/PrelimMemo/Scattered/CBAnalysis.lean
+* `scattered_iff_empty_perfectKernel` — A continuous function between topolical spaces is scattered iff it has empty perfect kernel.
 * `levels_finitely_generated` — Each CB-rank level is finitely generated.
 -/
 
@@ -176,8 +174,5 @@ of elements of `G`.
 This is the key structural result enabling the proof of Main Theorem 3.
 -/
 
--- The precise formalization of finite generation and the CB-rank levels requires
--- the gluing operation and transfinite induction machinery developed in later chapters.
--- We record the statement informally here for reference.
 
 end FiniteGeneration

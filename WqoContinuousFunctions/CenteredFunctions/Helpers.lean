@@ -165,7 +165,7 @@ lemma centers_different_images_not_scattered {A B : Type*}
   -- By definition of scatteredFun, if f is scattered, then its perfect kernel is empty.
   by_contra h_scattered
   have h_perfect_kernel_empty : perfectKernelCB f = ∅ := by
-    exact (scattered_iff_empty_perfectKernel_general f).mp h_scattered;
+    exact (scattered_iff_empty_perfectKernel f).mp h_scattered;
   exact Set.notMem_empty x ( h_perfect_kernel_empty ▸ Set.mem_iInter.mpr ( fun α => ( centers_in_all_CBLevels f x y hx hy hne ) α |>.1 ) )
 
 /-- If all centers of f have the same image and f is centered,

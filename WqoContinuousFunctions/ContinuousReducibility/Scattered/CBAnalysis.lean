@@ -18,7 +18,7 @@ and the relationship between scattered functions and the perfect kernel.
 
 ## Main results
 
-* `scattered_iff_empty_perfectKernel_general` — f is scattered ↔ f has empty perfect kernel
+* `scattered_iff_empty_perfectKernel` — f is scattered ↔ f has empty perfect kernel
 * `ContinuouslyReduces.scattered` — if f ≤ g and g is scattered, then f is scattered
 * `ContinuouslyReduces.cb_monotone` — if (σ,τ) reduces f to g, then σ(CB_α(f)) ⊆ CB_α(g)
 -/
@@ -145,9 +145,9 @@ nonempty. Returns `0` for functions where only `CB_0(f) = univ` is nonempty (whe
 domain is empty). -/
 
 
-noncomputable def CBRank_scat {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) (_fs: ScatteredFun f) : Ordinal.{0} :=
-  sSup {α : Ordinal.{0} | (CBLevel f α).Nonempty}
+-- noncomputable def CBRank_scat {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+--     (f : X → Y) (_fs: ScatteredFun f) : Ordinal.{0} :=
+--   sSup {α : Ordinal.{0} | (CBLevel f α).Nonempty}
 
 /- In general we define the CB rank as the least ordinal such that the CB derivative stabilizes-/
 noncomputable def CBRank {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
@@ -368,8 +368,9 @@ arithmetic). The backward direction is fully proved above.
 **Note on universes:** The proof of the forward direction uses `not_injective_of_ordinal`
 which requires `Small.{0} X`. Since the CB levels are indexed by `Ordinal.{0}`, this
 argument works when `X : Type 0` (or more generally when `Small.{0} X`). The theorem
-is stated with `[Small.{0} X]` to reflect this constraint. -/
-theorem scattered_iff_empty_perfectKernel_general {X Y : Type*}
+is stated with `[Small.{0} X]` to reflect this constraint.
+This theorem is proved for arbitrary spaces, this i Proposition 2.11 in the memoir. -/
+theorem scattered_iff_empty_perfectKernel {X Y : Type*}
     [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
     (f : X → Y) : ScatteredFun f ↔ perfectKernelCB f = ∅ := by
   exact ⟨scattered_implies_empty_perfectKernel_small f, scattered_of_empty_perfectKernel f⟩
@@ -734,95 +735,132 @@ theorem ContinuouslyReduces.rank_monotone {X X' Y Y' : Type*}
   have hmono := ContinuouslyReduces.cb_monotone hσ heq α
   exact Set.image_eq_empty.mp (Set.subset_empty_iff.mp (hmono.trans hα.subset))
 
-/-- The CB-rank of a scattered function on a subspace of Baire space is
+/-- All CB levels of any function are closed sets.
+
+Proof: By transfinite induction.
+- Base: CB₀(f) = univ is closed.
+- Successor: CB_{α+1}(f) = CB_α(f) \ isolatedLocus f (CB_α(f)).
+  By `isolatedLocus_isOpen_in`, the isolated locus equals V ∩ CB_α(f) for some open V,
+  so CB_{α+1}(f) = CB_α(f) ∩ Vᶜ = (closed) ∩ (closed) = closed.
+- Limit: CB_λ(f) = ⋂_{α<λ} CB_α(f) = intersection of closed sets = closed. -/
+lemma CBLevel_isClosed {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) (α : Ordinal.{0}) : IsClosed (CBLevel f α) := by
+  induction' α using Ordinal.limitRecOn with α ih lam hlam ih
+  · -- CB₀(f) = univ
+    simp [CBLevel_zero]
+  · -- CB_{succ α}(f) = CB_α(f) \ (V ∩ CB_α(f)) = CB_α(f) ∩ Vᶜ for some open V
+    rw [CBLevel_succ']
+    obtain ⟨V, hV_open, hiso⟩ := isolatedLocus_isOpen_in f (CBLevel f α)
+    rw [hiso]
+    have h_eq : CBLevel f α \ (V ∩ CBLevel f α) = CBLevel f α ∩ Vᶜ := by
+      ext x; simp [Set.mem_diff, Set.mem_inter_iff, Set.mem_compl_iff]
+    rw [h_eq]
+    exact ih.inter hV_open.isClosed_compl
+  · -- CB_λ(f) = ⋂_{α<λ} CB_α(f)
+    rw [CBLevel_limit f lam hlam]
+    exact isClosed_iInter (fun α => isClosed_iInter (fun hα => ih α hα))
+
+/-- The CB-rank of a scattered function on a subspace of Baire space (or in fact any secound countable space) is
     a countable ordinal, i.e. strictly less than ω₁.
 
-    Proof sketch: the complements of CB levels form a strictly increasing
-    chain of open sets in A (a subspace of ℕ → ℕ, which is second countable).
-    By regularity of ℵ₁ = Cardinal.aleph 1, no countable family can be
-    cofinal in omega1, so the chain must stabilize before omega1.
-
-    Key ingredients needed:
-    - `CBLevel_isClosed` : CB levels are closed (by transfinite induction)
-    - `Cardinal.isRegular_aleph_one` : aleph 1 is a regular cardinal
-    - `TopologicalSpace.exists_countable_basis` : A has a countable basis
-    TODO: complete this proof. -/
+    Proof by contradiction. Assume CBRank f ≥ ω₁.
+    The sets U_α = (CBLevel f α)ᶜ are open (since CB levels are closed) and
+    strictly increasing. For each α < ω₁, pick x_α ∈ CBLevel f α \ CBLevel f (succ α).
+    Then x_α ∈ U_{succ α} (open), so by second countability of A we can pick a
+    countable basis element V_α ⊆ U_{succ α} containing x_α.
+    The map α ↦ V_α is injective: if α < β then x_β ∈ CBLevel f (succ α) = U_{succ α}ᶜ,
+    so x_β ∉ V_α, hence V_α ≠ V_β.
+    This injects Iio ω₁ into the countable set countableBasis A — contradiction. -/
 theorem CBRank_lt_omega1
     {A : Set (ℕ → ℕ)} {f : A → ℕ → ℕ}
     (hf : ScatteredFun f) :
     CBRank f < omega1 := by
-  sorry
+  -- A inherits second countability from ℕ → ℕ; subtypes of Type 0 are Small.{0}
+  haveI : SecondCountableTopology A := inferInstance
+  haveI : Small.{0} A := inferInstance
+  -- Proof by contradiction: assume CBRank f ≥ ω₁
+  by_contra h_not_lt
+  push_neg at h_not_lt -- h_not_lt : omega1 ≤ CBRank f
+  -- Step 1: For each α < ω₁, the level strictly drops:
+  --         CBLevel f α \ CBLevel f (succ α) is nonempty.
+  -- Since α < ω₁ ≤ CBRank f, the level CBLevel f α is nonempty (from CBRank_eq_sInf_empty)
+  -- and CBLevel f α ≠ CBLevel f (succ α) (from α < CBRank f = sInf {...}).
+  -- Then CBLevel_succ_ssubset_of_scattered gives the strict inclusion.
+  have level_drop_nonempty : ∀ α : Ordinal.{0}, α < omega1 →
+      (CBLevel f α \ CBLevel f (Order.succ α)).Nonempty := by
+    intro α hα
+    have hα_lt_rank : α < CBRank f := lt_of_lt_of_le hα h_not_lt
+    -- CBLevel f α is nonempty: if it were empty it would be in sInf's set, giving rank ≤ α
+    have hα_nonempty : (CBLevel f α).Nonempty := by
+      by_contra h
+      rw [Set.not_nonempty_iff_eq_empty] at h
+      have hle : CBRank f ≤ α := by
+        rw [CBRank_eq_sInf_empty f hf]
+        exact csInf_le ⟨0, fun β _ => zero_le β⟩ h
+      exact absurd hle (not_le.mpr hα_lt_rank)
+    -- The level strictly decreases at α (since f is scattered and CBLevel f α ≠ ∅)
+    have hsub := CBLevel_succ_ssubset_of_scattered f hf α hα_nonempty
+    -- hsub : CBLevel f (succ α) ⊊ CBLevel f α, so the difference is nonempty
+    obtain ⟨x, hxα, hxnot⟩ := Set.not_subset.mp hsub.2
+    exact ⟨x, hxα, hxnot⟩
+  -- Step 2: Choose x_α ∈ CBLevel f α \ CBLevel f (succ α) for each α < ω₁
+  choose x hx using level_drop_nonempty
+  -- hx α hα : x α hα ∈ CBLevel f α ∧ x α hα ∉ CBLevel f (succ α)
+  -- Step 3: Each x_α lies in the open set (CBLevel f (succ α))ᶜ
+  -- Step 4: By second countability, pick a basis element V_α ⊆ (CBLevel f (succ α))ᶜ
+  --         with x_α ∈ V_α, for each α < ω₁
+  have pick_basis : ∀ α (hα : α < omega1), ∃ V ∈ TopologicalSpace.countableBasis A,
+      x α hα ∈ V ∧ V ⊆ (CBLevel f (Order.succ α))ᶜ :=
+    fun α hα => (TopologicalSpace.isBasis_countableBasis A).exists_subset_of_mem_open
+      (hx α hα).2  -- x α hα ∉ CBLevel f (succ α), i.e. x α hα ∈ (CBLevel f (succ α))ᶜ
+      (CBLevel_isClosed f (Order.succ α)).isOpen_compl
+  choose V hV_mem hV_x hV_sub using pick_basis
+  -- Step 5: The map α ↦ V_α is injective on Iio ω₁.
+  -- Key: if α < β, then x_β ∈ CBLevel f β ⊆ CBLevel f (succ α), so x_β ∉ V_α.
+  -- But x_β ∈ V_β, so V_α ≠ V_β.
+  have V_inj : ∀ α (hα : α < omega1) β (hβ : β < omega1),
+      V α hα = V β hβ → α = β := by
+    intro α hα β hβ h_eq
+    by_contra h_ne
+    rcases lt_or_gt_of_ne h_ne with hlt | hlt
+    · -- α < β: x_β ∈ CBLevel f (succ α) but V_β = V_α ⊆ (CBLevel f (succ α))ᶜ
+      have hxβ_in : x β hβ ∈ CBLevel f (Order.succ α) :=
+        CBLevel_antitone f (Order.succ_le_of_lt hlt) (hx β hβ).1
+      exact absurd hxβ_in (hV_sub α hα (h_eq ▸ hV_x β hβ))
+    · -- β < α: symmetric
+      have hxα_in : x α hα ∈ CBLevel f (Order.succ β) :=
+        CBLevel_antitone f (Order.succ_le_of_lt hlt) (hx α hα).1
+      exact absurd hxα_in (hV_sub β hβ (h_eq.symm ▸ hV_x α hα))
+  -- Step 6: The injection α ↦ V_α maps Iio ω₁ into the countable set countableBasis A,
+  --         so Iio ω₁ is countable.
+  have hIio_count : (Set.Iio omega1).Countable := by
+    apply Set.MapsTo.countable_of_injOn
+        (f := fun α : Ordinal.{0} => if h : α < omega1 then V α h else ∅)
+        (t := TopologicalSpace.countableBasis A)
+    · -- MapsTo: beta-reduce the lambda, then split the if
+      intro α hα
+      dsimp only
+      split_ifs with h
+      · exact hV_mem α h
+      · exact absurd hα h
+    · -- InjOn: beta-reduce in h_eq, then split both ifs
+      intro α hα β hβ h_eq
+      dsimp only at h_eq
+      split_ifs at h_eq with ha hb
+      · exact V_inj α ha β hb h_eq
+      · exact absurd hβ hb
+      · exact absurd hα ha
+      · exact absurd hα ha
+    · exact TopologicalSpace.countable_countableBasis A
+  -- Step 7: But Iio ω₁ is NOT countable (ω₁ is the first uncountable ordinal).
+  have hIio_uncount : ¬ (Set.Iio omega1).Countable := by
+    intro hcount
+    -- hcount : (Iio omega1).Countable, so Cardinal.mk ↑(Iio omega1) < aleph 1
+    have h1 : Cardinal.mk ↑(Set.Iio omega1) < Cardinal.aleph 1 :=
+      (Cardinal.countable_iff_lt_aleph_one _).mp hcount
+    rw [Ordinal.mk_Iio_ordinal, Cardinal.lift_lt_aleph_one] at h1
+    -- h1 : omega1.card < aleph 1, but omega1 = (aleph 1).ord so this gives omega1 < omega1
+    exact absurd (Cardinal.lt_ord.mpr h1) (lt_irrefl omega1)
+  exact hIio_uncount hIio_count
 
 end ReductionAndCB
-
-
-section ScatteredCharacterization
-
-/-!
-## Characterization of Scattered Functions
-
-**Theorem (scatterediffemptykernel).** Suppose `X` is metrizable, `Y` is Hausdorff,
-and `f : X → Y` is continuous. Then `f` is scattered if and only if it has empty
-perfect kernel.
--/
-
-/-- The *perfect kernel* of `f` is the largest closed subset of the domain on which `f`
-is nowhere locally constant. It is defined as the intersection of all closed sets `S`
-such that the locally constant locus of `f` restricted to `S` is empty (i.e., `f` is
-nowhere locally constant on `S`). -/
-def perfectKernel {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) : Set X :=
-  ⋂₀ {S : Set X | IsClosed S ∧ (locallyConstantLocus f)ᶜ ⊆ S}
-
-/-- The perfect kernel equals the complement of the locally constant locus,
-since the locally constant locus is open (hence its complement is the smallest
-closed set containing itself). -/
-lemma perfectKernel_eq_compl {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) : perfectKernel f = (locallyConstantLocus f)ᶜ := by
-  unfold perfectKernel
-  apply le_antisymm
-  · exact Set.sInter_subset_of_mem ⟨(isOpen_locallyConstantLocus f).isClosed_compl, le_refl _⟩
-  · exact Set.subset_sInter fun S hS => hS.2
-
-/-- Backward direction: if every point is locally constant, then f is scattered. -/
-lemma locallyConstantLocus_univ_imp_scattered {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) (h : locallyConstantLocus f = Set.univ) : ScatteredFun f := by
-  intro S hS
-  obtain ⟨x, hx⟩ := hS
-  have : x ∈ locallyConstantLocus f := h ▸ Set.mem_univ x
-  obtain ⟨U, hU, hxU, hconst⟩ := this
-  exact ⟨U, hU, ⟨x, hxU, hx⟩, fun y hy z hz => by rw [hconst y hy.1, hconst z hz.1]⟩
-
-/-- Forward direction helper: if f is scattered, continuous, X metrizable, Y T₂,
-then every point is locally constant.
-
-Proof: Suppose y ∉ locallyConstantLocus f. Since X is metrizable (hence first countable),
-choose z_n → y with f(z_n) ≠ f(y). Apply ScatteredFun to {y} ∪ {z_n}.
-The open set U must eventually contain y (since z_n → y), giving f(z_n) = f(y)
-for large n, contradiction. -/
-lemma scattered_imp_locallyConstantLocus_univ {X Y : Type*}
-    [TopologicalSpace X] [MetrizableSpace X]
-    [TopologicalSpace Y] [T2Space Y]
-    (f : X → Y) (hf : Continuous f) (hscat : ScatteredFun f) :
-    locallyConstantLocus f = Set.univ := by
-  sorry
-
-/-- A continuous function from a metrizable domain to a Hausdorff codomain is scattered
-if and only if its perfect kernel is empty. -/
-theorem scatteredIffEmptyKernel {X Y : Type*}
-    [TopologicalSpace X] [MetrizableSpace X]
-    [TopologicalSpace Y] [T2Space Y]
-    (f : X → Y) (hf : Continuous f) :
-    ScatteredFun f ↔ perfectKernel f = ∅ := by
-  rw [perfectKernel_eq_compl]
-  constructor
-  · intro h
-    rw [scattered_imp_locallyConstantLocus_univ f hf h]
-    simp
-  · intro h
-    have : locallyConstantLocus f = Set.univ := by
-      rwa [Set.compl_empty_iff] at h
-    exact locallyConstantLocus_univ_imp_scattered f this
-
-end ScatteredCharacterization
