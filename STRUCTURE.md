@@ -8,87 +8,80 @@ with Main Theorem 3 as the primary target.
 
 ## 1. Repository Layout
 
+```mermaid
+treeView-beta
+  "📁 wqo_functions/"
+    "📄 lakefile.toml - lake build configuration"
+    "📁 WqoContinuousFunctions/"
+      "📄 Main.lean - top-level entry point (re-exports)"
+      "📁 MainResults/"
+        "📄 Main.lean - statements of Thm 1–3 (all sorry)"
+        "📄 ScatFunBQO.lean - Main Theorem 3 proved (see §3)"
+      "📁 BaireSpace/"
+        "📄 Basics.lean - Baire space topology, cylinder sets, clopen basis"
+        "📄 GenRedProp.lean - disjointification of open families"
+      "📁 BQO/"
+        "📄 Ramsey.lean - RT² and RT³ for ℕ (finite colorings)"
+        "📄 TwoBQO.lean - 2-BQO definition, closure under products and lex sums"
+        "📄 OrdinalBQO.lean - ≤• on ordinals is 2-BQO; ordinal arithmetic helpers"
+      "📁 ContinuousReducibility/"
+        "📄 Defs.lean - ContinuouslyReduces, ScatteredFun, CBRank (core defs)"
+        "📄 Scattered.lean - re-export of Scattered/*"
+        "📁 Scattered/"
+          "📄 CBAnalysis.lean - CB derivative, CB rank, scattered ↔ empty kernel"
+          "📄 NonScattered.lean - non-scattered ⟹ ℚ embeds (Thm 2.5) — fully proved"
+          "📄 Decomposition.lean - locally simple decomposition (Lem 2.15)"
+        "📄 Gluing.lean - re-export of Gluing/*"
+        "📁 Gluing/"
+          "📄 Defs.lean - GluingSet, GluingFunVal, clopen partitions"
+          "📄 LocallyConstant.lean - locally constant ≡ id_ℕ or id_Unit"
+          "📄 UpperBound.lean - f ≤ ⊔ᵢ gᵢ ↔ clopen partition with f|Aᵢ ≤ gᵢ"
+      "📁 PointedGluing/"
+        "📄 Defs.lean - PointedGluingSet/Fun, MaxDom/MinDom, MaxFun/MinFun"
+        "📄 GeneralStructure.lean - ★ General Structure Theorem (Thm 3.13) — fully proved"
+        "📄 SelfSimilarity.lean - GluingSet(MaxDom α) ≤ MaxFun α — fully proved"
+        "📄 LowerBoundLemma.lean - pointed gluing as lower bound (Lem 3.13) — fully proved"
+        "📄 ClopenPartitionReduces.lean - locally reduces ⟹ globally reduces"
+        "📁 Basics/"
+          "📄 Properties.lean - continuity/injectivity of pgl; CBRank of pgl"
+          "📄 Functoriality.lean - pgl functoriality; ω·pgl ≤ pgl(pgl)"
+          "📄 GluingInjection.lean - gluing ≤ pointed-gluing via injection"
+          "📄 ContinuousOnTau.lean - ContinuousOn for τ at zeroStream"
+        "📁 CBRank/"
+          "📄 Helpers.lean - CB levels of blocks in pgl; zeroStream in CB levels"
+          "📄 SimpleHelpers.lean - ray CB ranks, regularity lemmas"
+          "📄 RegularSimple.lean - CBrank_regular_simple (Prop 3.8)"
+        "📁 MinFun/"
+          "📄 Helpers.lean - basic properties of MinFun"
+          "📄 LocalHelpers.lean - local conditions for MinFun"
+          "📄 LowerBound.lean - MinFun is a lower bound"
+          "📄 Theorems.lean - pointedGluing_lower_bound; minFun_is_minimum"
+        "📁 MaxFun/"
+          "📄 Helpers.lean - basic properties of MaxFun"
+          "📄 Maximum.lean - MaxFun is maximum at its CB rank"
+          "📁 LimitRankHelpers/"
+            "📄 Helpers.lean - limit rank helpers"
+            "📄 ClopenRestriction.lean - clopen restriction at limit rank"
+            "📄 TreeArgument.lean - tree argument for limit rank"
+        "📁 UpperBound/"
+          "📄 Helpers.lean - upper bound helpers"
+          "📄 Theorem.lean - pointedGluing_upper_bound (Prop 3.5)"
+      "📁 ScatFun/"
+        "📄 Defs.lean - ScatFun type, Level/LevelLE/LevelLT subtypes"
+        "📄 LiftToLex.lean - bad sequence in ScatFun ⟹ bad in lex sum"
+        "📄 ReflectLevel.lean - bad_restricts_to_level ✓; Level.no_bad ✗ (sorry)"
+      "📁 CenteredFunctions/"
+        "📄 Defs.lean - IsCenterFor, IsCentered, IsLocallyCentered, RayFun"
+        "📄 Helpers.lean - helpers for centered function theorems (mostly proved)"
+        "📄 Theorems.lean - centered classification theorems (mostly sorry)"
+      "📁 PreciseStructure/"
+        "📄 Defs.lean - definitions for the Precise Structure Theorem"
+        "📄 Theorems.lean - Precise Structure Theorem (nearly all sorry)"
+      "📁 DoubleSuccessor/"
+        "📄 Defs.lean - double-successor case definitions"
+        "📄 Theorems.lean - double-successor theorems (all sorry)"
 ```
-wqo_functions/
-├── lakefile.toml                  # lake build configuration
-├── WqoContinuousFunctions/
-│   ├── Main.lean                  # top-level entry point (re-exports)
-│   │
-│   ├── MainResults/
-│   │   ├── Main.lean              # statements of Thm 1–3 (all sorry)
-│   │   └── ScatFunBQO.lean        # Main Theorem 3 proved (see §3)
-│   │
-│   ├── BaireSpace/
-│   │   ├── Basics.lean            # Baire space topology, cylinder sets, clopen basis
-│   │   └── GenRedProp.lean        # disjointification of open families
-│   │
-│   ├── BQO/
-│   │   ├── Ramsey.lean            # RT² and RT³ for ℕ (finite colorings)
-│   │   ├── TwoBQO.lean            # 2-BQO definition, closure under products and lex sums
-│   │   └── OrdinalBQO.lean        # ≤• on ordinals is 2-BQO; ordinal arithmetic helpers
-│   │
-│   ├── ContinuousReducibility/
-│   │   ├── Defs.lean              # ContinuouslyReduces, ScatteredFun, CBRank (core defs)
-│   │   ├── Scattered.lean         # re-export of Scattered/*
-│   │   ├── Scattered/
-│   │   │   ├── CBAnalysis.lean    # CB derivative, CB rank, scattered ↔ empty kernel
-│   │   │   ├── NonScattered.lean  # non-scattered ⟹ ℚ embeds (Thm 2.5) — fully proved
-│   │   │   └── Decomposition.lean # locally simple decomposition (Lem 2.15)
-│   │   ├── Gluing.lean            # re-export of Gluing/*
-│   │   └── Gluing/
-│   │       ├── Defs.lean          # GluingSet, GluingFunVal, clopen partitions
-│   │       ├── LocallyConstant.lean # locally constant ≡ id_ℕ or id_Unit
-│   │       └── UpperBound.lean    # f ≤ ⊔ᵢ gᵢ ↔ clopen partition with f|Aᵢ ≤ gᵢ
-│   │
-│   ├── PointedGluing/
-│   │   ├── Defs.lean              # PointedGluingSet/Fun, MaxDom/MinDom, MaxFun/MinFun
-│   │   ├── GeneralStructure.lean  # ★ General Structure Theorem (Thm 3.13) — fully proved
-│   │   ├── SelfSimilarity.lean    # GluingSet(MaxDom α) ≤ MaxFun α — fully proved
-│   │   ├── LowerBoundLemma.lean   # pointed gluing as lower bound (Lem 3.13) — fully proved
-│   │   ├── ClopenPartitionReduces.lean  # locally reduces ⟹ globally reduces
-│   │   ├── Basics/
-│   │   │   ├── Properties.lean    # continuity/injectivity of pgl; CBRank of pgl
-│   │   │   ├── Functoriality.lean # pgl functoriality; ω·pgl ≤ pgl(pgl)
-│   │   │   ├── GluingInjection.lean # gluing ≤ pointed-gluing via injection
-│   │   │   └── ContinuousOnTau.lean # ContinuousOn for τ at zeroStream
-│   │   ├── CBRank/
-│   │   │   ├── Helpers.lean       # CB levels of blocks in pgl; zeroStream in CB levels
-│   │   │   ├── SimpleHelpers.lean # ray CB ranks, regularity lemmas
-│   │   │   └── RegularSimple.lean # CBrank_regular_simple (Prop 3.8)
-│   │   ├── MinFun/
-│   │   │   ├── Helpers.lean       # basic properties of MinFun
-│   │   │   ├── LocalHelpers.lean  # local conditions for MinFun
-│   │   │   ├── LowerBound.lean    # MinFun is a lower bound
-│   │   │   └── Theorems.lean      # pointedGluing_lower_bound; minFun_is_minimum
-│   │   ├── MaxFun/
-│   │   │   ├── Helpers.lean       # basic properties of MaxFun
-│   │   │   ├── Maximum.lean       # MaxFun is maximum at its CB rank
-│   │   │   └── LimitRankHelpers/
-│   │   │       ├── Helpers.lean   # limit rank helpers
-│   │   │       ├── ClopenRestriction.lean # clopen restriction at limit rank
-│   │   │       └── TreeArgument.lean      # tree argument for limit rank
-│   │   └── UpperBound/
-│   │       ├── Helpers.lean       # upper bound helpers
-│   │       └── Theorem.lean       # pointedGluing_upper_bound (Prop 3.5)
-│   │
-│   ├── ScatFun/
-│   │   ├── Defs.lean              # ScatFun type, Level/LevelLE/LevelLT subtypes
-│   │   ├── LiftToLex.lean         # bad sequence in ScatFun ⟹ bad in lex sum
-│   │   └── ReflectLevel.lean      # bad_restricts_to_level ✓; Level.no_bad ✗ (sorry)
-│   │
-│   ├── CenteredFunctions/
-│   │   ├── Defs.lean              # IsCenterFor, IsCentered, IsLocallyCentered, RayFun
-│   │   ├── Helpers.lean           # helpers for centered function theorems (mostly proved)
-│   │   └── Theorems.lean          # centered classification theorems (mostly sorry)
-│   │
-│   ├── PreciseStructure/
-│   │   ├── Defs.lean              # definitions for the Precise Structure Theorem
-│   │   └── Theorems.lean          # Precise Structure Theorem (nearly all sorry)
-│   │
-│   └── DoubleSuccessor/
-│       ├── Defs.lean              # double-successor case definitions
-│       └── Theorems.lean          # double-successor theorems (all sorry)
-```
+
 
 > **Note.** The `.claude/worktrees/` directory contains leftover git worktrees from
 > automated editing sessions. It is not part of the mathematical content.
@@ -99,11 +92,99 @@ wqo_functions/
 
 The following diagram shows the logical import order from foundations to the main result.
 
+```mermaid
+flowchart LR
+    MB((Mathlib v4.28.0))
+    MB --> BSB[BaireSpace/Basics]
+
+    BSB --> CRD[ContinuousReducibility/Defs]
+    CRD --> BSGRP[BaireSpace/GenRedProp]
+    CRD --> GD[Gluing/Defs]
+    CRD --> SCBA[Scattered/CBAnalysis]
+
+    GD --> GLC[Gluing/LocallyConstant]
+    GD --> GUB[Gluing/UpperBound]
+
+    SCBA --> SNS[Scattered/NonScattered]
+    SCBA --> SD[Scattered/Decomposition]
+
+    BQOR[BQO/Ramsey] --> BQO2[BQO/TwoBQO]
+    BQO2 --> BQOO[BQO/OrdinalBQO]
+
+    BQOO --> PGD[PointedGluing/Defs]
+    BSB --> PGD
+
+    PGD --> MF[MinFun/*]
+    PGD --> CBR[CBRank/*]
+    PGD --> BP[Basics/Properties]
+    PGD --> MAXF[MaxFun/*]
+    PGD --> SS[SelfSimilarity]
+    PGD --> LBL[LowerBoundLemma]
+    PGD --> UB[UpperBound/*]
+    PGD --> CPR[ClopenPartitionReduces]
+    PGD --> GS[GeneralStructure]
+
+    MF --> MFT[MinFun/Theorems]
+
+    CBR --> CBRS[CBRank/RegularSimple]
+
+    BP --> BF[Basics/Functoriality]
+    BP --> BGI[Basics/GluingInjection]
+    BGI --> BCT[Basics/ContinuousOnTau]
+
+    MAXF --> MAXFM[MaxFun/Maximum]
+    MAXF --> MAXFLRH[MaxFun/LimitRankHelpers/*]
+
+    BGI --> GS
+    BQOO --> GS
+
+    GS --> SFD[ScatFun/Defs]
+    SFD --> SFTL[ScatFun/LiftToLex]
+    SFTL --> SFRL[ScatFun/ReflectLevel]
+    SFRL --> MRSFB[MainResults/ScatFunBQO]
+    MRSFB --> MAIN([Main.lean])
+
+    style MB fill:#534AB7,color:#EEEDFE,stroke:#3C3489
+    style BSB fill:#185FA5,color:#E6F1FB,stroke:#0C447C
+    style CRD fill:#185FA5,color:#E6F1FB,stroke:#0C447C
+    style BSGRP fill:#0C447C,color:#E6F1FB,stroke:#042C53
+    style GD fill:#0C447C,color:#E6F1FB,stroke:#042C53
+    style GLC fill:#085041,color:#E1F5EE,stroke:#04342C
+    style GUB fill:#085041,color:#E1F5EE,stroke:#04342C
+    style SCBA fill:#0C447C,color:#E6F1FB,stroke:#042C53
+    style SNS fill:#085041,color:#E1F5EE,stroke:#04342C
+    style SD fill:#085041,color:#E1F5EE,stroke:#04342C
+    style BQOR fill:#BA7517,color:#FAEEDA,stroke:#854F0B
+    style BQO2 fill:#BA7517,color:#FAEEDA,stroke:#854F0B
+    style BQOO fill:#BA7517,color:#FAEEDA,stroke:#854F0B
+    style PGD fill:#993C1D,color:#FAECE7,stroke:#712B13
+    style MF fill:#993C1D,color:#FAECE7,stroke:#712B13
+    style MFT fill:#712B13,color:#FAECE7,stroke:#4A1B0C
+    style CBR fill:#993C1D,color:#FAECE7,stroke:#712B13
+    style CBRS fill:#712B13,color:#FAECE7,stroke:#4A1B0C
+    style BP fill:#993556,color:#FBEAF0,stroke:#72243E
+    style BF fill:#72243E,color:#FBEAF0,stroke:#4B1528
+    style BGI fill:#72243E,color:#FBEAF0,stroke:#4B1528
+    style BCT fill:#4B1528,color:#FBEAF0,stroke:#4B1528
+    style MAXF fill:#993C1D,color:#FAECE7,stroke:#712B13
+    style MAXFM fill:#712B13,color:#FAECE7,stroke:#4A1B0C
+    style MAXFLRH fill:#712B13,color:#FAECE7,stroke:#4A1B0C
+    style SS fill:#444441,color:#F1EFE8,stroke:#2C2C2A
+    style LBL fill:#444441,color:#F1EFE8,stroke:#2C2C2A
+    style UB fill:#444441,color:#F1EFE8,stroke:#2C2C2A
+    style CPR fill:#444441,color:#F1EFE8,stroke:#2C2C2A
+    style GS fill:#444441,color:#F1EFE8,stroke:#2C2C2A
+    style SFD fill:#3C3489,color:#EEEDFE,stroke:#26215C
+    style SFTL fill:#3C3489,color:#EEEDFE,stroke:#26215C
+    style SFRL fill:#3C3489,color:#EEEDFE,stroke:#26215C
+    style MRSFB fill:#534AB7,color:#EEEDFE,stroke:#3C3489
+    style MAIN fill:#534AB7,color:#EEEDFE,stroke:#3C3489
 ```
+<!--```
 Mathlib (v4.28.0)
      │
      ▼
-BaireSpace/Basics ──────────────────────────────────────┐
+BaireSpace/Basics ───────────────────────────────────────┐
      │                                                   │
      ▼                                                   │
 ContinuousReducibility/Defs                              │
@@ -116,7 +197,7 @@ ContinuousReducibility/Defs                              │
      └──▶ Scattered/CBAnalysis ──▶ Scattered/NonScattered│
                └────────────────▶ Scattered/Decomposition│
                                                          │
-BQO/Ramsey ──▶ BQO/TwoBQO ──▶ BQO/OrdinalBQO            │
+BQO/Ramsey ──▶ BQO/TwoBQO ──▶ BQO/OrdinalBQO             │
                                     │                    │
                     ┌───────────────┘                    │
                     │                                    │
@@ -148,7 +229,7 @@ BQO/Ramsey ──▶ BQO/TwoBQO ──▶ BQO/OrdinalBQO            │
                                                                      ▼
                                                                Main.lean
 ```
-
+-->
 ---
 
 ## 3. Proof Tree for Main Theorem 3
