@@ -52,7 +52,13 @@ Because WQOs lack closure properties under infintary operations, this is achieve
 
 - [x] **Core Definitions:** Formalized main concepts about functions and the concept of 2-BQO an intermediate strengthening of WQO which I believe to be enough to carry out the proof.
 - [x] **Preliminary Lemmas and intermediate Theorems:** Proved intermediate results concerning Scattered functions and the Pointed Gluing operation.
-- [ ] **Main Theorem:** A major step has been already formally proved with the General Structure theorem and its corollaries (more information in ![Summary](STRUCTURE.md)). 
+- [ ] **Main Theorem:** A major step has been already formally proved with the General Structure theorem and its corollaries (more information in [Summary](STRUCTURE.md)).
+
+### Most Advanced Formally Verified Result
+
+The screenshot below shows Lean 4's kernel accepting the proof of `ScatFun.Reduces.isTwoBQO` — that continuous reducibility is a **2-BQO on scattered functions** — which is the central claim of the project:
+
+![Lean 4 proof of ScatFun.Reduces.isTwoBQO](proof_isTwoBQO.png)
 
 ## 💻 Code Highlight
 
