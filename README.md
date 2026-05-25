@@ -27,20 +27,20 @@ The paper formalized here deals with the following quasi-order on functions:
 **Definition** A function `f : X → Y'` **continuously reduces** to `g : X' → Y'` if there is a continuous `σ : X → X'` and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
 such that `f(x) = τ(g(σ(x)))` for all `x` in `X`.
 
-![A diagram to help visualize the continuous reduction](ContinuouslyReducesDiagram.png)
+<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">
 
 The main result states that this quasi-order is a WQO on a large class of functions
 
 **Theorem (Main Theorem 3)** Continuous reducibility is a well-quasi-order on the class of scattered continuous functions from a zero-dimensional separable metrizable space to a metrizable space.
 
-This is achieved by proving a stronger property, that of better-quasi-ordering (BQO). 
+Because WQOs lack closure properties under infintary operations, this is achieved by proving a stronger property, that of better-quasi-ordering (BQO). 
 
 
 ## 🚀 Current Status
 
 - [x] **Core Definitions:** Formalized main concepts about functions and the concept of 2-BQO an intermediate strengthening of WQO which I believe to be enough to carry out the proof.
-- [x] **Preliminary Lemmas:** Proved intermediate results concerning Scattered functions and the Pointed Gluing operation.
-- [ ] **Main Theorem:** A major step has been already formally proved with the General Structure theorem and its corollaries (more information in ![Summary](STRUCTURE.md)).
+- [x] **Preliminary Lemmas and intermediate Theorems:** Proved intermediate results concerning Scattered functions and the Pointed Gluing operation.
+- [ ] **Main Theorem:** A major step has been already formally proved with the General Structure theorem and its corollaries (more information in ![Summary](STRUCTURE.md)). 
 
 ## 💻 Code Highlight
 
