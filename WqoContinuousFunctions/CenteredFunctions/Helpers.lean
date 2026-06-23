@@ -29,7 +29,7 @@ focused pieces.
 -/
 
 -- Note: a zero-stream neighborhood contains a cylinder via `nbhd_basis zeroStream`
--- (`BaireSpace/Basics.lean`); for `prependZerosOne` heads being zero use
+-- (`ZeroDimensionalSpaces/Basics.lean`); for `prependZerosOne` heads being zero use
 -- `prependZerosOne_head_eq_zero` (`PointedGluing/Defs.lean`).  A regular sequence has
 -- arbitrarily large dominating indices via `Preorder.IsRegularSeq.exists_ge` (`BQO/WQO.lean`),
 -- strengthened to a strictly monotone dominating reindexing by

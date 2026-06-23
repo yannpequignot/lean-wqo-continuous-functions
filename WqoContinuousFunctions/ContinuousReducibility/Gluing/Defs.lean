@@ -283,9 +283,7 @@ continuous.  If each block `fᵢ : Aᵢ → Bᵢ` is continuous, then the glued 
 coordinate into the relatively-clopen blocks `{x | x 0 = i}`; on each block the
 glued map agrees with `prepend i ∘ fᵢ ∘ unprepend`, a composition of continuous
 maps.  Continuity then follows from the pasting lemma
-`continuous_of_relativeClopenPartition_seq`.
-
-TODO (geometry, Fact 2.16): discharge this `sorry`. -/
+`continuous_of_relativeClopenPartition_seq`. -/
 theorem gluingFunVal_preserves_continuity
     (A B : ℕ → Set (ℕ → ℕ))
     (f : ∀ i, A i → B i)
@@ -349,9 +347,7 @@ then the glued map on `GluingSet A` is scattered.
 `y ∈ S`; its first coordinate `i = y 0` selects a block.  Apply scatteredness of
 `fᵢ` to the projection of `S ∩ {first coord = i}` into `Aᵢ` to obtain an open set
 on which the block — hence the glued map — is constant.  (This mirrors
-`pointedGluing_scattered`, without the `0^ω` base-point case.)
-
-TODO (geometry, Fact 2.16): discharge this `sorry`. -/
+`pointedGluing_scattered`, without the `0^ω` base-point case.) -/
 theorem gluingFun_scattered
     (A B : ℕ → Set (ℕ → ℕ))
     (f : ∀ i, A i → B i)
