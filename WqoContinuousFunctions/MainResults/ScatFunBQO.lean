@@ -1,6 +1,7 @@
-import WqoContinuousFunctions.BQO.TwoBQO
-import WqoContinuousFunctions.BQO.OrdinalBQO
+import BQO.TwoBQO
+import BQO.OrdinalBQO
 import WqoContinuousFunctions.ScatFun.ReflectLevel
+import WqoContinuousFunctions.ScatFun.FiniteGluing
 
 open scoped Topology
 open Set Function TopologicalSpace Classical
@@ -9,64 +10,46 @@ set_option autoImplicit false
 
 noncomputable section
 
-namespace ScatFun
-
 /-!
-## Assembling the proof of MainTheorem3
+## Assembling the proof of MainTheorem3 (2-BQO of `ScatFun`)
 
-The next three declarations assemble `ScatFun.bad_restricts_to_level` and
-`ScatFun.Level.no_bad` into the full theorem.
+**Proof architecture.**  The whole result rests on the structural input
+`levels_finitely_generated` (in `MainResults/Main.lean`):
 
-**Proof architecture.**
+1. `ScatFun.Level.isTwoBQO` — each CB-rank level `α < ω₁` is 2-BQO.  By
+   `levels_finitely_generated` the level embeds into a single `FinGl B`, which is
+   2-BQO by `ScatFun.FinGl.isTwoBQO`; pull back with `TwoBQO.comap`.
 
-1. `ScatFun.no_bad_all_levels` — transfinite induction on `β < ω₁`:
-   assume no bad sequence exists at any level `γ < β` (induction hypothesis),
-   show no bad sequence exists at level `β`.
-   The inductive step consists of providing the `ih` that `ScatFun.Level.no_bad` expects:
-   if a bad `PairSeq (ScatFun.LevelLT β)` existed, we would coerce it to
-   `PairSeq ScatFun`, apply `ScatFun.bad_restricts_to_level` to land at some level `γ`,
-   observe `γ < β` from the membership bound, and contradict the induction hypothesis.
+2. `levels_no_bad` — the `iff_noBad` reformulation of (1): no bad pair-sequence at
+   any level.
 
-2. `ScatFun.Reduces.isTwoBQO` — if a bad `PairSeq ScatFun` existed,
-   `ScatFun.bad_restricts_to_level` would produce a bad sequence at some level `β < ω₁`,
-   contradicting `ScatFun.no_bad_all_levels β`.
+3. `ScatFun.Reduces.isTwoBQO` — `ScatFun.bad_restricts_to_level` reflects any bad
+   `PairSeq ScatFun` onto a single level `β < ω₁`, where (2) forbids it.  In other
+   words, `bad_restricts_to_level` is exactly the statement that
+   `ScatFun.Level.isTwoBQO` (all levels 2-BQO) implies `ScatFun.Reduces.isTwoBQO`.
 
-3. `ScatFun.Reduces.isWQO` — WQO corollary via `TwoBQO.wellQuasiOrdered`.
+4. `ScatFun.Reduces.isWQO` — WQO corollary via `TwoBQO.wellQuasiOrdered`.
+
+This replaces the earlier transfinite-induction route (`no_bad_all_levels` resting
+on the `ScatFun.Level.no_bad` inductive step): the induction is now encapsulated in
+the eventual proof of `levels_finitely_generated`, and the order-theoretic glue is
+the single reflection lemma `bad_restricts_to_level`.
 -/
 
-/-- **Auxiliary (transfinite induction).** For every `β < ω₁`, there is no bad
-pair-sequence in `ScatFun.Level β`. The proof is by strong transfinite induction
-on `β`, using `ScatFun.Level.no_bad` as the inductive step. -/
-theorem no_bad_all_levels (β : Ordinal.{0}) (hβ : β < omega1) :
-    ¬ ∃ f : PairSeq (ScatFun.Level β), PairSeq.IsBad (ScatFun.Level.reduces β) f := by
-  revert hβ
-  induction β using Ordinal.induction with
-  | h β ih_β =>
-    intro hβ
-    -- Apply ScatFun.Level.no_bad; it suffices to supply the inductive hypothesis,
-    -- i.e., that no bad pair-sequence exists in ScatFun.LevelLT β.
-    apply ScatFun.Level.no_bad β hβ
-    intro ⟨f, hbad⟩
-    -- Coerce f : PairSeq (ScatFun.LevelLT β) to a PairSeq ScatFun by forgetting the bound.
-    let g : PairSeq ScatFun := fun m n h => (f m n h).val
-    have hbad_g : PairSeq.IsBad ScatFun.Reduces g :=
-      fun m n l hmn hnl hrel => hbad m n l hmn hnl hrel
-    -- ScatFun.bad_restricts_to_level gives a level γ < ω₁ and a bad restriction there.
-    obtain ⟨γ, hγ_ω1, e, he, hbad_γ, hrank⟩ := ScatFun.bad_restricts_to_level g hbad_g
-    -- Since every element of f has CB-rank < β, we get γ < β.
-    have hγ_lt_β : γ < β :=
-      -- hrank 0 1 h : CBRank (f (e 0) (e 1) (he h)).val.func = γ
-      -- (f (e 0) (e 1) (he h)).prop : CBRank (f (e 0) (e 1) (he h)).val.func < β
-      hrank 0 1 (by norm_num : (0:ℕ) < 1) ▸
-        (f (e 0) (e 1) (he (by norm_num : (0:ℕ) < 1))).prop
-    -- Build a bad pair-sequence at level γ and contradict the induction hypothesis.
-    let f_γ : PairSeq (ScatFun.Level γ) :=
-      fun m n h => ⟨PairSeq.restrict g e he m n h, hrank m n h⟩
-    exact ih_β γ hγ_lt_β (hγ_lt_β.trans hβ)
-      ⟨f_γ, fun m n l hmn hnl hrel => hbad_γ m n l hmn hnl hrel⟩
+/-- **Each CB-rank level is 2-BQO.**  By `levels_finitely_generated` the whole
+level `α` embeds into a single `FinGl B`, which is 2-BQO by `ScatFun.FinGl.isTwoBQO`;
+pull back along the inclusion `Level α ↪ FinGl B` with `TwoBQO.comap`. -/
+theorem ScatFun.Level.isTwoBQO (α : Ordinal.{0}) (hα : α < omega1) :
+    TwoBQO (ScatFun.Level.reduces α) := by
+  obtain ⟨n, B, hB⟩ := ScatFun.levels_finitely_generated α hα
+  exact (ScatFun.FinGl.isTwoBQO B).comap
+    (fun F : ScatFun.Level α => ⟨F.val, hB F.val F.prop⟩)
 
-end ScatFun
-
+/-- **No bad pair-sequence at any level**, the `iff_noBad` form of
+`ScatFun.Level.isTwoBQO`. -/
+theorem levels_no_bad (α : Ordinal.{0}) (hα : α < omega1) :
+    ¬ ∃ f : PairSeq (ScatFun.Level α), PairSeq.IsBad (ScatFun.Level.reduces α) f :=
+  (TwoBQO.iff_noBad _).mp (ScatFun.Level.isTwoBQO α hα)
 
 /-- **Main Theorem 3 for ScatFun — 2-BQO strengthening.**
 Continuous reducibility is a 2-BQO on scattered continuous functions from
@@ -76,15 +59,15 @@ This is the specialisation of Theorem 1.5 of the memoir to `ScatFun`.
 It is stronger than WQO: every pair-sequence has a good triple.
 
 **Proof.** If a bad `PairSeq ScatFun` existed, `ScatFun.bad_restricts_to_level`
-would produce a bad sequence at some level `β < ω₁`, contradicting
-`ScatFun.no_bad_all_levels`. -/
+would reflect it onto a single level `β < ω₁`, contradicting `levels_no_bad β`
+(i.e. `ScatFun.Level.isTwoBQO β`). -/
 theorem ScatFun.Reduces.isTwoBQO : TwoBQO ScatFun.Reduces := by
   rw [TwoBQO.iff_noBad]
   intro ⟨f, hbad⟩
   obtain ⟨β, hβ, e, he, hbad_level, hrank⟩ := ScatFun.bad_restricts_to_level f hbad
   let f_β : PairSeq (ScatFun.Level β) :=
     fun m n h => ⟨PairSeq.restrict f e he m n h, hrank m n h⟩
-  exact ScatFun.no_bad_all_levels β hβ
+  exact levels_no_bad β hβ
     ⟨f_β, fun m n l hmn hnl hrel => hbad_level m n l hmn hnl hrel⟩
 
 /-- **Main Theorem 3 for ScatFun — WQO version.**

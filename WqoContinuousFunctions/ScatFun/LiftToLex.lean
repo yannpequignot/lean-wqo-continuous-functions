@@ -1,6 +1,6 @@
 import WqoContinuousFunctions.PointedGluing.GeneralStructure
-import WqoContinuousFunctions.BQO.TwoBQO
-import WqoContinuousFunctions.BQO.OrdinalBQO
+import BQO.TwoBQO
+import BQO.OrdinalBQO
 import WqoContinuousFunctions.ScatFun.Defs
 
 open scoped Topology

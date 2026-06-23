@@ -2,7 +2,7 @@ import Mathlib.Tactic
 import Mathlib.SetTheory.Ordinal.Basic
 import Mathlib.SetTheory.Ordinal.Arithmetic
 import Mathlib.Order.SuccPred.Basic
-import WqoContinuousFunctions.BQO.OrdinalBQO
+import BQO.OrdinalBQO
 import WqoContinuousFunctions.PointedGluing.Basics.GluingInjection
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.ClopenRestriction
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.TreeArgument
@@ -216,7 +216,11 @@ private lemma MaxFun_le_MinFun : ∀ (η : Ordinal.{0}), η < omega1 →
         rw [← Ordinal.add_one_eq_succ, ← Ordinal.add_one_eq_succ]
         rw [mul_add, mul_one, add_assoc, add_assoc]; norm_num
       rw [h1, h2]
-      exact MaxFun_le_MinFun_succ (η + ↑n) (η + 2 * ↑n) ih
+      -- `MaxDom`/`MinDom` are well-founded (`limitRecOn`) and do not reduce definitionally,
+      -- so a default-transparency `exact` makes `isDefEq` spin trying to `whnf` them
+      -- (≈17 min here).  Matching at `reducible` transparency forbids that unfolding and the
+      -- goal closes structurally in milliseconds.
+      with_reducible exact MaxFun_le_MinFun_succ (η + ↑n) (η + 2 * ↑n) ih
 
 set_option maxHeartbeats 8000000 in
 /- Tree argument: MaxFun(η) ≤ g for limit η with CBRank g = η.
@@ -283,8 +287,11 @@ private lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
     have h_scat := CoRestrict_scattered B g hg (C (p n))
     have h_cont := CoRestrict_continuous B g hgc (C (p n))
     have h_cast : (2 : Ordinal.{0}) * ↑(m n) = ↑(2 * m n) := by push_cast; ring_nf
-    have hmin_g : ContinuouslyReduces (MinFun (α' n + 2 * ↑(m n)))
-        (CoRestrict' B g (C (p n))) :=
+    -- No type ascription: every argument is explicit and concrete, so the result type
+    -- `ContinuouslyReduces (MinFun (α' n + 2 * ↑(m n))) (CoRestrict' B g (C (p n)))` is
+    -- inferred directly.  Ascribing it forced a target-unification that attempted a
+    -- coercion and spun `whnf`-ing the well-founded `MinDom` (≈44 s).
+    have hmin_g :=
       minFun_is_minimum (α' n + 2 * ↑(m n))
         (by rw [h_cast]; exact lt_trans (by rw [← h_cast]; exact hδ n) hη)
         (PreImage B g (C (p n)))

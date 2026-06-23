@@ -1,6 +1,9 @@
 import WqoContinuousFunctions.CenteredFunctions.Defs
 import WqoContinuousFunctions.CenteredFunctions.Helpers
 import WqoContinuousFunctions.PointedGluing.UpperBound.Theorem
+import WqoContinuousFunctions.ScatFun.Operations
+import WqoContinuousFunctions.ScatFun.FiniteGluing
+import WqoContinuousFunctions.PointedGluing.MinFun.Theorems
 import Mathlib.Tactic
 import Mathlib.Topology.Basic
 import Mathlib.Topology.Separation.Basic
@@ -33,12 +36,11 @@ memoir on continuous reducibility between functions.
 * `rigidityOfCocenter_finiteGluing` — Proposition 4.4, Item 3
 * `rigidityOfCocenter_reducibleByPieces` — Proposition 4.4, Item 4
 * `residualCorestrictionOfCentered` — Corollary 4.5
-* `centeredAsPgluing_forward` — Theorem 4.6, Item 1 (forward)
 * `centeredAsPgluing_iff_monotone` — Theorem 4.6, Item 2
 * `centeredAsPgluing_CBrank` — Theorem 4.6, CB-rank consequence
 
 ### Section 2: Centered functions and structure of continuous reducibility (§4.2)
-* `localCenterednessFromBQO` — Theorem 4.7
+* `localCenterednessFromTwoBQO_scatFun` — Theorem 4.7
 * `finitegenerationAndPgluing_upper` — Proposition 4.8, Item 1
 * `finitegenerationAndPgluing_lower` — Proposition 4.8, Item 2
 * `finitenessOfCenteredFunctions` — Theorem 4.9
@@ -66,20 +68,59 @@ neighborhood `U` of `0^ω` and every `n ∈ ℕ`, there exists a continuous redu
 `0^ω ∉ cl(im(f ∘ σ))`. By regularity, we can find `m` large enough such that
 `N_{(0)^m} ⊆ U` and `f_n ≤ f_m`, giving the desired reduction. -/
 theorem pgluingOfRegularIsCentered
-    (A B : ℕ → Set (ℕ → ℕ))
-    (f : ∀ i, A i → B i)
-    (hf_reg : IsRegularSeq (fun i => (fun (x : A i) => (f i x : ℕ → ℕ)))) :
+    (F : ℕ → ScatFun)
+    (hf_reg : Preorder.IsRegularSeq ScatFun.Reduces F) :
     IsCenterFor
-      (fun (x : PointedGluingSet A) => PointedGluingFun A B f x)
-      ⟨zeroStream, zeroStream_mem_pointedGluingSet A⟩ := by
-  -- Proof skeleton: for any open U ∋ zeroStream in the subspace topology,
-  -- construct a reduction from the full pointed gluing to its restriction on U.
-  intro U hU hzU
-  -- Step 1: Find N such that {x | ∀ k < N, x k = 0} ∩ PointedGluingSet A ⊆ U
-  -- Step 2: For each piece i, find j ≥ N with f_i ≤ f_j by regularity
-  -- Step 3: Construct σ by redirecting piece i to piece j (embedded in U)
-  -- Step 4: Construct τ accordingly
-  sorry
+      (ScatFun.pgl F).func
+      ⟨zeroStream, zeroStream_mem_pointedGluingSet _⟩ := by
+  -- By `pgl_isCenterFor_of_local`, it suffices to give, for each block `i` and each
+  -- neighbourhood `V ∋ 0^ω`, a reduction of `(F i).func` into `pgl F` landing in `V`
+  -- with closure avoiding `0^ω`.  Regularity gives `j ≥ N` with `F i ≤ F j`; we redirect
+  -- block `i` into block `j` (which for `j` large sits in `V`, with image in the clopen
+  -- `{y | y j = 1}` avoiding `0^ω`).
+  apply pgl_isCenterFor_of_local
+  intro i V hV hzV
+  obtain ⟨n, hn⟩ :=
+    nbhd_basis' (ScatFun.pgl F).domain ⟨zeroStream, zeroStream_mem_pointedGluingSet _⟩ V hV hzV
+  obtain ⟨j, hjn, hred⟩ := hf_reg.exists_ge i n
+  obtain ⟨σ₀, hσ₀cont, τ₀, hτ₀cont, hστ₀⟩ := hred
+  set σ : (F i).domain → ↥(ScatFun.pgl F).domain :=
+    fun z => ⟨prependZerosOne j (σ₀ z).val,
+      prependZerosOne_mem_pointedGluingSet _ j _ (σ₀ z).prop⟩ with hσ
+  -- `pgl F` on `σ z` is the block-`j` embedding `(0)^j(1)·(F j).func (σ₀ z)`.
+  have hfs : ∀ z, (ScatFun.pgl F).func (σ z) = prependZerosOne j ((F j).func (σ₀ z)) :=
+    fun z => ScatFun.pgl_func_block F j (σ₀ z)
+  refine ⟨σ, fun y => τ₀ (stripZerosOne j y), ?_, ?_, ?_, ?_, ?_⟩
+  · -- continuity of σ
+    exact Continuous.subtype_mk
+      ((continuous_prependZerosOne j).comp (continuous_subtype_val.comp hσ₀cont)) _
+  · -- reduction equation
+    intro z
+    show (F i).func z = τ₀ (stripZerosOne j ((ScatFun.pgl F).func (σ z)))
+    rw [hfs z, stripZerosOne_prependZerosOne]
+    exact hστ₀ z
+  · -- continuity of τ on the relevant range
+    apply hτ₀cont.comp (continuous_stripZerosOne j).continuousOn
+    rintro _ ⟨z, rfl⟩
+    refine ⟨z, ?_⟩
+    show ((F j).func ∘ σ₀) z = stripZerosOne j ((ScatFun.pgl F).func (σ z))
+    rw [hfs z, stripZerosOne_prependZerosOne]
+    rfl
+  · -- image of σ lands in V
+    intro z
+    refine hn ?_
+    intro k hk
+    exact prependZerosOne_head_eq_zero j _ k (lt_of_lt_of_le (Finset.mem_range.mp hk) hjn)
+  · -- 0^ω is not in the closure of the image (it sits in the clopen {y | y j = 1})
+    have hCcl : IsClosed {y : Baire | y j = 1} :=
+      isClosed_singleton.preimage (continuous_apply j)
+    have hsub : Set.range (fun z => (ScatFun.pgl F).func (σ z)) ⊆ {y : Baire | y j = 1} := by
+      rintro _ ⟨z, rfl⟩
+      simp only [Set.mem_setOf_eq, hfs z]
+      exact prependZerosOne_at_i j _
+    intro h
+    have : zeroStream ∈ {y : Baire | y j = 1} := hCcl.closure_subset_iff.mpr hsub h
+    simp [zeroStream] at this
 
 /-
 **Fact 4.2 (Centerinvariance) — Item 1.**
@@ -168,29 +209,21 @@ on `CB_α(f)` — hence `f` is simple and all centers have the same image.
 
 *Proof sketch (⇐ / contrapositive):* If two centers `x₀, x₁` map to different
 values `f(x₀) ≠ f(x₁)`, then by induction both belong to every `CB_α(f)`,
-so the perfect kernel is nonempty and `f` is not scattered. -/
+so the perfect kernel is nonempty and `f` is not scattered.
+Not formalized yet -/
 theorem scatteredHaveCocenter
     {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A] [Small.{0} A]
+    [TopologicalSpace A] [MetrizableSpace A]
     [TopologicalSpace B] [T2Space B]
-    (f : A → B) (hf_cent : IsCentered f) :
-    ScatteredFun f ↔ (∀ x y : A, IsCenterFor f x → IsCenterFor f y → f x = f y) := by
-  constructor
-  · -- Forward: scattered → all centers have same image
-    -- By contrapositive: if two centers x, y have f(x) ≠ f(y),
-    -- then f is not scattered (centers_different_images_not_scattered)
-    intro hf_scat x y hx hy
-    by_contra h
-    exact centers_different_images_not_scattered f x y hx hy h hf_scat
-  · -- Backward: all centers same image → scattered
-    -- Contrapositive: not scattered → ∃ centers with different images
-    intro hcocenter
-    -- This direction requires showing that if f is not scattered,
-    -- then there exist two centers with different images.
-    -- The key idea: non-scattered means the perfect kernel is nonempty,
-    -- and points in the perfect kernel can be used to find centers
-    -- with different images.
-    sorry
+    (f : A → B) (hf_scat: ScatteredFun f):
+    ∀ x y : A, IsCenterFor f x → IsCenterFor f y → f x = f y := by
+  -- Forward: scattered → all centers have same image
+  -- By contrapositive: if two centers x, y have f(x) ≠ f(y),
+  -- then f is not scattered (centers_different_images_not_scattered)
+  intro x y hx hy
+  by_contra h
+  exact centers_different_images_not_scattered f x y hx hy h hf_scat
+
 
 /--
 **Proposition 4.3 — Second part.**
@@ -199,14 +232,18 @@ distinguished point.
 -/
 theorem scatteredCentered_isSimple
     {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A] [Small.{0} A]
+    [TopologicalSpace A] [MetrizableSpace A]
     [TopologicalSpace B] [T2Space B]
     (f : A → B) (hf_scat : ScatteredFun f)
     (hf_cent : IsCentered f) :
-    ∃ (y : B), ∀ x : A, IsCenterFor f x → f x = y := by
-  have h_cocenter : ∀ x y : A, IsCenterFor f x → IsCenterFor f y → f x = f y := by
-    apply (scatteredHaveCocenter f hf_cent).mp hf_scat
-  exact ⟨f hf_cent.choose, fun x hx => h_cocenter _ _ hx hf_cent.choose_spec⟩
+    SimpleFun f := by
+  -- The distinguished point is the cocenter; `centered_scattered_simple_structure`
+  -- supplies the last nonempty CB-level on which `f` is constant.
+  have hy : ∀ x, IsCenterFor f x → f x = cocenter f hf_cent := fun x hx =>
+    scatteredHaveCocenter f hf_scat x hf_cent.choose hx hf_cent.choose_spec
+  obtain ⟨α, _hrank, hne, hempty, hconst⟩ :=
+    centered_scattered_simple_structure f hf_scat hf_cent (cocenter f hf_cent) hy
+  exact ⟨α, hne, hempty, cocenter f hf_cent, hconst⟩
 
 /-
 **Proposition 4.4 (Rigidityofthecocenter) — Item 1.**
@@ -223,18 +260,21 @@ theorem rigidityOfCocenter_tau
     [TopologicalSpace A'] [MetrizableSpace A']
     [TopologicalSpace B'] [T2Space B']
     {f : A → B} {g : A' → B'}
-    (_hf_scat : ScatteredFun f) (_hg_scat : ScatteredFun g)
-    (hf_cent : IsCentered f) (_hg_cent : IsCentered g)
+    (hf_scat : ScatteredFun f) (hg_scat : ScatteredFun g)
+    (hf_cent : IsCentered f) (hg_cent : IsCentered g)
     (hequiv : ContinuouslyEquiv f g)
     {σ : A → A'} {τ : B' → B}
     (hσ : Continuous σ)
     (hτ_cont : ContinuousOn τ (Set.range (g ∘ σ)))
-    (hτ_eq : ∀ a, f a = τ (g (σ a)))
-    (y_f : B) (hy_f : ∀ x, IsCenterFor f x → f x = y_f)
-    (y_g : B') (hy_g : ∀ x, IsCenterFor g x → g x = y_g) :
-    τ y_g = y_f := by
-  obtain ⟨x, hx⟩ := hf_cent
-  rw [← hy_g _ (centerInvariance_equiv hx hequiv hσ hτ_cont hτ_eq), ← hy_f _ hx, hτ_eq]
+    (hτ_eq : ∀ a, f a = τ (g (σ a))) :
+    τ (cocenter g hg_cent) = cocenter f hf_cent := by
+  -- The cocenter values are determined by scatteredness (`scatteredHaveCocenter`).
+  have hy_f : ∀ x, IsCenterFor f x → f x = cocenter f hf_cent := fun x hx =>
+    scatteredHaveCocenter f hf_scat x hf_cent.choose hx hf_cent.choose_spec
+  have hy_g : ∀ x, IsCenterFor g x → g x = cocenter g hg_cent := fun x hx =>
+    scatteredHaveCocenter g hg_scat x hg_cent.choose hx hg_cent.choose_spec
+  rw [← hy_g _ (centerInvariance_equiv hf_cent.choose_spec hequiv hσ hτ_cont hτ_eq),
+    ← hy_f _ hf_cent.choose_spec, hτ_eq]
 
 /-
 **Proposition 4.4 (Rigidityofthecocenter) — Item 2.**
@@ -251,12 +291,12 @@ theorem rigidityOfCocenter_separation
     (_hf_cent : IsCentered f) (_hg_cent : IsCentered g)
     (_hequiv : ContinuouslyEquiv f g)
     (σ : A → A) (τ : (ℕ → ℕ) → (ℕ → ℕ))
-    (_hσ : Continuous σ) (hτ : Continuous τ)
+    (_hσ : Continuous σ) (hτ : ContinuousOn τ (Set.range (g ∘ σ)))
     (hred : ∀ a, f a = τ (g (σ a)))
     (y_f y_g : ℕ → ℕ)
     (_hy_f : ∀ x, IsCenterFor f x → f x = y_f)
     (_hy_g : ∀ x, IsCenterFor g x → g x = y_g)
-    (hτ_yg : τ y_g = y_f) :
+    (hτ_yg : τ y_g = y_f) (hyg_mem : y_g ∈ Set.range (g ∘ σ)) :
     ∀ n : ℕ, y_g ∉ closure (Set.range
       (fun (x : {a : A | (∀ k, k < n → f a k = y_f k) ∧ f a n ≠ y_f n}) =>
         g (σ x.val))) := by
@@ -266,10 +306,178 @@ theorem rigidityOfCocenter_separation
     exact ⟨fun i => Classical.choose (hn.choose_spec.1 i), by simpa only [Classical.choose_spec (hn.choose_spec.1 _)] using hn.choose_spec.2⟩
   have h_contra : ∀ᶠ i in Filter.atTop, f (x_i i) n = y_f n := by
     have h_contra : Filter.Tendsto (fun i => f (x_i i)) Filter.atTop (nhds y_f) := by
-      simpa only [hred, hτ_yg] using hτ.continuousAt.tendsto.comp hx_i
+      -- `τ` is continuous within `range (g ∘ σ)` at `y_g`, and the sequence stays in it.
+      have hx' : Filter.Tendsto (fun i => g (σ (x_i i))) Filter.atTop
+          (nhdsWithin y_g (Set.range (g ∘ σ))) :=
+        tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ hx_i
+          (Filter.Eventually.of_forall (fun i => ⟨(x_i i : A), rfl⟩))
+      have hcomp := Filter.Tendsto.comp (hτ _ hyg_mem) hx'
+      rw [hτ_yg] at hcomp
+      simpa only [Function.comp, hred] using hcomp
     rw [tendsto_pi_nhds] at h_contra
     simpa using h_contra n
   exact h_contra.exists.elim fun i hi => x_i i |>.2.2 hi
+
+/-- **Continuity of a reduction at the cocenter.**
+If `(σ, τ)` witnesses `F.func ≤ G.func` (both centered scattered) and a family `x i`
+satisfies `G.func (σ (x i)) → y_g` (the cocenter of `G`), then `F.func (x i) → y_f`
+(the cocenter of `F`).
+
+This is the analytic heart of Proposition 4.4.  Although `τ` is only continuous on
+`range (G.func ∘ σ)`, the cocenter `y_g = G.func (σ x_f)` *lies in* that range (where
+`x_f` is a center of `F`, so `σ x_f` is a center of `G` by `centerInvariance_equiv` and
+`G.func (σ x_f) = y_g` by `scatteredHaveCocenter`), and `τ y_g = y_f`.  So `τ` is
+genuinely continuous at the limit point, and the conclusion follows by transporting the
+convergence through `τ`. -/
+lemma reduction_tendsto_cocenter {A B : Type*}
+    [TopologicalSpace A] [TopologicalSpace B] [MetrizableSpace B]
+    {f : A → Baire} {g : B → Baire}
+    (hg_scat : ScatteredFun g)
+    (hf_cent : IsCentered f) (hg_cent : IsCentered g)
+    (hequiv : ContinuouslyEquiv f g)
+    {σ : A → B} (hσ : Continuous σ)
+    {τ : Baire → Baire} (hτ : ContinuousOn τ (Set.range (g ∘ σ)))
+    (hred : ∀ a, f a = τ (g (σ a)))
+    {ι : Type*} {l : Filter ι} {x : ι → A}
+    (hx : Filter.Tendsto (fun i => g (σ (x i))) l (nhds (cocenter g hg_cent))) :
+    Filter.Tendsto (fun i => f (x i)) l (nhds (cocenter f hf_cent)) := by
+  set xf := hf_cent.choose with hxf_def
+  have hxf : IsCenterFor f xf := hf_cent.choose_spec
+  -- `σ x_f` is a center of `g`, so it is mapped to the cocenter `y_g`.
+  have hcenterG : IsCenterFor g (σ xf) :=
+    centerInvariance_equiv hxf hequiv hσ hτ hred
+  have hyg_eq : g (σ xf) = cocenter g hg_cent :=
+    scatteredHaveCocenter g hg_scat (σ xf) hg_cent.choose hcenterG hg_cent.choose_spec
+  have hyg_mem : cocenter g hg_cent ∈ Set.range (g ∘ σ) := ⟨xf, hyg_eq⟩
+  -- `τ y_g = y_f`.
+  have hτyf : τ (cocenter g hg_cent) = cocenter f hf_cent := by
+    rw [← hyg_eq, ← hred xf]
+    rfl
+  -- `τ` is continuous within the range at `y_g`, and the sequence stays in the range.
+  have hwithin : ContinuousWithinAt τ (Set.range (g ∘ σ)) (cocenter g hg_cent) :=
+    hτ _ hyg_mem
+  have hx' : Filter.Tendsto (fun i => g (σ (x i))) l
+      (nhdsWithin (cocenter g hg_cent) (Set.range (g ∘ σ))) :=
+    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ hx
+      (Filter.Eventually.of_forall (fun i => ⟨x i, rfl⟩))
+  have hcomp : Filter.Tendsto (fun i => τ (g (σ (x i)))) l
+      (nhds (cocenter f hf_cent)) := by
+    have := Filter.Tendsto.comp hwithin hx'
+    rwa [hτyf] at this
+  simpa only [hred] using hcomp
+
+/-- **Center of an open restriction.**  If `x` is a center of `f` and `V` is an open
+neighbourhood of `x`, then `⟨x, _⟩` is a center of the restriction `f|_V = f ∘ val`.
+
+The witnessing reductions for `f ≤ f|_W'` (`W' ⊆ V` open around `x`) come from the
+center property of `f` on the ambient nbhd `val '' W'`, transported across the open
+embedding `val : V → A`. -/
+lemma isCenterFor_restrict {A B : Type*} [TopologicalSpace A] [TopologicalSpace B]
+    {f : A → B} {x : A} (hx : IsCenterFor f x)
+    {V : Set A} (hV : IsOpen V) (hxV : x ∈ V) :
+    IsCenterFor (f ∘ (Subtype.val : V → A)) ⟨x, hxV⟩ := by
+  intro W hW hxW
+  -- `W' = val '' W ⊆ A` is open (open embedding) and contains `x`.
+  set W' : Set A := Subtype.val '' W with hW'_def
+  have hW'_open : IsOpen W' := hV.isOpenMap_subtype_val W hW
+  have hxW' : x ∈ W' := ⟨⟨x, hxV⟩, hxW, rfl⟩
+  obtain ⟨σ₀, hσ₀, τ₀, hτ₀, h₀⟩ := hx W' hW'_open hxW'
+  -- Every point of `W'` lies in `V`, and (re-realised in `↥V`) lies in `W`.
+  have hsubV : ∀ w' : ↥W', (w' : A) ∈ V := by
+    rintro ⟨a, b, _, rfl⟩; exact b.2
+  have hsubW : ∀ w' : ↥W', (⟨(w' : A), hsubV w'⟩ : ↥V) ∈ W := by
+    rintro ⟨a, b, hbW, rfl⟩
+    have : (⟨(b : A), hsubV ⟨(b : A), b, hbW, rfl⟩⟩ : ↥V) = b := Subtype.ext rfl
+    rw [this]; exact hbW
+  set φ : ↥W' → ↥W := fun w' => ⟨⟨(w' : A), hsubV w'⟩, hsubW w'⟩ with hφ
+  have hφ_cont : Continuous φ :=
+    Continuous.subtype_mk (Continuous.subtype_mk continuous_subtype_val _) _
+  -- Reduce `f∘val_V ≤ (f∘val_V)|_W` via `(φ ∘ σ₀ ∘ val_V, τ₀)`.
+  refine ⟨fun v => φ (σ₀ ((Subtype.val : V → A) v)), ?_, τ₀, ?_, ?_⟩
+  · exact hφ_cont.comp (hσ₀.comp continuous_subtype_val)
+  · refine hτ₀.mono ?_
+    rintro _ ⟨v, rfl⟩
+    exact ⟨(v : A), rfl⟩
+  · intro v
+    exact h₀ (v : A)
+
+/-- **Cylinder basis bound.**  If `y` is not in the closure of `S ⊆ Baire`, some finite
+initial segment `[0, M)` already witnesses that every point of `S` differs from `y`.
+(The complement of `closure S` is an open neighbourhood of `y`, hence contains a cylinder
+`nbhd y M`, which is therefore disjoint from `S`.) -/
+lemma exists_lt_disagree_of_notMem_closure {S : Set Baire} {y : Baire}
+    (h : y ∉ closure S) : ∃ M : ℕ, ∀ z ∈ S, ∃ k < M, z k ≠ y k := by
+  obtain ⟨M, hM⟩ := nbhd_basis y (closure S)ᶜ isClosed_closure.isOpen_compl h
+  refine ⟨M, fun z hz => ?_⟩
+  by_contra hcon
+  push_neg at hcon
+  have hz_nbhd : z ∈ nbhd y M := by
+    simp only [nbhd, Set.mem_setOf_eq]
+    exact fun i hi => hcon i (Finset.mem_range.mp hi)
+  exact hM hz_nbhd (subset_closure hz)
+
+/-- **Separation for the pushed ray (the analytic core of Item 3).**
+With `(σ, τ)` reducing `F.func ≤ G.func`, `x_f` a center of `F`, `V` an open nbhd of
+`x_f`, and `(ρ, κ)` the center-reduction `F.func ≤ F.func|_V`, the cocenter `y_g` is not
+in the closure of the image of the `n`-ray of `F` under `G.func ∘ σ ∘ ρ`.
+
+*Proof:* a sequence converging to `y_g` would, by `reduction_tendsto_cocenter` applied to
+`(σ, τ)`, force `F.func (val (ρ x_j)) → y_f`; since `y_f = cocenter (F.func|_V)`, a second
+application of `reduction_tendsto_cocenter` to `(ρ, κ)` forces `F.func (x_j) → y_f`,
+contradicting membership in the ray (where the `n`-th coordinate stays `≠ y_f n`). -/
+lemma ray_separation
+    (F G : ScatFun) (hF_cent : IsCentered F.func) (hG_cent : IsCentered G.func)
+    (hequiv : ContinuouslyEquiv F.func G.func)
+    {σ : ↑F.domain → ↑G.domain} (hσ : Continuous σ)
+    {τ : Baire → Baire} (hτ : ContinuousOn τ (Set.range (G.func ∘ σ)))
+    (hred : ∀ a, F.func a = τ (G.func (σ a)))
+    {V : Set ↑F.domain} (hV : IsOpen V) {xf : ↑F.domain} (hxfV : xf ∈ V)
+    (hxf : IsCenterFor F.func xf)
+    {ρ : ↑F.domain → ↥V} (hρ : Continuous ρ)
+    {κ : Baire → Baire} (hκ : ContinuousOn κ (Set.range ((F.func ∘ Subtype.val) ∘ ρ)))
+    (hred_c : ∀ a, F.func a = κ (F.func (Subtype.val (ρ a)))) (n : ℕ) :
+    cocenter G.func hG_cent ∉ closure (Set.range
+      (fun (x : {a : ↑F.domain | (∀ k, k < n → F.func a k = cocenter F.func hF_cent k) ∧
+          F.func a n ≠ cocenter F.func hF_cent n}) =>
+        G.func (σ (Subtype.val (ρ x.val))))) := by
+  -- The restricted function `F.func|_V`, bundled with scatteredness/centeredness/equiv.
+  set gV : ↥V → Baire := F.func ∘ (Subtype.val : V → ↑F.domain) with hgV
+  have hVscat : ScatteredFun gV := scattered_restrict F.func F.hScat V
+  have hVcent : IsCentered gV := ⟨⟨xf, hxfV⟩, isCenterFor_restrict hxf hV hxfV⟩
+  have hVequiv : ContinuouslyEquiv F.func gV :=
+    ⟨⟨ρ, hρ, κ, hκ, hred_c⟩,
+     ⟨Subtype.val, continuous_subtype_val, id, continuousOn_id, fun _ => rfl⟩⟩
+  -- The cocenter of `F.func|_V` is the cocenter of `F.func`.
+  have hxf_cocenter : F.func xf = cocenter F.func hF_cent :=
+    scatteredHaveCocenter F.func F.hScat xf hF_cent.choose hxf hF_cent.choose_spec
+  have hVcocenter : cocenter gV hVcent = cocenter F.func hF_cent := by
+    have h := scatteredHaveCocenter gV hVscat hVcent.choose ⟨xf, hxfV⟩ hVcent.choose_spec
+      (isCenterFor_restrict hxf hV hxfV)
+    rw [show cocenter gV hVcent = gV hVcent.choose from rfl, h]
+    exact hxf_cocenter
+  -- Suppose the cocenter were in the closure; extract a sequence.
+  intro hmem
+  rw [mem_closure_iff_seq_limit] at hmem
+  obtain ⟨u, hu_mem, hu_lim⟩ := hmem
+  choose x_j hx_j using hu_mem
+  have hlim1 : Filter.Tendsto (fun j => G.func (σ (Subtype.val (ρ (x_j j).val)))) Filter.atTop
+      (nhds (cocenter G.func hG_cent)) := by simpa only [hx_j] using hu_lim
+  -- First engine application: along `σ`, the pushed source converges to `y_f`.
+  have hlim2 : Filter.Tendsto (fun j => F.func (Subtype.val (ρ (x_j j).val))) Filter.atTop
+      (nhds (cocenter F.func hF_cent)) :=
+    reduction_tendsto_cocenter G.hScat hF_cent hG_cent hequiv hσ hτ hred hlim1
+  -- Second engine application: along `ρ` (the center-reduction), the source converges to `y_f`.
+  have hlim3 : Filter.Tendsto (fun j => F.func ((x_j j).val)) Filter.atTop
+      (nhds (cocenter F.func hF_cent)) := by
+    have hx2 : Filter.Tendsto (fun j => gV (ρ ((x_j j).val))) Filter.atTop
+        (nhds (cocenter gV hVcent)) := by rw [hVcocenter]; exact hlim2
+    exact reduction_tendsto_cocenter hVscat hF_cent hVcent hVequiv hρ hκ hred_c hx2
+  -- But the source stays in the `n`-ray, so its `n`-th coordinate never equals `y_f n`.
+  rw [tendsto_pi_nhds] at hlim3
+  have hev : ∀ᶠ j in Filter.atTop, F.func ((x_j j).val) n = cocenter F.func hF_cent n := by
+    simpa using hlim3 n
+  obtain ⟨j, hj⟩ := hev.exists
+  exact (x_j j).2.2 hj
 
 /-- **Proposition 4.4 (Rigidityofthecocenter) — Item 3.**
 For all `m, n ∈ ℕ` there is `M ≥ m` such that
@@ -280,30 +488,78 @@ Since `σ(x)` is a center for `g`, find `(σ', τ')` reducing `f` to `g|_U`.
 By the separation property, find `M > m` with `N_{y_g|_{M+1}}` disjoint from
 the closure of `g ∘ σ'(dom(Ray(f, y_f, n)))`. -/
 theorem rigidityOfCocenter_finiteGluing
-    {A : Type*} [TopologicalSpace A] [MetrizableSpace A]
-    {f g : A → ℕ → ℕ}
-    (hf_scat : ScatteredFun f) (hg_scat : ScatteredFun g)
-    (hf_cent : IsCentered f) (hg_cent : IsCentered g)
-    (hequiv : ContinuouslyEquiv f g)
-    (y_f y_g : ℕ → ℕ)
-    (hy_f : ∀ x, IsCenterFor f x → f x = y_f)
-    (hy_g : ∀ x, IsCenterFor g x → g x = y_g) :
+    (F G : ScatFun)
+    (hF_cent : IsCentered F.func) (hG_cent : IsCentered G.func)
+    (hequiv : ContinuouslyEquiv F.func G.func) :
     ∀ m n : ℕ, ∃ M : ℕ, m ≤ M ∧
       ContinuouslyReduces
-        (fun (x : {a : A | (∀ k, k < n → f a k = y_f k) ∧ f a n ≠ y_f n}) =>
-          f x.val)
-        (fun (x : {a : A | ∃ i, m ≤ i ∧ i ≤ M ∧
-          (∀ k, k < i → g a k = y_g k) ∧ g a i ≠ y_g i}) =>
-          g x.val) := by
-  -- Proof skeleton:
-  -- Step 1: Use continuity of g and the equivalence to get σ : A → A with f = τ ∘ g ∘ σ
-  -- Step 2: Since σ(center_f) is a center for g, find U ∋ σ(center_f) open
-  --         with g(U) in the m-cylinder of y_g
-  -- Step 3: By centerInvariance_reduce, Ray(f,y_f,n) ≤ g|_U
-  -- Step 4: By rigidityOfCocenter_separation, find M > m with
-  --         N_{y_g|_{M+1}} disjoint from the closure of g ∘ σ'(dom(Ray(f,y_f,n)))
-  -- Step 5: Conclude Ray(f,y_f,n) ≤ ⊔_{i=m}^{M} Ray(g,y_g,i)
-  sorry
+        (fun (x : {a : ↑F.domain | (∀ k, k < n → F.func a k = cocenter F.func hF_cent k) ∧
+            F.func a n ≠ cocenter F.func hF_cent n}) =>
+          F.func x.val) -- the ray of F at n
+        (fun (x : {a : ↑G.domain | ∃ i, m ≤ i ∧ i ≤ M ∧ -- the gluing of rays [m, M] of G
+          (∀ k, k < i → G.func a k = cocenter G.func hG_cent k) ∧
+          G.func a i ≠ cocenter G.func hG_cent i}) => G.func x.val) := by
+  intro m n
+  -- Step 1: a reduction `(σ, τ)` of `F.func ≤ G.func`; `σ x_f` is a center of `G` whose
+  -- image is the cocenter `y_g`.
+  obtain ⟨σ, hσ, τ, hτ, hred⟩ := hequiv.1
+  have hxf : IsCenterFor F.func hF_cent.choose := hF_cent.choose_spec
+  have hcenterG : IsCenterFor G.func (σ hF_cent.choose) :=
+    centerInvariance_equiv hxf hequiv hσ hτ hred
+  have hyg_eq : G.func (σ hF_cent.choose) = cocenter G.func hG_cent :=
+    scatteredHaveCocenter G.func G.hScat _ hG_cent.choose hcenterG hG_cent.choose_spec
+  -- Step 2: lower-bound neighbourhood `U ∋ σ x_f`; pull back to `V ∋ x_f`.
+  obtain ⟨U, hU_open, hσxfU, hU⟩ :=
+    cocenter_continuity_cylinder continuous_id (σ hF_cent.choose) (cocenter G.func hG_cent)
+      G.hCont hcenterG hyg_eq m
+  set V : Set ↑F.domain := σ ⁻¹' U with hV_def
+  have hV_open : IsOpen V := hU_open.preimage hσ
+  have hxfV : hF_cent.choose ∈ V := by simpa [hV_def, Set.mem_preimage] using hσxfU
+  -- Step 3: the center-reduction `F.func ≤ F.func|_V`, witnessed by `(ρ, κ)`.
+  obtain ⟨ρ, hρ, κ, hκ, hred_c⟩ := hxf V hV_open hxfV
+  -- Step 4: separation — `y_g` avoids the closure of the pushed ray image.
+  have hsep := ray_separation F G hF_cent hG_cent hequiv hσ hτ hred hV_open hxfV hxf hρ hκ
+    hred_c n
+  -- Step 5: a uniform bound `M₀` from the cylinder basis.
+  obtain ⟨M₀, hM₀⟩ := exists_lt_disagree_of_notMem_closure hsep
+  refine ⟨max m M₀, le_max_left _ _, ?_⟩
+  -- Step 6: assemble the reduction `(x ↦ ⟨σ (val (ρ x.val)), _⟩, κ ∘ τ)`.
+  -- Membership of each pushed source point in `⊔_{[m, max m M₀]} Ray_G`.
+  have hmem : ∀ (x : {a : ↑F.domain | (∀ k, k < n → F.func a k = cocenter F.func hF_cent k) ∧
+        F.func a n ≠ cocenter F.func hF_cent n}),
+      σ (Subtype.val (ρ x.val)) ∈
+        {a : ↑G.domain | ∃ i, m ≤ i ∧ i ≤ max m M₀ ∧
+          (∀ k, k < i → G.func a k = cocenter G.func hG_cent k) ∧
+          G.func a i ≠ cocenter G.func hG_cent i} := by
+    intro x
+    have hb_range : G.func (σ (Subtype.val (ρ x.val))) ∈ Set.range
+        (fun (y : {a : ↑F.domain | (∀ k, k < n → F.func a k = cocenter F.func hF_cent k) ∧
+            F.func a n ≠ cocenter F.func hF_cent n}) =>
+          G.func (σ (Subtype.val (ρ y.val)))) := ⟨x, rfl⟩
+    have hb_ne : G.func (σ (Subtype.val (ρ x.val))) ≠ cocenter G.func hG_cent :=
+      fun h => hsep (h ▸ subset_closure hb_range)
+    have hb_ex : ∃ k, G.func (σ (Subtype.val (ρ x.val))) k ≠ cocenter G.func hG_cent k :=
+      Function.ne_iff.mp hb_ne
+    have hb_in_U : σ (Subtype.val (ρ x.val)) ∈ U := (ρ x.val).2
+    refine ⟨Nat.find hb_ex, ?_, ?_, ?_, Nat.find_spec hb_ex⟩
+    · rw [Nat.le_find_iff]
+      exact fun k hk => not_ne_iff.mpr (hU _ hb_in_U k hk)
+    · obtain ⟨k₀, hk₀M, hk₀ne⟩ := hM₀ _ hb_range
+      exact le_trans (Nat.find_le hk₀ne) (le_trans hk₀M.le (le_max_right m M₀))
+    · exact fun k hk => not_ne_iff.mp (Nat.find_min hb_ex hk)
+  refine ⟨fun x => ⟨σ (Subtype.val (ρ x.val)), hmem x⟩, ?_, κ ∘ τ, ?_, ?_⟩
+  · exact Continuous.subtype_mk
+      (hσ.comp (continuous_subtype_val.comp (hρ.comp continuous_subtype_val))) _
+  · apply ContinuousOn.comp hκ
+    · refine hτ.mono ?_
+      rintro _ ⟨x, rfl⟩
+      exact ⟨Subtype.val (ρ x.val), rfl⟩
+    · rintro _ ⟨x, rfl⟩
+      exact ⟨x.val, hred (Subtype.val (ρ x.val))⟩
+  · intro x
+    show F.func x.val = κ (τ (G.func (σ (Subtype.val (ρ x.val)))))
+    rw [hred_c x.val]
+    exact congrArg κ (hred (Subtype.val (ρ x.val)))
 
 /--
 **Proposition 4.4 (Rigidityofthecocenter) — Item 4.**
@@ -311,24 +567,21 @@ theorem rigidityOfCocenter_finiteGluing
 This follows from a recursive application of Item 3.
 -/
 theorem rigidityOfCocenter_reducibleByPieces
-    {A : Type*} [TopologicalSpace A] [MetrizableSpace A]
-    {f g : A → ℕ → ℕ}
-    (hf_scat : ScatteredFun f) (hg_scat : ScatteredFun g)
-    (hf_cent : IsCentered f) (hg_cent : IsCentered g)
-    (hequiv : ContinuouslyEquiv f g)
-    (y_f y_g : ℕ → ℕ)
-    (hy_f : ∀ x, IsCenterFor f x → f x = y_f)
-    (hy_g : ∀ x, IsCenterFor g x → g x = y_g) :
+    (F G : ScatFun)
+    (hF_cent : IsCentered F.func) (hG_cent : IsCentered G.func)
+    (hequiv : ContinuouslyEquiv F.func G.func) :
     ∃ (I : ℕ → Finset ℕ),
       (∀ m n, m ≠ n → Disjoint (I m) (I n)) ∧
       ∀ n, ContinuouslyReduces
-        (fun (x : {a : A | (∀ k, k < n → f a k = y_f k) ∧ f a n ≠ y_f n}) =>
-          f x.val)
-        (fun (x : {a : A | ∃ i ∈ I n,
-          (∀ k, k < i → g a k = y_g k) ∧ g a i ≠ y_g i}) =>
-          g x.val) := by
+        (fun (x : {a : ↑F.domain | (∀ k, k < n → F.func a k = cocenter F.func hF_cent k) ∧
+            F.func a n ≠ cocenter F.func hF_cent n}) =>
+          F.func x.val)
+        (fun (x : {a : ↑G.domain | ∃ i ∈ I n,
+          (∀ k, k < i → G.func a k = cocenter G.func hG_cent k) ∧
+            G.func a i ≠ cocenter G.func hG_cent i}) =>
+          G.func x.val) := by
   by_contra h_contra
-  have :=rigidityOfCocenter_finiteGluing hf_scat hg_scat hf_cent hg_cent hequiv y_f y_g hy_f hy_g
+  have :=rigidityOfCocenter_finiteGluing F G hF_cent hG_cent hequiv
   choose M hM₁ hM₂ using this
   refine h_contra ⟨fun n => Finset.Icc (Nat.recOn n 0 fun n IH => M IH n + 1) (M (Nat.recOn n 0 fun n IH => M IH n + 1) n), ?_, ?_⟩
   · intro m n hmn
@@ -377,47 +630,18 @@ theorem isCentered_of_equiv
   have := centerInvariance_equiv hx₀ hequiv.symm hσ'_cont hτ'_cont (fun x => hτ'_eq x ▸ rfl) ; aesop
 
 theorem residualCorestrictionOfCentered
-    {A B : Set (ℕ → ℕ)}
-    (f : A → ℕ → ℕ) (_hfB : ∀ a, f a ∈ B)
-    (_hf : Continuous f)
-    (_hf_scat : ScatteredFun f)
-    (C D : ℕ → Set (ℕ → ℕ))
-    (g : ∀ i, C i → D i)
-    (hg_reg : IsRegularSeq (fun i => (fun (x : C i) => (g i x : ℕ → ℕ))))
-    (hequiv : ContinuouslyEquiv
-      (fun (a : A) => (f a : ℕ → ℕ))
-      (fun (x : PointedGluingSet C) => PointedGluingFun C D g x)) :
-    IsCentered f := by
+    (F : ScatFun)
+    (g : ℕ → ScatFun)
+    (hg_reg : Preorder.IsRegularSeq ScatFun.Reduces g)
+    (hequiv : ContinuouslyEquiv F.func (ScatFun.pgl g).func) :
+    IsCentered F.func := by
   convert isCentered_of_equiv _ hequiv using 1
-  exact ⟨⟨_, zeroStream_mem_pointedGluingSet C⟩, pgluingOfRegularIsCentered C D g hg_reg⟩
+  exact ⟨⟨_, zeroStream_mem_pointedGluingSet _⟩, pgluingOfRegularIsCentered g hg_reg⟩
 
-/--
-**Theorem 4.6 (CenteredasPgluing) — Item 1 (forward direction).**
-If `f ∈ 𝒞` is centered with cocenter `y`, then `f ≤ pgl_n Ray(f, y, n)`.
-
-*Proof:* By Pgluingofraysasupperbound, `f ≤ pgl_n Ray(f, y, n)`.
--/
-theorem centeredAsPgluing_forward
-    {A B : Set (ℕ → ℕ)}
-    (f : A → ℕ → ℕ) (hfB : ∀ a, f a ∈ B)
-    (hf : Continuous f)
-    (_hf_scat : ScatteredFun f)
-    (hf_cent : IsCentered f)
-    (y : ℕ → ℕ) (hy : ∀ x, IsCenterFor f x → f x = y) :
-    -- f ≤ pgl_n Ray(f, y, n) (using pointed gluing of rays)
-    ∃ (C D : ℕ → Set (ℕ → ℕ)) (g : ∀ i, C i → D i),
-      ContinuouslyReduces f
-        (fun (x : PointedGluingSet C) => PointedGluingFun C D g x) := by
-  obtain ⟨C, D, g, hg⟩ : ∃ (C : ℕ → Set (ℕ → ℕ)) (D : ℕ → Set (ℕ → ℕ)) (g : ∀ i, C i → D i),
-      f ≤ fun x => PointedGluingFun C D g x := by
-    have h_red : ∃ (C : ℕ → Set (ℕ → ℕ)) (D : ℕ → Set (ℕ → ℕ)) (g : ∀ i, C i → D i),
-        f ≤ fun x => PointedGluingFun C D g x := by
-      have := pointedGluing_rays_upper_bound f hfB hf y (by
-      obtain ⟨x, hx⟩ := hf_cent; specialize hy x hx; aesop;)
-      exact this
-    exact h_red
-  generalize_proofs at *
-  use C, D, g
+-- **Theorem 4.6 (CenteredAsPgluing) — Item 1 (forward).**  Restated at the `ScatFun`
+-- level as `centeredAsPgluing_forward` in `CenteredFunctions/LocallyCentered/Theorem.lean`,
+-- where the constructive `ScatFun.reduces_pgl_rays` (the proper replacement for the old
+-- degenerate `pointedGluing_rays_upper_bound`) is in scope.
 
 /-- **Theorem 4.6 (CenteredasPgluing) — Item 2.**
 `f ∈ 𝒞` is centered if and only if `f ≡ pgl_i f_i` for some monotone (or regular)
@@ -428,27 +652,22 @@ sequence `(f_i)_i`.
 sets `(I_n)_n` with `f_n = ⊔_{i ∈ I_n} Ray(f, y, i)` monotone.
 Then `pgl_n f_n ≡ pgl_n Ray(f, y, n)` by Pgluingasupperbound. -/
 theorem centeredAsPgluing_iff_monotone
-    {A B : Set (ℕ → ℕ)}
-    (f : A → ℕ → ℕ) (hfB : ∀ a, f a ∈ B)
-    (hf : Continuous f)
-    (hf_scat : ScatteredFun f) :
-    IsCentered f ↔
-    ∃ (C D : ℕ → Set (ℕ → ℕ))
-      (g : ∀ i, C i → D i),
-      IsMonotoneSeq (fun i => (fun (x : C i) => (g i x : ℕ → ℕ))) ∧
-      ContinuouslyEquiv f
-        (fun (x : PointedGluingSet C) => PointedGluingFun C D g x) := by
+    (F : ScatFun) :
+    IsCentered F.func ↔
+    ∃ (g : ℕ → ScatFun),
+      IsMonotoneSeq g ∧
+      ContinuouslyEquiv F.func (ScatFun.pgl g).func := by
   constructor
-  · -- Forward: centered → ∃ monotone equiv
-    -- By monotone_pgluing_of_centered helper
-    exact fun hcent => monotone_pgluing_of_centered f hfB hf hf_scat hcent
-  · -- Backward: ∃ monotone equiv → centered
-    -- By pgluingOfRegularIsCentered + isCentered_of_equiv
-    rintro ⟨C, D, g, hg_mono, hequiv⟩
-    have hg_reg := hg_mono.isRegularSeq
-    have hg_cent : IsCentered (fun (x : PointedGluingSet C) => PointedGluingFun C D g x) :=
-      ⟨⟨zeroStream, zeroStream_mem_pointedGluingSet C⟩,
-       pgluingOfRegularIsCentered C D g hg_reg⟩
+  · -- Forward: centered → ∃ monotone equiv.
+    -- (The forward construction `monotone_pgluing_of_centered` is still pending; see
+    -- CenteredFunctions/Helpers.lean.)
+    sorry
+  · -- Backward: ∃ monotone equiv → centered.
+    -- By `pgluingOfRegularIsCentered` (a monotone sequence is regular) + `isCentered_of_equiv`.
+    rintro ⟨g, hg_mono, hequiv⟩
+    have hg_reg : Preorder.IsRegularSeq ScatFun.Reduces g := IsMonotoneSeq.isRegularSeq g hg_mono
+    have hg_cent : IsCentered (ScatFun.pgl g).func :=
+      ⟨⟨zeroStream, zeroStream_mem_pointedGluingSet _⟩, pgluingOfRegularIsCentered g hg_reg⟩
     exact isCentered_of_equiv hg_cent hequiv
 
 /-- **Theorem 4.6 — CB-rank consequence.**
@@ -462,325 +681,125 @@ theorem centeredAsPgluing_CBrank
     (hf_cent : IsCentered f)
     (y : ℕ → ℕ) (hy : ∀ x, IsCenterFor f x → f x = y) :
     CBRank f = Order.succ (⨆ n, CBRank (RayFun f y n)) := by
-  -- Proof skeleton:
-  -- Step 1: By centeredAsPgluing_forward, f ≤ pgl_n Ray(f, y, n)
-  -- Step 2: By ContinuouslyReduces.rank_monotone, CB(f) ≤ CB(pgl_n Ray(f,y,n))
-  -- Step 3: CB(pgl) = succ(sup_n CB(Ray(f,y,n))) by pointed gluing CB rank formula
-  -- Step 4: For the other direction, each Ray(f,y,n) ≤ f, so CB(Ray) ≤ CB(f)
-  -- Step 5: Since f is centered with successor CB-rank, CB(f) = succ(sup ...)
+  -- `f` is simple: rank `α + 1`, with `f` constant `= y` on `CB_α`.
+  obtain ⟨α, hrank, hne, _hempty, hsimple⟩ :=
+    centered_scattered_simple_structure f hf_scat hf_cent y hy
+  -- `RayFun f y n` has the same CB-rank as the `RaySet`-form ray used by the helpers
+  -- (their domains coincide, since `f a ∈ B` always).
+  have hray_eq : ∀ n, CBRank (RayFun f y n)
+      = CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val) := by
+    intro n
+    have hD : {a : A | (∀ k, k < n → f a k = y k) ∧ f a n ≠ y n}
+            = {a : A | f a ∈ RaySet B y n} := by
+      ext a; simp only [RaySet, Set.mem_setOf_eq]
+      exact ⟨fun h => ⟨hfB a, h⟩, fun h => h.2⟩
+    exact CBRank_comp_homeomorph (Homeomorph.setCongr hD)
+      (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val)
+  -- The supremum of the ray CB-ranks is exactly `α` (`sup_ray_cb_eq_alpha`).
+  have hsup : (⨆ n, CBRank (RayFun f y n)) = α := by
+    rw [iSup_congr hray_eq]
+    exact sup_ray_cb_eq_alpha f hfB hf hf_scat α hne y hsimple
+      (fun n => CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val))
+      (fun _ => rfl) (fun n => ray_cb_le_alpha f hf α y hsimple n)
+  rw [hrank, hsup]
+
+/-- **Theorem 4.9 (Finitenessofcenteredfunctions).**
+If `lam` is `0` or a limit ordinal and `𝒞_{[lam, lam+n]}` is generated by a finite
+family `B` (i.e. `ScatFun.LevelInter lam (lam+n) ⊆ ScatFun.FinGl B`), then every
+centered `g ∈ 𝒞_{[lam, lam+n+1]}` is equivalent either to the minimal function
+`k_{lam+1}` (`ScatFun.minFun lam`) or to the pointed gluing `⊔ G` of some non-empty
+sub-family `G = B ∘ ι` of `B`.
+
+## Provided solution
+
+Let `g ∈ 𝒞_{[lam, lam+n+1]}` be centered, hence of successor CB-rank by
+`centeredAsPgluing_CBrank`.  In particular `g` is not equivalent to the maximal
+function, so `lam < CBRank g.func ≤ lam+n+1`.
+
+By `centeredAsPgluing_iff_monotone` there is a `≤`-monotone sequence `(gᵢ)ᵢ` with
+`g ≡ ScatFun.pgl g`, where for every `i`, `CBRank (gᵢ).func < CBRank g.func ≤ lam+n+1`
+and `(⨆ i, CBRank (gᵢ).func) + 1 = CBRank g.func > lam`.  In particular
+`⨆ i, CBRank (gᵢ).func ≥ lam`.
+
+* **Case `⨆ i, CBRank (gᵢ).func = lam`.**  If `lam = 0` then
+  `g ≡ ScatFun.minFun 0 = ⊔ ∅`.  Otherwise `lam` is limit and
+  `ScatFun.minFun lam ≡ ScatFun.pgl g ≡ g`, because `ScatFun.minFun lam` is the
+  minimum at level `lam+1` (`minFun_is_minimum`) and `g` sits at that level.
+  Both sub-cases land in the left disjunct `ScatFun.Equiv g (ScatFun.minFun lam hlam)`.
+
+* **Case `⨆ i, CBRank (gᵢ).func > lam`.**  By monotonicity there is `j` with
+  `CBRank (gᵢ).func ≥ lam` for all `i ≥ j`, and monotonicity again gives
+  `g ≡ ScatFun.pgl_{i ≥ j} gᵢ` via two applications of `pointedGluing_upper_bound`.
+  For each `i ≥ j`, since `gᵢ ∈ ScatFun.LevelInter lam (lam+n) ⊆ ScatFun.FinGl B`,
+  fix a finite gluing `gᵢ ≡ ScatFun.Gl B tᵢ` and let `Gᵢ = {f ∈ B | tᵢ f > 0}`.
+  Put `G = ⋃_{i ≥ j} Gᵢ`, enumerated as `B ∘ ι` (`ι : Fin k → Fin m`).  `G` is
+  non-empty: otherwise every `gᵢ` (`i ≥ j`) is empty, forcing
+  `⨆ i, CBRank (gᵢ).func = 0`, contradicting `> lam ≥ 0`.  By construction each
+  `gᵢ ∈ ScatFun.FinGl (B ∘ ι)`, and each block of `G` reduces cofinally into
+  `(gᵢ)ᵢ` by monotonicity, so `finitegenerationAndPgluing_upper` /
+  `finitegenerationAndPgluing_lower` give `g ≡ ScatFun.pgl (ScatFun.repSeq (B ∘ ι))`. -/
+theorem finitenessOfCenteredFunctions
+    {lam : Ordinal.{0}} (hlam : lam < omega1)
+    (hlim : Order.IsSuccLimit lam ∨ lam = 0)
+    {m n : ℕ} (B : Fin m → ScatFun)
+    (hgen : ScatFun.LevelInter lam (lam + ↑n) ⊆ ScatFun.FinGl B)
+    (g : ScatFun)
+    (hg_lvl  : g ∈ ScatFun.LevelInter lam (lam + ↑n + 1))
+    (hg_cent : IsCentered g.func) :
+    ScatFun.Equiv g (ScatFun.minFun lam hlam) ∨
+      ∃ (k : ℕ) (ι : Fin k → Fin m), 0 < k ∧
+        ScatFun.Equiv g (ScatFun.pgl (ScatFun.repSeq (B ∘ ι))) := by
   sorry
 
 /-!
-## Section 2: Centered Functions and Structure of Continuous Reducibility (§4.2)
+### Corollary 4.10 (centeredSuccessor)
+
+The two conclusion lemmas of Corollary 4.10.  They are stated here, rather than in
+`CenteredFunctions/Helpers.lean` where the supporting facts (`maxFun_cbRank_eq`,
+`minFun_le_pglMaxFun`, …) live, because the strict-inequality direction needs the
+cocenter-rigidity results of Proposition 4.4 (`rigidityOfCocenter_*`), which are defined
+in this file — and `Theorems.lean` imports `Helpers.lean`, not the other way around.
 -/
 
-/-
-**Theorem 4.7 (LocalCenterednessFromBQO).**
-For all `α < ω₁`, if `𝒞_{<α}` is BQO, then every function in `𝒞_α` is locally
-centered.
+open ScatFun in
+/-- `pgl(ℓ_lam)` does not reduce to `k_{lam+1} + 1` (the strictness of the inequality
+in Corollary 4.10).
 
-*Proof by strong induction on `α`:*
-- *`α = 0`:* The empty function is trivially locally centered.
-- *`α` limit:* `f` has limit CB-rank, so is locally in `𝒞_{<α}`, hence locally centered
-  by induction.
-- *`α` successor:* Let `α = β + 1`. By the Decomposition Lemma, `f` is locally simple.
-  WLOG `f` is simple with distinguished point `ȳ`. For `x ∈ A`, if ∃ `s ⊑ x` with
-  `CB(f|_{N_s}) < CB(f)`, done by induction. Otherwise, `x ∈ CB_α(f)`, `f(x) = ȳ`.
-  For each `n`, `(Ray(f, ȳ, i)|_{N_{x|_n}})_{i ∈ ℕ}` lies in `𝒞_{<α}`.
-  Since `𝒞_{<α}` is WQO, choose `(j_n)_n` with `ρ_n` regular.
-  Since `𝒞_{<α}` is BQO, `(ρ_n)_n` stabilizes. Find `m` with `f|_U ≡ pgl ρ_m`,
-  which is centered by Pgluingofregulariscentered.
--/
-theorem localCenterednessFromBQO
-    (α : Ordinal.{0}) (hα : α < omega1)
-    (hbqo : ∀ (X : ℕ → Type) (Y : ℕ → Type)
-      [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
-      (seq : ∀ n, X n → Y n),
-      (∀ n, ScatteredFun (seq n)) →
-      (∀ n, CBRank (seq n) < α) →
-      ∃ m n, m < n ∧ ContinuouslyReduces (seq m) (seq n)) :
-    ∀ (X Y : Type) [TopologicalSpace X] [TopologicalSpace Y]
-      (f : X → Y),
-      ScatteredFun f → CBRank f = α →
-      IsLocallyCentered f := by
-  -- Proof by strong induction on α:
-  -- Case α = 0: use locallyCentered_rank_zero
-  -- Case α limit: use locallyCentered_limit_rank with induction hypothesis
-  -- Case α = β + 1: use locallyCentered_succ_rank with BQO hypothesis
-  intro X Y _ _ f hf_scat hf_rank
-  have h_ind : ∀ β < α, ∀ (X' Y' : Type) [TopologicalSpace X'] [TopologicalSpace Y'] (g : X' → Y'), ScatteredFun g → CBRank g = β → IsLocallyCentered g := by
-    intros β hβ X' Y' _ _ g hg_scat hg_rank
-    induction' β using Ordinal.induction with β ih generalizing X' Y' g;
-    by_cases hβ_limit : Order.IsSuccLimit β ∧ β ≠ 0;
-    · apply locallyCentered_limit_rank g hg_scat β hβ_limit.left hβ_limit.right hg_rank;
-      exact fun γ hγ X' Y' _ _ g hg_scat hg_rank => ih γ hγ ( lt_trans hγ hβ ) X' Y' g hg_scat hg_rank;
-    · by_cases hβ_zero : β = 0;
-      · convert locallyCentered_rank_zero g hg_scat ( by aesop );
-      · -- Since β is not a limit ordinal and not zero, it must be a successor ordinal.
-        obtain ⟨γ, rfl⟩ : ∃ γ, β = Order.succ γ := by
-          contrapose! hβ_limit;
-          refine' ⟨ ⟨ _, _ ⟩, hβ_zero ⟩;
-          · exact fun h => hβ_zero <| h.eq_bot;
-          · intro γ hγ;
-            exact hβ_limit γ hγ.succ_eq.symm;
-        apply locallyCentered_succ_rank γ (by
-        exact lt_of_le_of_lt ( Order.le_succ _ ) ( lt_of_lt_of_le hβ ( le_of_lt hα ) )) (by
-        exact fun X Y _ _ seq hseq hseq' => hbqo X Y seq hseq fun n => lt_trans ( hseq' n ) hβ) g hg_scat hg_rank (by
-        grind +qlia);
-  by_cases hα_succ : ∃ γ, α = Order.succ γ;
-  · obtain ⟨γ, rfl⟩ := hα_succ
-    exact locallyCentered_succ_rank γ (by
-    exact lt_of_le_of_lt ( Order.le_succ _ ) hα) (by
-    convert hbqo using 1) f hf_scat hf_rank h_ind;
-  · cases' eq_or_ne α 0 with hα_zero hα_nonzero <;> simp_all +decide;
-    · convert locallyCentered_rank_zero f hf_scat hf_rank;
-    · apply locallyCentered_limit_rank f hf_scat α (by
-      constructor;
-      · exact fun h => hα_nonzero <| h.eq_bot;
-      · intro x hx;
-        exact hα_succ x hx.succ_eq.symm) (by
-      grind) hf_rank (by
-      exact h_ind)
+This is the genuinely hard direction.  Both `pgl(ℓ_lam)` and `k_{lam+1}` are centered,
+scattered and *simple* of CB-rank `lam + 1` (their top CB-level is the singleton
+`{0^ω}`), so the CB-rank alone cannot separate them: the obstruction is finer and is
+exactly the content of the cocenter-rigidity results of Proposition 4.4
+(`rigidityOfCocenter_*`, above).  Following the informal proof (`cor:CenteredSucessor`),
+equivalence would force, via `rigidityOfCocenter_reducibleByPieces`, a reduction
+`ℓ_lam ≤ gl_{n<M} k_{α_n+1}` for some finite `M`, whence
+`CBRank ℓ_lam = lam ≤ sup_{n<M} (α_n+1) < lam`, a contradiction.
 
-/-
-**Proposition 4.8 (FinitegenerationandPgluing) — Item 1.**
-If `F ⊆ 𝒞` is finite and `f_i ≤ FinGl(F)` for all `i ∈ ℕ`, then
-`pgl_i f_i ≤ pgl F`.
-
-*Proof:* For all `n`, by hypothesis there exists `k_n` such that `f_n ≤ k_n · F`.
-Set `K_n = Σ_{i<n} k_i` and `I_n = [K_n, K_{n+1})`. This witnesses a reduction
-by pieces from `(f_i)_i` to `ω · ⊔F`, and by Pgluingasupperbound,
-`pgl_i f_i ≤ pgl F`.
--/
-theorem finitegenerationAndPgluing_upper
-    (C D : ℕ → Set (ℕ → ℕ))
-    (f : ∀ i, C i → D i)
-    (k : ℕ)
-    (FC FD : Fin k → Set (ℕ → ℕ))
-    (_F : ∀ j : Fin k, FC j → FD j)
-    -- f_i ≤ FinGl(F) for all i (simplified hypothesis)
-    (_hred : ∀ i, ∃ (m : ℕ),
-      ContinuouslyReduces
-        (fun (x : C i) => (f i x : ℕ → ℕ))
-        (fun (x : GluingSet (fun j => if j < m then Set.univ else ∅)) =>
-          (GluingFunVal _ _ (fun _j => id) x))) :
-    -- pgl_i f_i ≤ pgl F (stated existentially)
-    ∃ (C' D' : ℕ → Set (ℕ → ℕ)) (g' : ∀ i, C' i → D' i),
-      ContinuouslyReduces
-        (fun (x : PointedGluingSet C) => PointedGluingFun C D f x)
-        (fun (x : PointedGluingSet C') => PointedGluingFun C' D' g' x) := by
-  use C, D, f
-  use fun x => x
-  exact ⟨continuous_id, fun x => x, continuousOn_id, fun x => rfl⟩
-
-/-
-**Proposition 4.8 (FinitegenerationandPgluing) — Item 2.**
-If for all `f ∈ F` and all `i ∈ ℕ` there is `j ≥ i` such that `f ≤ f_j`,
-then `pgl F ≤ pgl_i f_i`.
-
-*Proof:* Build a reduction by induction. Given `n`, suppose `(I_m)_{m<n}` are
-built. Use the hypothesis to find injective `ι : F → [j, ∞)` with `g ≤ f_{ι(g)}`
-for all `g ∈ F`. Set `I_n = ι(F)`.
--/
-theorem finitegenerationAndPgluing_lower
-    (C D : ℕ → Set (ℕ → ℕ))
-    (f : ∀ i, C i → D i)
-    (k : ℕ)
-    (FC FD : Fin k → Set (ℕ → ℕ))
-    (F : ∀ j : Fin k, FC j → FD j)
-    (_hcofinal : ∀ (j : Fin k) (i : ℕ), ∃ (m : ℕ), i ≤ m ∧
-      ContinuouslyReduces
-        (fun (x : FC j) => (F j x : ℕ → ℕ))
-        (fun (x : C m) => (f m x : ℕ → ℕ))) :
-    -- pgl F ≤ pgl_i f_i
-    ∃ (C' D' : ℕ → Set (ℕ → ℕ)) (g' : ∀ i, C' i → D' i),
-      ContinuouslyReduces
-        (fun (x : PointedGluingSet C') => PointedGluingFun C' D' g' x)
-        (fun (x : PointedGluingSet C) => PointedGluingFun C D f x) := by
-  exact ⟨_, _, _, ContinuouslyReduces.refl _⟩
-
-/-- **Theorem 4.9 (finitenessofcenteredfunctions).**
-Let `λ` be zero or a limit ordinal and `n ∈ ℕ`. Assume that `𝒞_{[λ, λ+n]}`
-is generated by some finite set `F`. Then for every centered function
-`g ∈ 𝒞_{[λ, λ+n+1]}`, either `g ≡ k_{λ+1}` or there exists a nonempty
-`G ⊆ F` such that `g ≡ pgl G`.
-
-In particular, there are finitely many centered functions up to equivalence
-in `𝒞_{λ+n+1}`.
-
-*Proof:* Let `g` be centered with successor CB-rank. By CenteredasPgluing, there
-is a monotone `(g_i)_i` with `g ≡ pgl_i g_i` and `sup_i CB(g_i) ≥ λ`.
-- If `sup = λ`: `g ≡ k_{λ+1}`.
-- If `sup > λ`: Write `g_i` using generators, define `G = ⋃_{i≥j} G_i`,
-  and by FinitegenerationandPgluing, `g ≡ pgl G`. -/
-theorem finitenessOfCenteredFunctions
-    (lam : Ordinal.{0}) (_hlam : Order.IsSuccLimit lam ∨ lam = 0)
-    (_n : ℕ)
-    (_kgen : ℕ) -- number of generators
-    -- Hypothesis: 𝒞_{[λ, λ+n]} is generated by kgen generators
-    (_hgen : True) :
-    -- There are at most 2^kgen + 1 centered functions up to equivalence in 𝒞_{λ+n+1}
-    True := by
-  trivial
-
-/-- **Corollary 4.10 (cor:CenteredSucessor).**
-Let `λ < ω₁` be either equal to 1 or infinite limit. Then, up to continuous equivalence,
-there are exactly two centered functions in `𝒞_{λ+1}`: `k_{λ+1}` and `pgl ℓ_λ`.
-Moreover, `k_{λ+1} < pgl ℓ_λ` (strict inequality).
-
-*Proof:* Apply finitenessofcenteredfunctions (valid by LocallyConstantFunctions for
-`λ = 1` and JSLgeneralstructure for `λ` limit).
-- For `λ = 1`: any centered function in `𝒞_2` ≡ `pgl G` for `G ⊆ {k_1, ℓ_1}`,
-  giving `k_2` and `pgl{k_1, ℓ_1} ≡ pgl ℓ_1`.
-- For `λ` limit: the only possible `G` is `{ℓ_λ}`.
-- Strictness: suppose `k_{λ+1} ≡ pgl ℓ_λ`, then Rigidityofthecocenter gives a
-  contradiction (for `λ = 1`: `id_ℕ ≤ n · id_1`; for `λ` limit:
-  `CB(ℓ_λ) = λ ≤ sup_{n<M}(α_n+1) < λ`). -/
-theorem centeredSuccessor
-    (lam : Ordinal.{0})
+The supporting rigidity results are now available: `rigidityOfCocenter_finiteGluing`
+(Item 3) and `rigidityOfCocenter_reducibleByPieces` (Item 4) are both proved (over
+`ScatFun`).  What remains here is to instantiate them at `F := pgl(ℓ_lam)` and
+`G := k_{lam+1}` (bundled as `ScatFun`s), feed the reducibility-by-pieces to bound
+`CBRank ℓ_lam = lam` by `sup_{n<M}(α_n+1) < lam`, and derive the contradiction. -/
+lemma pglMaxFun_not_le_minFunPlusOne (lam : Ordinal.{0})
     (hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
     (hlam_lt : lam < omega1) :
-    -- There are exactly two centered functions in 𝒞_{λ+1}: k_{λ+1} and pgl ℓ_λ,
-    -- with k_{λ+1} < pgl ℓ_λ.
-    -- We state this as: there exist exactly two non-equivalent centered
-    -- representatives in 𝒞_{λ+1}.
-    ∃ (X₁ Y₁ X₂ Y₂ : Type)
-      (_ : TopologicalSpace X₁) (_ : TopologicalSpace Y₁)
-      (_ : TopologicalSpace X₂) (_ : TopologicalSpace Y₂)
-      (min_f : X₁ → Y₁) (pgl_max : X₂ → Y₂),
-      IsCentered min_f ∧ IsCentered pgl_max ∧
-      CBRank min_f = Order.succ lam ∧
-      CBRank pgl_max = Order.succ lam ∧
-      ContinuouslyReduces min_f pgl_max ∧
-      ¬ ContinuouslyReduces pgl_max min_f := by
-  -- Proof skeleton:
-  -- Step 1: Construct the two candidates: k_{λ+1} = MinFun lam, pgl(ℓ_λ)
-  -- Step 2: Show both are centered (minFun_isCentered, pglMaxFun_isCentered)
-  -- Step 3: Show both have CB-rank λ+1
-  -- Step 4: Show k_{λ+1} ≤ pgl(ℓ_λ) (minimum reduces to everything at that rank)
-  -- Step 5: Show pgl(ℓ_λ) ≰ k_{λ+1} (by Rigidityofthecocenter)
+    ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam + 1) := by
   sorry
 
-/-!
-## Section 3: Simple Functions at Successors of Limit Levels (§4.3)
--/
-
-/-- **Proposition 4.11 (Simpleiffcoincidenceofcocenters).**
-Let `f ∈ 𝒞` with `f = ⊔_{i ∈ ℕ} f_i` for some sequence of centered functions.
-Set `I = {n ∈ ℕ | CB(f_n) = sup_i CB(f_i)}`.
-1. `CB(f)` is successor iff `I ≠ ∅`.
-2. The CB-degree of `f` is `|{cocenters of f_i | i ∈ I}|`.
-
-In particular, `f` is simple iff `I ≠ ∅` and all cocenters of `f_n` for `n ∈ I`
-coincide with the distinguished point of `f`.
-
-*Proof:*
-Item 1: If `CB(f) = α+1`, then `CB_α(f) = ⊔_n CB_α(f_n)` is nonempty,
-so `CB(f_n) = α+1` for some `n ∈ I`. Conversely, if `n ∈ I` then by
-CenteredasPgluing, `CB(f_n)` is successor, hence `CB(f)` is too.
-
-Item 2: For `n ∈ I`, `f_n` is simple with distinguished point = cocenter.
-Since `CB_α(f) = ⊔_{n ∈ I} CB_α(f_n)`, we get
-`f(CB_α(f)) = {y_n | n ∈ I}`. -/
-theorem simpleIffCoincidenceOfCocenters
-    {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A]
-    [TopologicalSpace B] [T2Space B]
-    (f : A → B)
-    (P : ℕ → Set A) (hclopen : ∀ i, IsClopen (P i))
-    (hdisj : ∀ i j, i ≠ j → Disjoint (P i) (P j))
-    (hcover : ⋃ i, P i = univ)
-    (hf_cent : ∀ i, IsCentered (f ∘ (Subtype.val : P i → A)))
-    (hf_scat : ScatteredFun f) :
-    -- CB(f) is successor ↔ I ≠ ∅ where I = {n | CB(f_n) = sup_i CB(f_i)}
-    (∃ α : Ordinal.{0}, CBRank f = Order.succ α) ↔
-    {n : ℕ | CBRank (f ∘ (Subtype.val : P n → A)) =
-      ⨆ i, CBRank (f ∘ (Subtype.val : P i → A))}.Nonempty := by
-  constructor
-  · -- Forward: CB(f) is successor → I is nonempty
-    -- If CB(f) = α+1, then CB_α(f) = ⋃_n CB_α(f_n) is nonempty,
-    -- so some f_n has CB(f_n) = α+1 = sup CB(f_i)
-    rintro ⟨α, hα⟩
-    exact successor_rank_implies_I_nonempty f P hcover α hα
-  · -- Backward: I nonempty → CB(f) is successor
-    -- If some f_n has CB(f_n) = sup, and f_n is centered (hence has successor CB-rank),
-    -- then CB(f) is successor
-    exact I_nonempty_implies_successor_rank f P hclopen hdisj hcover hf_cent hf_scat
-
-/-- **Theorem 4.12 (simplefunctionslambda+1).**
-Let `λ` be limit or 1. Assume that continuous reducibility is BQO on `𝒞_{<λ}`.
-Any simple function `f ∈ 𝒞_{λ+1}` is continuously equivalent to one of
-`k_{λ+1}`, `k_{λ+1} ⊔ ℓ_λ`, or `pgl ℓ_λ`.
-
-*Proof:* By LocalCenterednessFromBQO, write `f = ⊔_i f_i` with each `f_i` centered.
-By cor:CenteredSucessor, each centered function in `𝒞_{λ+1}` is `k_{λ+1}` or
-`pgl ℓ_λ`. If some `f_i ≡ pgl ℓ_λ`, then `f ≡ pgl ℓ_λ`. Otherwise, WLOG
-all `f_i` with `CB > λ` are `≡ k_{λ+1}`.
-
-If all rays have `CB < λ`, then `f ≡ k_{λ+1}`.
-Otherwise, fix a ray with `CB = λ`: then `k_{λ+1} ⊔ ℓ_λ ≤ f ≤ k_{λ+1} ⊔ ℓ_λ`
-by a diagonal splitting argument. -/
-theorem simpleFunctionsLambdaPlusOne
-    (lam : Ordinal.{0})
+open ScatFun in
+/-- k_{λ+1} and pgl(ℓ_λ) are not equivalent (strict inequality). -/
+lemma minFun_lt_pglMaxFun (lam : Ordinal.{0})
     (hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
-    (hbqo : ∀ (X : ℕ → Type) (Y : ℕ → Type)
-      [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
-      (seq : ∀ n, X n → Y n),
-      (∀ n, ScatteredFun (seq n)) →
-      (∀ n, CBRank (seq n) < lam) →
-      ∃ m n, m < n ∧ ContinuouslyReduces (seq m) (seq n))
-    {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y)
-    (hf_scat : ScatteredFun f)
-    (hf_rank : CBRank f = Order.succ lam)
-    -- f is simple (CB-degree 1): the CB_λ level maps to a single point
-    (hf_simple : ∃ (y : Y), ∀ x ∈ CBLevel f lam, f x = y) :
-    -- f is equivalent to one of k_{λ+1}, k_{λ+1} ⊔ ℓ_λ, or pgl ℓ_λ
-    -- Stated as: there exist three canonical forms and f ≡ one of them
-    ∃ (X₁ Y₁ X₂ Y₂ X₃ Y₃ : Type)
-      (_ : TopologicalSpace X₁) (_ : TopologicalSpace Y₁)
-      (_ : TopologicalSpace X₂) (_ : TopologicalSpace Y₂)
-      (_ : TopologicalSpace X₃) (_ : TopologicalSpace Y₃)
-      (g₁ : X₁ → Y₁) (g₂ : X₂ → Y₂) (g₃ : X₃ → Y₃),
-      ContinuouslyEquiv f g₁ ∨ ContinuouslyEquiv f g₂ ∨ ContinuouslyEquiv f g₃ := by
-  -- Proof skeleton:
-  -- Step 1: By localCenterednessFromBQO, write f = ⊔_i f_i with each f_i centered
-  -- Step 2: By centeredSuccessor, each centered function in 𝓞_{λ+1}
-  --         is ≡ k_{λ+1} or ≡ pgl ℓ_λ
-  -- Step 3: Case analysis on which centered pieces appear:
-  --   (a) If some f_i ≡ pgl ℓ_λ: then f ≡ pgl ℓ_λ
-  --   (b) If all high-rank pieces ≡ k_{λ+1} and all rays have CB < λ:
-  --       then f ≡ k_{λ+1}
-  --   (c) Otherwise: f ≡ k_{λ+1} ⊔ ℓ_λ
-  sorry
-
-/-- **Corollary 4.13 (finitedegreedamuddafuckaz).**
-For `λ` limit or 1, if continuous reducibility is BQO on `𝒞_{<λ}`, then
-the set of functions in `𝒞_{λ+1}` that have finite degree is finitely generated
-by `{ℓ_λ, k_{λ+1}, pgl ℓ_λ}`.
-
-This follows from Theorem 4.12 and the Decomposition Lemma. -/
-theorem finiteDegreeLambdaPlusOne
-    (lam : Ordinal.{0})
-    (_hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
-    (_hbqo : ∀ (X : ℕ → Type) (Y : ℕ → Type)
-      [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
-      (seq : ∀ n, X n → Y n),
-      (∀ n, ScatteredFun (seq n)) →
-      (∀ n, CBRank (seq n) < lam) →
-      ∃ m n, m < n ∧ ContinuouslyReduces (seq m) (seq n)) :
-    -- The set of finite-degree functions in 𝒞_{λ+1} is finitely generated by
-    -- {ℓ_λ, k_{λ+1}, pgl ℓ_λ}
-    -- Stated as: every finite-degree f ∈ 𝒞_{λ+1} reduces to a finite gluing
-    -- of these three generators
-    ∀ (X Y : Type) [TopologicalSpace X] [TopologicalSpace Y]
-      (f : X → Y),
-      ScatteredFun f →
-      CBRank f = Order.succ lam →
-      -- f has finite CB-degree
-      (∃ _n : ℕ, True) →
-      -- f ≤ finite gluing of {ℓ_λ, k_{λ+1}, pgl ℓ_λ}
-      True := by
-  intro _ _ _ _ _ _ _ _; trivial
+    (hlam_lt : lam < omega1) :
+      ContinuouslyReduces (MinFun lam + 1) (SuccMaxFun lam) ∧
+      ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam + 1) := by
+  have hlam_ne : lam ≠ 0 := by
+    rcases hlam with h | h
+    · rw [h]; exact one_ne_zero
+    · exact h.2
+  refine ⟨?_, pglMaxFun_not_le_minFunPlusOne lam hlam hlam_lt⟩
+  obtain ⟨σ, hσ, τ, hτ, heq⟩ := minFun_le_pglMaxFun lam hlam_lt hlam_ne
+  refine ⟨σ, hσ, fun w => τ w + 1, hτ.add continuousOn_const, fun x => ?_⟩
+  have hx : (MinFun lam + 1) x = MinFun lam x + 1 := rfl
+  rw [hx, heq x]
 
 end

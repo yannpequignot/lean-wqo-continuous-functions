@@ -1,5 +1,5 @@
-import WqoContinuousFunctions.BQO.TwoBQO
-import WqoContinuousFunctions.BQO.OrdinalBQO
+import BQO.TwoBQO
+import BQO.OrdinalBQO
 import WqoContinuousFunctions.ScatFun.LiftToLex
 
 open scoped Topology
@@ -60,15 +60,5 @@ theorem bad_restricts_to_level
       have := hmem m n h
       simp only [f_lex] at this
       exact this
-
-/-!
-Here is the final step of the proof of `FGgivesBQO_2`:
-if there are no bad pair-sequences
--/
-theorem Level.no_bad (β : Ordinal.{0}) (hβ : β < omega1)
-    (ih : ¬ ∃ f : PairSeq (ScatFun.LevelLT β), PairSeq.IsBad (ScatFun.LevelLT.reduces β) f)
-    : ¬ ∃ f : PairSeq (ScatFun.Level β), PairSeq.IsBad (ScatFun.Level.reduces β) f := by
-    sorry
-
 
 end ScatFun

@@ -2,6 +2,9 @@ import Mathlib.Tactic
 import Mathlib.Topology.Basic
 import Mathlib.Topology.Bases
 import Mathlib.Topology.Separation.Basic
+import Mathlib.Topology.Separation.CompletelyRegular
+import Mathlib.Topology.Separation.Profinite
+import Mathlib.Topology.Clopen
 import Mathlib.Topology.Order
 import Mathlib.Topology.Constructions
 import Mathlib.Topology.NatEmbedding
@@ -9,8 +12,11 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Order.Disjointed
+
 open scoped Topology
 open Set Function TopologicalSpace
+
+
 
 set_option autoImplicit false
 
@@ -156,6 +162,8 @@ lemma nbhd_basis (x : Baire) : ∀ U : Set Baire, IsOpen U → x ∈ U →
   rw [ha i hi_range]
   exact (hF i hi).2
 
+
+
 /--
 The Baire space has a topological basis consisting of clopen sets.
 -/
@@ -231,20 +239,6 @@ lemma disjointed_clopen {X : Type*} [TopologicalSpace X]
 
 end DisjointedClopen
 
-/-! **Helper (clopen basis).** In a metrizable, separable, totally disconnected space,
-every open set containing a point has a clopen subset containing that point.
-This is a consequence of de Groot's theorem (metrizable + TD → ultra-metrizable)
-and the fact that balls in an ultrametric space are clopen.
-we only use this result in the specific case of subspace of the Baire space.
-This specific result is proved below.
-
-lemma exists_clopen_subset_of_open {X : Type*}
-    [TopologicalSpace X] [SeparableSpace X] [MetrizableSpace X]
-    [TotallyDisconnectedSpace X]
-    (x : X) (U : Set X) (hU : IsOpen U) (hx : x ∈ U) :
-    ∃ V : Set X, IsClopen V ∧ x ∈ V ∧ V ⊆ U := by
-  sorry
- -/
 
 /--
 In the Baire space, every open set containing a point has a clopen subset
@@ -372,3 +366,140 @@ lemma BaNbhd_extend_disjoint {n : ℕ} (s : Fin n → ℕ) (j k : ℕ) (hjk : j 
     simp [Fin.snoc, Fin.last] at this
     exact this
   exact hjk (by omega)
+
+
+/-! ## §2  Representation theorems -/
+
+/-- The Cantor space of infinite binary sequences `ℕ → Fin 2`. -/
+abbrev CantorSpace := ℕ → Fin 2
+
+/-- A topological space is zero-dimensional if it is Hausdorff and admits
+    a basis of clopen sets. -/
+class ZeroDimensionalSpace (X : Type*) [TopologicalSpace X] : Prop where
+  t2 : T2Space X
+  clopen_basis : ∃ B : Set (Set X), IsTopologicalBasis B ∧ ∀ s ∈ B, IsClopen s
+
+/-- Every countable metrizable space is zero-dimensional.
+Proof: metrizable implies T4 implies T3.5 implies completely regular;
+since |X| ≤ ℵ₀ < 𝔠, the clopens form a basis
+(Mathlib's `CompletelyRegularSpace.isTopologicalBasis_clopens_of_cardinalMk_lt_continuum`). -/
+instance (priority := 100) ZeroDimensionalSpace.of_countable_metrizable
+    {X : Type*} [TopologicalSpace X] [MetrizableSpace X] [Countable X] :
+    ZeroDimensionalSpace X where
+  t2 := inferInstance
+  clopen_basis :=
+    ⟨{s | IsClopen s},
+     CompletelyRegularSpace.isTopologicalBasis_clopens_of_cardinalMk_lt_continuum
+       ((Cardinal.mk_le_aleph0_iff.mpr inferInstance).trans_lt Cardinal.aleph0_lt_continuum),
+     fun _ hs => hs⟩
+
+open Classical Topology in
+/-- A separable, metrizable, zero-dimensional space admits a countable clopen basis
+that can be enumerated as a sequence `c : ℕ → Set X`. -/
+lemma exists_clopen_seq_basis {X : Type*} [TopologicalSpace X] [SeparableSpace X]
+    [MetrizableSpace X] [ZeroDimensionalSpace X] :
+    ∃ c : ℕ → Set X, (∀ n, IsClopen (c n)) ∧ IsTopologicalBasis (Set.range c) := by
+  obtain ⟨ B, hB, hBclopen ⟩ := ZeroDimensionalSpace.clopen_basis (X := X);
+  have h_countable : ∃ s : Set (Set X), s ⊆ B ∧ s.Countable ∧ IsTopologicalBasis s := by
+    convert hB.exists_countable;
+    convert UniformSpace.secondCountable_of_separable X;
+    any_goals exact pseudoMetrizableSpaceUniformity X
+    any_goals exact pseudoMetrizableSpaceUniformity_countably_generated X
+    · grind +suggestions;
+    · infer_instance;
+  obtain ⟨ s, hs₁, hs₂, hs₃ ⟩ := h_countable;
+  have := hs₂.exists_eq_range;
+  rcases s.eq_empty_or_nonempty with ( rfl | hs₄ ) <;> simp_all +decide;
+  · refine' ⟨ fun _ => ∅, _, _ ⟩ <;> simp +decide;
+    refine' TopologicalSpace.isTopologicalBasis_of_isOpen_of_nhds _ _ <;> simp +decide [ Set.eq_empty_of_isEmpty ];
+  · obtain ⟨ f, rfl ⟩ := this; exact ⟨ f, fun n => hBclopen _ ( hs₁ ( Set.mem_range_self n ) ), hs₃ ⟩ ;
+
+open Classical Topology in
+/-- The map `x ↦ (n ↦ if x ∈ c n then 1 else 0)` from a Hausdorff space with a clopen
+basis `c` into the Cantor space is a topological embedding. -/
+lemma clopen_seq_embedding {X : Type*} [TopologicalSpace X] [T2Space X]
+    (c : ℕ → Set X) (hc : ∀ n, IsClopen (c n))
+    (hbasis : IsTopologicalBasis (Set.range c)) :
+    IsEmbedding (fun x => (fun n => if x ∈ c n then (1 : Fin 2) else 0) : X → CantorSpace) := by
+  refine' { .. };
+  · refine' le_antisymm _ _;
+    · refine' ( continuous_iff_le_induced.mp _ );
+      refine' continuous_pi fun n => _;
+      refine' continuous_if _ _ _;
+      · simp +decide [ frontier_eq_closure_inter_closure, hc n |>.1, hc n |>.2 ];
+      · exact continuousOn_const;
+      · exact continuousOn_const;
+    · refine' le_of_nhds_le_nhds fun x => _;
+      simp +decide [ nhds_induced, Filter.le_def ];
+      intro U hU;
+      rcases hbasis.mem_nhds_iff.1 hU with ⟨ t, ⟨ n, rfl ⟩, htx, htU ⟩;
+      refine' ⟨ { f : ℕ → Fin 2 | f n = 1 }, _, _ ⟩ <;> simp_all +decide [ Set.subset_def ];
+      exact IsOpen.mem_nhds ( isOpen_discrete { 1 } |> IsOpen.preimage ( continuous_apply n ) ) ( by aesop );
+  · intro x y hxy
+    by_contra hxy_neq
+    obtain ⟨U, hU⟩ : ∃ U ∈ Set.range c, x ∈ U ∧ y ∉ U ∨ y ∈ U ∧ x ∉ U := by
+      have := hbasis.exists_subset_of_mem_open ( show x ∈ ( { y } : Set X ) ᶜ from by simp [ hxy_neq ] ) ( isOpen_compl_singleton ) ; aesop;
+    obtain ⟨ n, rfl ⟩ := hU.1; replace hxy := congr_fun hxy n; aesop;
+
+/--
+PROVIDED SOLUTION
+Let `B` be a basis of clopen sets for `X`.
+Since `X` seperable and metrizable the basis can be taken countable.
+Let `s_n, n∈ ℕ` be an enumeration of the basis.
+Define `f:X → CantorSpace` by `f(x)(n) = 1` if `x∈ s_n` and `f(x)(n) = 0` otherwise.
+Let A be the range of `ƒ`.
+
+(The original statement used `∃ A : Set CantorSpace, X ≃ₜ A`, but `X ≃ₜ A` is
+`Type`-valued, so the existential is stated with `Nonempty` to make it a `Prop`.) -/
+theorem ZerodimMetrizableSep_hom_CantorSubspace {X : Type*}
+    [TopologicalSpace X]
+    [SeparableSpace X] [MetrizableSpace X] [ZeroDimensionalSpace X] :
+    ∃ A : Set CantorSpace, Nonempty (X ≃ₜ A) := by
+  obtain ⟨c, hc, hbasis⟩ := exists_clopen_seq_basis (X := X)
+  haveI : T2Space X := ‹ZeroDimensionalSpace X›.t2
+  have hemb := clopen_seq_embedding c hc hbasis
+  exact ⟨_, ⟨hemb.toHomeomorph⟩⟩
+
+/-- A zero-dimensional space is totally disconnected.
+Proof: the clopen basis separates points (totally separated), which implies totally
+disconnected. -/
+instance (priority := 100) ZeroDimensionalSpace.totallyDisconnectedSpace
+    {X : Type*} [TopologicalSpace X] [ZeroDimensionalSpace X] :
+    TotallyDisconnectedSpace X := by
+  haveI : T2Space X := ZeroDimensionalSpace.t2 (X := X)
+  haveI : T0Space X := inferInstance
+  obtain ⟨B, hB, hBclopen⟩ := ZeroDimensionalSpace.clopen_basis (X := X)
+  -- `totallySeparatedSpace_of_t0_of_basis_clopen` expects the basis of *all* clopen sets.
+  -- Since `B ⊆ {s | IsClopen s}` is itself a basis of open sets, the larger family is a basis too.
+  have htop : IsTopologicalBasis {s : Set X | IsClopen s} :=
+    TopologicalSpace.isTopologicalBasis_of_isOpen_of_nhds (fun u hu => hu.isOpen)
+      fun a u ha hu => by
+        obtain ⟨v, hvB, hav, hvu⟩ := hB.exists_subset_of_mem_open ha hu
+        exact ⟨v, hBclopen v hvB, hav, hvu⟩
+  exact (totallySeparatedSpace_of_t0_of_basis_clopen htop).totallyDisconnectedSpace
+
+/-- The natural map `CantorSpace → Baire` sending each `f : ℕ → Fin 2` to the
+sequence of its underlying natural numbers `n ↦ (f n).val`. -/
+def cantorToBaire : CantorSpace → Baire := fun f n => (f n).val
+
+/-- `cantorToBaire` is a topological embedding. Both spaces carry the product
+topology; on each coordinate `Fin.val : Fin 2 → ℕ` is a closed embedding (the
+image `{0, 1}` is discrete), so the product of these embeddings is an embedding. -/
+lemma cantorToBaire_isEmbedding : Topology.IsEmbedding cantorToBaire :=
+  -- `Fin.val : Fin 2 → ℕ` is a continuous injection from a finite (hence compact)
+  -- discrete space into the discrete (hence Hausdorff) `ℕ`, so it is a closed embedding.
+  Topology.IsEmbedding.piMap fun _ =>
+    (continuous_of_discreteTopology.isClosedEmbedding Fin.val_injective).isEmbedding
+
+/-- Any subset `A` of `CantorSpace` is homeomorphic to its image in `Baire`. -/
+noncomputable def cantorSubsetHomeomorph (A : Set CantorSpace) :
+    A ≃ₜ (cantorToBaire '' A) :=
+  cantorToBaire_isEmbedding.homeomorphImage A
+
+/-- A separable metrizable zero-dimensional space embeds homeomorphically into a
+subset of Baire space (via CantorSpace). -/
+theorem ZeroDimensionalSpace.embedsBaire {X : Type*} [TopologicalSpace X]
+    [SeparableSpace X] [MetrizableSpace X] [ZeroDimensionalSpace X] :
+    ∃ D : Set Baire, Nonempty (X ≃ₜ D) := by
+  obtain ⟨A, ⟨eA⟩⟩ := ZerodimMetrizableSep_hom_CantorSubspace (X := X)
+  exact ⟨cantorToBaire '' A, ⟨eA.trans (cantorSubsetHomeomorph A)⟩⟩

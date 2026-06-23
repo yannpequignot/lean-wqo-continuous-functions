@@ -2,7 +2,7 @@ import Mathlib.Tactic
 import Mathlib.Topology.Basic
 import Mathlib.Topology.Separation.Basic
 import WqoContinuousFunctions.ContinuousReducibility.Defs
-import WqoContinuousFunctions.BaireSpace.GenRedProp
+import ZeroDimensionalSpaces.GenRedProp
 import WqoContinuousFunctions.ContinuousReducibility.Scattered
 import WqoContinuousFunctions.ContinuousReducibility.Gluing
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis

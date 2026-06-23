@@ -1,7 +1,7 @@
 import WqoContinuousFunctions.PointedGluing.Defs
 import WqoContinuousFunctions.PointedGluing.Basics.Properties
 import WqoContinuousFunctions.PointedGluing.CBRank.SimpleHelpers
-import WqoContinuousFunctions.BaireSpace.GenRedProp
+import ZeroDimensionalSpaces.GenRedProp
 
 open scoped Topology
 open Set Function TopologicalSpace Classical
@@ -97,8 +97,6 @@ theorem pointedGluing_lower_bound_lemma
   -- Their union equals {z | z.val ≠ zeroStream}, so ContinuousOn on the
   -- union follows from piecewise continuity.
   --
-  -- ★ SORRY 1 ★
-  -- What is needed:
   --   For each n, the piece above is open in PointedGluingSet C.
   -- Proof sketch: it equals the preimage under (fun z => z.val) of
   --   (cylinder n \ cylinder (n+1)) ∩ {s | s ≠ zeroStream},
@@ -411,7 +409,6 @@ theorem pointedGluing_lower_bound_lemma
 
     -- 5.2  The composition z ↦ τ_global(f(σ z)) is continuous
     --
-    -- ★ SORRY 2 ★
     -- What is needed for the sub-goal `hlift`:
     --   Show that (fun w => ⟨f (σ w), h_incl w ...⟩ : UI) is ContinuousAt z.
     -- This is a subtype membership assertion near z, which holds because:

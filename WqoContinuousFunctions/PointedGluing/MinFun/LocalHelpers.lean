@@ -1,5 +1,5 @@
 import WqoContinuousFunctions.PointedGluing.Defs
-import WqoContinuousFunctions.BaireSpace.GenRedProp
+import ZeroDimensionalSpaces.GenRedProp
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.Decomposition
 import WqoContinuousFunctions.PointedGluing.MaxFun.Helpers
 import WqoContinuousFunctions.PointedGluing.MinFun.Helpers

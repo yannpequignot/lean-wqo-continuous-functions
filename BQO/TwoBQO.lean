@@ -1,4 +1,3 @@
-
 import Mathlib.Tactic
 import Mathlib.Order.WellQuasiOrder
 import Mathlib.Order.WellFoundedSet
@@ -6,8 +5,9 @@ import Mathlib.Order.WellFounded
 import Mathlib.Order.RelClasses
 import Mathlib.Data.Bool.Basic
 import Mathlib.SetTheory.Ordinal.Basic
-import WqoContinuousFunctions.ContinuousReducibility.Defs
-import WqoContinuousFunctions.BQO.Ramsey
+import BQO.WQO
+import BQO.Ramsey
+
 open Set
 
 set_option autoImplicit false
@@ -15,6 +15,7 @@ set_option autoImplicit false
 noncomputable section
 
 open Classical
+open Preorder
 
 
 /-
@@ -47,9 +48,7 @@ def restrict {α : Type*} (f : PairSeq α) (e : ℕ → ℕ) (he_mono : StrictMo
 
 /-- A pair-sequence `f` is **bad** for `r` if:
     for all `m < n < l`, `f(m,n)` and `f(n,l)` are not `r`-related.
-
-    This is the specialisation of Pequignot's "bad super-sequence" to the
-    rank-2 front `[ℕ]²`. -/
+-/
 def IsBad {α : Type*} (r : α → α → Prop) (f : PairSeq α) : Prop :=
   ∀ (m n l : ℕ), ∀ (hmn : m < n) (hnl : n < l),
     ¬ r (f m n hmn) (f n l hnl)
@@ -97,7 +96,7 @@ theorem TwoBQO.iff_noBad {α : Type*} (r : α → α → Prop) :
 ## §3  2-BQO implies WQO
 -/
 
-/-- **2-BQO implies WQO** (Pequignot, Proposition 2.2).
+/-- **2-BQO implies WQO** .
 
 **Proof:** Given a sequence `g : ℕ → α`, apply 2-BQO to the pair-sequence
 `(m, n, _) ↦ g m`. A good triple `m < n < l` yields `r (g m) (g n)`. -/
@@ -167,33 +166,40 @@ theorem TwoBQO.mono {α : Type*} {r s : α → α → Prop}
   intro ⟨f, hbad⟩
   exact h ⟨f, fun m n l hmn hnl hrel => hbad m n l hmn hnl (hincl _ _ hrel)⟩
 
+/-- **Monotone image of a 2-BQO, up to equivalence.**
+
+Let `r` be a preorder on `Q` and `rι` a 2-BQO on `ι`.  If `G : ι → Q` is
+*monotone* (`rι a b → r (G a) (G b)`), then `r` is 2-BQO on the class of
+elements that are `r`-equivalent to some `G i`.
+
+This is the abstract skeleton of the `FinGl` argument: take `ι = ℕⁿ` with its
+(2-BQO) product order, `G = Gl B`, and the class is `FinGl B`.
+
+**Proof.**  Each element `q` of the subtype carries a witness `i` with
+`q ≡ G i`; let `w q` be that witness.  `rι` is 2-BQO, so by `comap` the pulled-
+back relation `rι (w a) (w b)` is 2-BQO on the subtype.  And it implies the
+target: `rι (w a) (w b)` gives `r (G (w a)) (G (w b))` by monotonicity, which
+chains with `a ≤ G (w a)` and `G (w b) ≤ b` to give `r a b`.  Conclude by
+`mono`. -/
+theorem TwoBQO.monotone_image_equiv {ι Q : Type*}
+    {rι : ι → ι → Prop} {r : Q → Q → Prop} [IsPreorder Q r]
+    (hι : TwoBQO rι) (G : ι → Q)
+    (hmono : ∀ a b, rι a b → r (G a) (G b)) :
+    TwoBQO (fun a b : {q : Q // ∃ i, r (G i) q ∧ r q (G i)} => r a.val b.val) := by
+  refine (hι.comap (fun q => q.prop.choose)).mono ?_
+  intro a b hab
+  -- `hab : rι (w a) (w b)` where `w q := q.prop.choose`.
+  have ha := a.prop.choose_spec  -- `r (G (w a)) a.val ∧ r a.val (G (w a))`
+  have hb := b.prop.choose_spec  -- `r (G (w b)) b.val ∧ r b.val (G (w b))`
+  -- `a.val ≤ G (w a) ≤ G (w b) ≤ b.val`.
+  exact trans_of r ha.2 (trans_of r (hmono _ _ hab) hb.1)
+
 /-!
 ### 6.2  Finite products (Dickson's lemma for 2-BQO)
 
 **Theorem:** If `r` and `s` are 2-BQO then the componentwise product
 `r × s` on `α × β` is 2-BQO.
 
-**Proof:** Let `f : PairSeq (α × β)` be bad for `r × s`.
-Write `f₁(m,n) = (f m n).1` and `f₂(m,n) = (f m n).2`.
-
-Step 1: Apply RT² to the colouring of pairs:
-  colour `(m,n)` by 0 if `r (f₁ m n) (f₁ n ?)` ... wait, RT² colours
-  by a fixed colour, but we need to compare consecutive values.
-
-Actually the cleanest argument does NOT need RT²:
-
-If `f` is bad for `r × s`, then `f₁ = (·).1 ∘ f` is bad for `r`:
-- Suppose `f₁` has a good triple `m < n < l`: `r (f₁ m n) (f₁ n l)`.
-- Since `f` is bad: `¬ (r (f₁ m n) (f₁ n l) ∧ s (f₂ m n) (f₂ n l))`.
-- So `¬ s (f₂ m n) (f₂ n l)`.
-
-So the triple that's good for `r` is bad for `s`. We need to find a pair-
-sequence that is globally bad for `s`, not just bad at one triple.
-
-This is where RT² enters: apply it to colour pairs by whether r holds.
-Get an infinite monochromatic set.
-- If r always holds: then for s, the restricted f₂ is bad → contradiction.
-- If r never holds: then f₁ is bad → contradiction with r being 2-BQO.
 -/
 
 /-- **Product closure** (Dickson's lemma for 2-BQO).
@@ -585,3 +591,231 @@ theorem TwoBQO.lexSigmaQO
     exfalso
     rw [TwoBQO.iff_noBad] at hr
     exact hr ⟨PairSeq.restrict f₁ e he, hbad⟩
+
+
+/-! ## Domination Order on subsets -/
+
+def DomOrder {α : Type*} (r : α → α → Prop) (X Y : Set α) : Prop :=
+  ∀ x ∈ X, ∃ y ∈ Y, r x y
+
+
+lemma badSeq_dom_to_pairSeq {α : Type*} {r : α → α → Prop}
+    (f : ℕ → Set α)
+    (hbad : ∀ m n, m < n → ¬ DomOrder r (f m) (f n)) :
+    ∃ f_ : PairSeq α,
+      (∀ m n (hmn : m < n), f_ m n hmn ∈ f m) ∧
+      PairSeq.IsBad r f_ := by
+  have hex : ∀ m n, m < n → ∃ x, x ∈ f m ∧ ∀ y ∈ f n, ¬ r x y := by
+    intro m n hmn
+    have h := hbad m n hmn
+    unfold DomOrder at h
+    push_neg at h
+    exact h
+  let g : ∀ m n, m < n → α := fun m n hmn => Classical.choose (hex m n hmn)
+  have hg_mem : ∀ m n (hmn : m < n), g m n hmn ∈ f m :=
+    fun m n hmn => (Classical.choose_spec (hex m n hmn)).1
+  have hg_bad : ∀ m n (hmn : m < n), ∀ y ∈ f n, ¬ r (g m n hmn) y :=
+    fun m n hmn => (Classical.choose_spec (hex m n hmn)).2
+  refine ⟨g, hg_mem, ?_⟩
+  intro m n l hmn hnl
+  exact hg_bad m n hmn (g n l hnl) (hg_mem n l hnl)
+
+
+theorem TwoBQO.dom_twoBQO {α : Type*} {r : α → α → Prop} (hr : TwoBQO r) :
+    WellQuasiOrdered (DomOrder r) := by
+  intro g
+  by_contra hcon
+  push_neg at hcon
+  -- hcon : ∀ m n, m < n → ¬ DomOrder r (g m) (g n)
+  obtain ⟨f_, _, hf_bad⟩ := badSeq_dom_to_pairSeq g hcon
+  rw [TwoBQO.iff_noBad] at hr
+  exact hr ⟨f_, hf_bad⟩
+
+/-! ## Infinite sequences
+Infinite sequences `:ℕ → Q` in a 2-BQO `Q` are wqo under EmbeddingForall
+-/
+def EmbedForAll {α : Type*} (r : α → α → Prop) (s : ℕ → α) (s' : ℕ → α) : Prop :=
+  ∃ e : ℕ → ℕ, StrictMono e ∧ ∀ n, r (s n) (s' (e n))
+
+/-- `EmbedForAll r` is a preorder on `ℕ → Q` whenever `r` is (reflexivity via the
+identity reindexing, transitivity via composition of strictly monotone reindexings). -/
+instance EmbedForAll.isPreorder {Q : Type*} (r : Q → Q → Prop) [IsPreorder Q r] :
+    IsPreorder (ℕ → Q) (EmbedForAll r) where
+  refl s := ⟨id, strictMono_id, fun n => refl_of r (s n)⟩
+  trans := by
+    rintro s s' s'' ⟨e₁, he₁, h₁⟩ ⟨e₂, he₂, h₂⟩
+    exact ⟨e₂ ∘ e₁, he₂.comp he₁, fun n => trans_of r (h₁ n) (h₂ (e₁ n))⟩
+
+
+
+private lemma exists_strictMono_of_greedy {P : ℕ → ℕ → Prop}
+    (hbuild : ∀ (start i : ℕ), ∃ j, start < j ∧ P i j) :
+    ∃ e : ℕ → ℕ, StrictMono e ∧ ∀ i, P i (e i) := by
+  let e : ℕ → ℕ := fun i =>
+    Nat.rec (motive := fun _ => ℕ)
+      (hbuild 0 0).choose
+      (fun n prev => (hbuild prev (n + 1)).choose)
+      i
+  have he0 : e 0 = (hbuild 0 0).choose := rfl
+  have hesucc : ∀ n, e (n + 1) = (hbuild (e n) (n + 1)).choose := fun n => rfl
+  have hP0 : P 0 (e 0) := he0 ▸ (hbuild 0 0).choose_spec.2
+  have hPsucc : ∀ n, P (n + 1) (e (n + 1)) := fun n =>
+    (hesucc n) ▸ (hbuild (e n) (n + 1)).choose_spec.2
+  have hlt : ∀ n, e n < e (n + 1) := fun n =>
+    (hesucc n) ▸ (hbuild (e n) (n + 1)).choose_spec.1
+  refine ⟨e, strictMono_nat_of_lt_succ hlt, fun i => ?_⟩
+  cases i with
+  | zero => exact hP0
+  | succ n => exact hPsucc n
+
+/-- **Strengthening of regularity.** If `f` is a regular sequence in a preorder, then
+for every threshold `n` there is a strictly monotone reindexing `e : ℕ → ℕ` whose values
+all lie at or above `n` and which dominates `f` pointwise: `n ≤ e i` and `f i ≤ f (e i)`
+for every `i`.  Proved greedily via `exists_strictMono_of_greedy`, picking at each step a
+later index that is both `> ` the previous one and `≥ n`, available by regularity. -/
+theorem Preorder.IsRegularSeq.exists_strictMono_dominating {Q : Type*} {le : Q → Q → Prop}
+    [IsPreorder Q le] {f : ℕ → Q} (hf : IsRegularSeq le f) (n : ℕ) :
+    ∃ e : ℕ → ℕ, StrictMono e ∧ ∀ i, n ≤ e i ∧ le (f i) (f (e i)) := by
+  apply exists_strictMono_of_greedy (P := fun i j => n ≤ j ∧ le (f i) (f j))
+  intro start i
+  obtain ⟨j, hj_mem, hj_gt⟩ := (hf i).exists_gt (max start n)
+  exact ⟨j, lt_of_le_of_lt (le_max_left _ _) hj_gt,
+    le_of_lt (lt_of_le_of_lt (le_max_right _ _) hj_gt), hj_mem⟩
+
+/-
+**Key lemma A**: if `List.SublistForall₂ r l₁ l₂` then there is a strictly
+monotone `φ : Fin l₁.length → Fin l₂.length` with `r (l₁.get i) (l₂.get (φ i))`
+for all `i`.
+-/
+private lemma sublistForall₂_to_embedding {α : Type*} (r : α → α → Prop)
+    (l₁ l₂ : List α) (h : List.SublistForall₂ r l₁ l₂) :
+    ∃ φ : Fin l₁.length → Fin l₂.length, StrictMono φ ∧
+      ∀ i, r (l₁.get i) (l₂.get (φ i)) := by
+  induction h;
+  · simp +decide [ StrictMono ];
+  · simp_all +decide [ Fin.forall_fin_succ, StrictMono ];
+    obtain ⟨ φ, hφ₁, hφ₂ ⟩ := ‹_›; use Fin.cons 0 ( Fin.succ ∘ φ ) ; aesop;
+  · rename_i l₁ l₂ h ih; obtain ⟨ φ, hφ₁, hφ₂ ⟩ := ih; use fun i => Fin.succ ( φ i ) ; simp_all +decide [ StrictMono ] ;
+
+/-
+standard fact about List.SublistForall₂, provable by induction on h
+
+**Key lemma B**: combine a strictly monotone embedding `ψ` of an initial
+segment `[0, ka)` and a strictly monotone embedding `eG` of the tail (shifted by
+`kb`) into a single strictly monotone embedding `e : ℕ → ℕ` witnessing `r (Fa n)
+(Fb (e n))` for every `n`.
+-/
+private lemma embed_combine {α : Type*} (r : α → α → Prop)
+    (Fa Fb : ℕ → α) (ka kb : ℕ)
+    (ψ : ℕ → ℕ)
+    (hψ_lt : ∀ n, n < ka → ψ n < kb)
+    (hψ_mono : ∀ m n, m < n → n < ka → ψ m < ψ n)
+    (hψ_rel : ∀ n, n < ka → r (Fa n) (Fb (ψ n)))
+    (eG : ℕ → ℕ) (heG_mono : StrictMono eG)
+    (heG_rel : ∀ i, r (Fa (i + ka)) (Fb (eG i + kb))) :
+    ∃ e : ℕ → ℕ, StrictMono e ∧ ∀ n, r (Fa n) (Fb (e n)) := by
+  refine' ⟨ fun n => if hn : n < ka then ψ n else eG ( n - ka ) + kb, _, _ ⟩;
+  · intro m n hmn;
+    by_cases hm : m < ka <;> by_cases hn : n < ka <;> simp +decide [ hm, hn ];
+    · exact hψ_mono m n hmn hn;
+    · linarith [ hψ_lt m hm, heG_mono.monotone ( Nat.zero_le ( n - ka ) ) ];
+    · linarith;
+    · exact heG_mono ( by omega );
+  · grind
+
+theorem TwoBQO.embedForAll_wqo {α : Type*} {r : α → α → Prop} [IsPreorder α r]
+    (hr : TwoBQO r) :
+    WellQuasiOrdered (EmbedForAll r) := by
+  intro F
+  -- Step 0: split each F n into a regular tail G n, preceded by a finite head w n.
+  have hreg : ∀ n, ∃ k, IsRegularSeq r (fun i => F n (i + k)) :=
+    fun n => WQO.eventuallyRegular r hr.wellQuasiOrdered (F n)
+  choose kk hkk using hreg
+  set G : ℕ → ℕ → α := fun n i => F n (i + kk n) with hG_def
+  set w : ℕ → List α := fun n => (List.range (kk n)).map (F n) with hw_def
+  have hw_len : ∀ n, (w n).length = kk n := fun n => by simp [hw_def]
+  have hw_get : ∀ n (i : ℕ) (h : i < (w n).length), (w n)[i] = F n i := fun n i h => by
+    simp [hw_def, List.getElem_map, List.getElem_range]
+  -- Step 1: Higman's WQO on lists gives a < b with w a Higman-embeds in w b.
+  have hwqo_list : WellQuasiOrdered (HigmanOrder r) :=
+    higman_theorem r hr.wellQuasiOrdered
+  -- Step 2: DomOrder r is WQO (from 2-BQO)
+  have hdom_wqo : WellQuasiOrdered (DomOrder r) := hr.dom_twoBQO
+  set S : ℕ → Set α := fun n => {x : α | ∃ i, r x (G n i)} with hS_def
+  -- Step 3: product of the two WQOs applied to (w n, S n)
+  have hprod_wqo : WellQuasiOrdered
+      (fun p q : List α × Set α => HigmanOrder r p.1 q.1 ∧ DomOrder r p.2 q.2) :=
+    WellQuasiOrdered.prod hwqo_list hdom_wqo
+  obtain ⟨a, b, hab, hwgood, hSgood⟩ := hprod_wqo (fun n => (w n, S n))
+  -- Step 4: build the index embedding for the regular tails using hSgood + regularity
+  have hpt : ∀ i, ∃ j, r (G a i) (G b j) := fun i => by
+    obtain ⟨y, ⟨j, hy_mem⟩, hy_rel⟩ := hSgood (G a i) ⟨i, refl (G a i)⟩
+    exact ⟨j, _root_.trans hy_rel hy_mem⟩
+  have hbuild : ∀ (start i : ℕ), ∃ j, start < j ∧ r (G a i) (G b j) := fun start i => by
+    obtain ⟨j0, hj0⟩ := hpt i
+    obtain ⟨j, hmem, hgt⟩ := Set.Infinite.exists_gt (hkk b j0) start
+    exact ⟨j, hgt, IsTrans.trans _ _ _ hj0 hmem⟩
+  obtain ⟨eG, heG_mono, heG_rel⟩ := exists_strictMono_of_greedy hbuild
+  -- Step 5: build the index embedding for the finite heads from hwgood
+  obtain ⟨φ, hφ_mono, hφ_rel⟩ := sublistForall₂_to_embedding r (w a) (w b) hwgood
+  -- Step 6: combine the head embedding `φ` (below `kk a`) and the tail embedding
+  -- `eG` (shifted by `kk b`) into a single strictly monotone `e : ℕ → ℕ` using
+  -- `embed_combine`.
+  refine ⟨a, b, hab, ?_⟩
+  refine embed_combine r (F a) (F b) (kk a) (kk b)
+    (fun n => if h : n < kk a then
+        (φ (Fin.cast (hw_len a).symm ⟨n, h⟩)).val else 0)
+    ?_ ?_ ?_ eG heG_mono ?_
+  · -- bound: the head map stays below `kk b`
+    intro n hn
+    simp only [dif_pos hn]
+    have h := (φ (Fin.cast (hw_len a).symm ⟨n, hn⟩)).isLt
+    have hl := hw_len b
+    omega
+  · -- monotonicity of the head map
+    intro m n hmn hn
+    have hm : m < kk a := lt_trans hmn hn
+    simp only [dif_pos hm, dif_pos hn]
+    have h := hφ_mono (a := Fin.cast (hw_len a).symm ⟨m, hm⟩)
+                      (b := Fin.cast (hw_len a).symm ⟨n, hn⟩) (by simpa using hmn)
+    simpa using h
+  · -- the head map witnesses `r`
+    intro n hn
+    simp only [dif_pos hn]
+    have h := hφ_rel (Fin.cast (hw_len a).symm ⟨n, hn⟩)
+    simpa [hw_def, List.get_eq_getElem, List.getElem_map, List.getElem_range,
+      Fin.val_cast] using h
+  · -- the tail map witnesses `r` (definitionally `G`)
+    exact heG_rel
+
+/-- **Abstract WQO double selection.**  Given a doubly-indexed family `s n i` in a
+2-BQO preorder that is *antitone in `n`* (`s n i ≤ s m i` for `m ≤ n`), there is a
+depth `m` and an offset `j` such that the shifted row `i ↦ s m (i + j)` is a regular
+sequence and is dominated, term by term, into every deeper row at indices `≥ j`. -/
+lemma wqo_double_selection {Q : Type*} {r : Q → Q → Prop} [IsPreorder Q r]
+    (hbqo : TwoBQO r) (s : ℕ → ℕ → Q)
+    (hdec : ∀ m n i : ℕ, m ≤ n → r (s n i) (s m i)) :
+    ∃ (m j : ℕ),
+      IsRegularSeq r (fun i => s m (i + j)) ∧
+      ∀ n : ℕ, m < n → ∀ i : ℕ, ∃ i' : ℕ, j ≤ i' ∧ r (s m (i + j)) (s n i') := by
+  obtain ⟨k, hk⟩ : ∃ k : ℕ → ℕ, ∀ n, IsRegularSeq r (fun i => s n (i + k n)) := by
+    have hwqo := hbqo.wellQuasiOrdered;
+    exact ⟨ fun n => Classical.choose ( WQO.eventuallyRegular r hwqo ( fun i => s n i ) ), fun n => Classical.choose_spec ( WQO.eventuallyRegular r hwqo ( fun i => s n i ) ) ⟩;
+  set j : ℕ → ℕ := fun n => (Finset.range (n + 1)).sup k with hj_def;
+  -- Step 3: The row sequence is EmbedForAll-antitone.
+  have h_antitone : ∀ m n : ℕ, m ≤ n → EmbedForAll r (fun i => s n (i + j n)) (fun i => s m (i + j m)) := by
+    intro m n hmn
+    use fun i => i + (j n - j m);
+    simp +decide [ StrictMono ];
+    intro i; convert hdec m n ( i + j n ) hmn using 1; rw [ add_assoc, tsub_add_cancel_of_le ( show j m ≤ j n from Finset.sup_mono ( Finset.range_mono ( by linarith ) ) ) ] ;
+  obtain ⟨ m, hm ⟩ := WellQuasiOrdered.exists_forall_le_of_antitone ( hbqo.embedForAll_wqo ) ( fun n => fun i => s n ( i + j n ) ) h_antitone;
+  refine' ⟨ m, j m, _, _ ⟩;
+  · have h_tail : IsRegularSeq r (fun i => s m (i + k m)) := by
+      exact hk m;
+    convert IsRegularSeq.tail h_tail ( j m - k m ) using 1;
+    exact funext fun i => by rw [ add_assoc, Nat.sub_add_cancel ( show k m ≤ j m from Finset.le_sup ( f := k ) ( Finset.mem_range.mpr ( Nat.lt_succ_self m ) ) ) ] ;
+  · intro n hn i
+    obtain ⟨e, he_mono, he⟩ := hm n (le_of_lt hn);
+    refine' ⟨ e i + j n, _, _ ⟩;
+    · exact le_add_of_nonneg_of_le ( Nat.zero_le _ ) ( Finset.sup_mono ( Finset.range_mono ( by linarith ) ) );
+    · exact he i

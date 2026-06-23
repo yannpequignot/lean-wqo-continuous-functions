@@ -3,3 +3,4 @@
 build/
 .claude/
 .venv/
+.DS_Store*

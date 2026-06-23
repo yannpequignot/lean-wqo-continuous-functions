@@ -92,14 +92,6 @@ lemma ray_reduces_to_maxFun
     rw [h_empty]; simp
 
 /--
-Helper: ScatteredFun follows from having a finite CB level.
--/
-lemma scatteredFun_of_CBLevel_empty {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) (β : Ordinal.{0}) (h : CBLevel f β = ∅) : ScatteredFun f := by
-  convert scattered_of_empty_perfectKernel f _
-  exact Set.eq_empty_of_forall_notMem fun x hx => by have := Set.mem_iInter.mp hx β; aesop
-
-/--
 Helper: ray reduces to sub-gluing (for pointedGluing_upper_bound).
 -/
 lemma ray_to_sub_gluing
@@ -258,8 +250,7 @@ lemma simple_piece_reduces_to_maxfun
     (U : Set (ℕ → ℕ)) (hU : IsClopen U)
     (h_simple : SimpleFun (f ∘ (Subtype.val : {a : A | (a : ℕ → ℕ) ∈ U} → A))) :
     ContinuouslyReduces (fun a : {a : A | (a : ℕ → ℕ) ∈ U} => f a.val) (MaxFun α) := by
-  have := h_simple.2
-  obtain ⟨β, hβ_ne, hβ_empty, y, hy_simple⟩ := this
+  obtain ⟨β, hβ_ne, hβ_empty, y, hy_simple⟩ := h_simple
   have hβ_lt_α : β < α := by
     contrapose! hcb
     obtain ⟨x, hx⟩ := hβ_ne

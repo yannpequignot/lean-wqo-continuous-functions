@@ -1,4 +1,5 @@
-import WqoContinuousFunctions.BaireSpace.Basics
+import ZeroDimensionalSpaces.Basics
+import BQO.OrdinalBQO
 open scoped Topology
 open Set Function TopologicalSpace
 
@@ -31,9 +32,14 @@ Given topological spaces `X, X', Y, Y'`, a function `f : X → Y` *continuously 
 to a function `g : X' → Y'` if there exist continuous `σ : X → X'` and a continuous
 `τ : im(g ∘ σ) → im(f)` such that `τ(g(σ(x))) = f(x)` for all `x`.
 
-**Note:** The naive definition uses a total `τ : Y' → Y`. The correct definition
-(used here) restricts `τ` to operate between the relevant images, matching the
-paper's original formulation.
+**Note:** Three formulations appear below.  `ContinuouslyReduces_naive` uses a total
+*continuous* `τ : Y' → Y` (too strong).  `ContinuouslyReduces_range_based` is the memoir's
+formulation, with `τ` defined only between the images `im (g ∘ σ) → im f`.  The primary
+definition `ContinuouslyReduces` (carrying the `≤` notation and used throughout) is a
+convenient middle ground: a total `τ : Y' → Y` that is only required to be `ContinuousOn`
+`im (g ∘ σ)`.  It agrees with the memoir's `ContinuouslyReduces_range_based` whenever the
+codomain is nonempty (`continuouslyReduces_iff_range_based`); they differ only for the empty
+function — see the discussion above `ContinuouslyReduces.to_range_based`.
 -/
 
 /-- `ContinuouslyReduces_naive f g` is the naive (stronger) version of continuous
@@ -94,6 +100,151 @@ theorem ContinuouslyReduces.trans {X X' X'' Y Y' Y'' : Type*}
     refine ⟨σ₂ ∘ σ₁, hσ₂.comp hσ₁, τ₁ ∘ τ₂, ?_, fun x => by simp [Function.comp]; rw [hτ₁eq, ← hτ₂eq]⟩
     apply ContinuousOn.comp hτ₁cont (hτ₂cont.mono (Set.range_comp_subset_range _ _))
     rintro y ⟨x, rfl⟩; simp [Function.comp] at *; rw [← hτ₂eq]; exact Set.mem_range_self x
+
+/-- `ContinuouslyReduces` is invariant under post/pre-composition by homeomorphisms
+on either side. -/
+lemma ContinuouslyReduces.comp_homeomorph_left
+    {X Y X' Y' W : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y]
+    [TopologicalSpace X'] [TopologicalSpace Y'] [TopologicalSpace W]
+    {f : X → Y} {g : X' → Y'} (h : ContinuouslyReduces f g) (e : W ≃ₜ X) :
+    ContinuouslyReduces (f ∘ e) g := by
+  obtain ⟨σ, hσ, τ, hτ, hστ⟩ := h
+  refine ⟨σ ∘ e, hσ.comp e.continuous, τ, ?_, fun x => by simp [hστ (e x)]⟩
+  have hrange : Set.range (g ∘ (σ ∘ e)) = Set.range (g ∘ σ) := by
+    apply Set.eq_of_subset_of_subset
+    · rintro _ ⟨w, rfl⟩; exact ⟨e w, rfl⟩
+    · rintro _ ⟨w', rfl⟩
+      obtain ⟨w, rfl⟩ := e.surjective w'
+      exact ⟨w, rfl⟩
+  rw [hrange]
+  exact hτ
+
+
+lemma ContinuouslyReduces.comp_homeomorph_right
+    {X Y X' Y' W : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y]
+    [TopologicalSpace X'] [TopologicalSpace Y'] [TopologicalSpace W]
+    {f : X → Y} {g : X' → Y'} (h : ContinuouslyReduces f g) (e : W ≃ₜ X') :
+    ContinuouslyReduces f (g ∘ e) := by
+  obtain ⟨σ, hσ, τ, hτ, hστ⟩ := h
+  refine ⟨e.symm ∘ σ, e.symm.continuous.comp hσ, τ, ?_, fun x => by
+    simp [hστ x, Function.comp]⟩
+  -- range (g ∘ e ∘ (e.symm ∘ σ)) = range (g ∘ σ), since e ∘ e.symm = id
+  have hrange : Set.range ((g ∘ e) ∘ (e.symm ∘ σ)) = Set.range (g ∘ σ) := by
+    congr 1
+    ext x
+    simp [Function.comp, e.apply_symm_apply]
+  rw [hrange]
+  exact hτ
+
+/-!
+## The image-restricted (memoir) variant and its relation to `ContinuouslyReduces`
+
+`ContinuouslyReduces_range_based` is the definition exactly as it appears in the memoir:
+`τ` is only required to be defined (and continuous) on `im (g ∘ σ)`, with values in `im f`.
+The definition `ContinuouslyReduces` used throughout this development instead takes a *total*
+`τ : Y' → Y` that is merely `ContinuousOn (im (g ∘ σ))`.
+
+The two notions coincide as soon as the codomain `Y` is nonempty
+(`continuouslyReduces_iff_range_based`).  They differ *only* for the empty function: if `Y`
+is empty (so `X` is empty) and `Y'` is nonempty, then the image-restricted version holds
+vacuously (`ContinuouslyReduces_range_based.of_isEmpty_codomain`) while the total version
+fails (`not_continuouslyReduces_of_isEmpty_codomain`), because a witness `τ : Y' → Y` would be
+a total map from a nonempty type into an empty one.
+
+### Why the total-`τ` definition is the convenient one in Lean
+
+The image-based `τ : C(im (g ∘ σ), im f)` is a *bundled* continuous map whose **domain and
+codomain are subtypes depending on the data** `σ, f, g`.  That dependency is exactly what makes
+it painful in a proof assistant, whereas the total `τ : Y' → Y` sidesteps all of it:
+
+* **Stable type.**  `ContinuouslyReduces` keeps `τ : Y' → Y`, a fixed type.  Precomposing `σ`
+  with a homeomorphism or composing two reductions never changes the type of `τ`.  In the
+  image-based version each such step changes `im (g ∘ σ)`, so `τ` must be transported across
+  *propositional* equalities `im (g ∘ σ₁) = im (g ∘ σ₂)` (`▸`/`cast`, with motive headaches).
+
+* **Composition is ordinary function composition.**  Transitivity just takes `τ₁ ∘ τ₂` and
+  intersects the `ContinuousOn` domains — `refl`, `trans`, `comp_homeomorph_*` are all
+  one-liners.  Composing bundled maps between *nested* subtypes (getting `im (h ∘ σ₂ ∘ σ₁) → im f`
+  out of `im (g ∘ σ₁) → im f` and `im (h ∘ σ₂) → im g`) needs explicit inclusion/corestriction
+  maps plus proofs that the images nest.
+
+* **Mathlib API.**  `ContinuousOn` has a large, ergonomic API (`ContinuousOn.comp`, `.mono`,
+  `continuousOn_iff_continuous_restrict`, …).  A subtype-valued `C(_, _)` instead forces
+  `Continuous.subtype_mk` together with `Subtype.ext`/`.val` bookkeeping at every step.
+
+* **The witnessing equation lives in `Y`.**  `f x = τ (g (σ x))` is a plain equation in `Y`;
+  the image-based `τ ⟨g (σ x), _⟩ = ⟨f x, _⟩` is an equation between proof-carrying subtype
+  elements, reachable only through `Subtype.ext`.
+
+The single cost is the degenerate empty-codomain discrepancy isolated above.  We therefore use
+`ContinuouslyReduces` throughout the development (the memoir is built on it), while the headline
+results — e.g. `MainTheorem3` — are *stated* with `ContinuouslyReduces_range_based`, matching
+the paper exactly; the bridge in both directions is `continuouslyReduces_iff_range_based`
+(and unconditionally `ContinuouslyReduces.to_range_based`).  Where the empty case could intrude
+internally we add `[Nonempty Y]` explicitly. -/
+
+/-- Any map out of an empty space is continuous. -/
+lemma continuous_of_isEmpty_dom {A B : Type*} [TopologicalSpace A] [TopologicalSpace B]
+    [IsEmpty A] (h : A → B) : Continuous h :=
+  continuous_def.mpr fun s _ => by rw [Set.eq_empty_of_isEmpty (h ⁻¹' s)]; exact isOpen_empty
+
+/-- The total-`τ` reduction always restricts to the memoir's image-based one. -/
+theorem ContinuouslyReduces.to_range_based {f : X → Y} {g : X' → Y'}
+    (h : ContinuouslyReduces f g) : ContinuouslyReduces_range_based f g := by
+  obtain ⟨σ, hσ, τ, hτcont, hτeq⟩ := h
+  have hτmaps : ∀ y ∈ Set.range (g ∘ σ), τ y ∈ Set.range f := by
+    rintro _ ⟨x, rfl⟩; exact ⟨x, hτeq x⟩
+  refine ⟨⟨σ, hσ⟩, ⟨fun y => ⟨τ y.val, hτmaps y.val y.2⟩, ?_⟩, fun x => ?_⟩
+  · exact (continuousOn_iff_continuous_restrict.mp hτcont).subtype_mk (fun y => hτmaps y.val y.2)
+  · exact Subtype.ext (hτeq x).symm
+
+/-- Conversely, when `Y` is nonempty the image-based reduction extends to a total one: off the
+image `τ` is filled in with an arbitrary value of `Y` (this is the only use of `[Nonempty Y]`). -/
+theorem ContinuouslyReduces_range_based.to_continuouslyReduces [Nonempty Y]
+    {f : X → Y} {g : X' → Y'}
+    (h : ContinuouslyReduces_range_based f g) : ContinuouslyReduces f g := by
+  classical
+  obtain ⟨σ, τ, hτeq⟩ := h
+  refine ⟨⇑σ, σ.continuous,
+    fun y => if hy : y ∈ Set.range (g ∘ σ) then (τ ⟨y, hy⟩).val else Classical.arbitrary Y,
+    ?_, ?_⟩
+  · rw [continuousOn_iff_continuous_restrict]
+    have hcongr : (Set.range (g ∘ σ)).restrict
+        (fun y => if hy : y ∈ Set.range (g ∘ σ) then (τ ⟨y, hy⟩).val else Classical.arbitrary Y)
+        = fun p : Set.range (g ∘ σ) => (τ p).val := by
+      funext p; simp only [Set.restrict_apply, dif_pos p.2, Subtype.coe_eta]
+    rw [hcongr]
+    exact continuous_subtype_val.comp τ.continuous
+  · intro x
+    have hx : g (σ x) ∈ Set.range (g ∘ σ) := Set.mem_range_self x
+    show f x = dite (g (σ x) ∈ Set.range (g ∘ σ))
+      (fun hy => (τ ⟨g (σ x), hy⟩).val) (fun _ => Classical.arbitrary Y)
+    rw [dif_pos hx]
+    exact (congrArg Subtype.val (hτeq x)).symm
+
+/-- For nonempty codomain, the memoir's definition and the total-`τ` definition agree. -/
+theorem continuouslyReduces_iff_range_based [Nonempty Y] {f : X → Y} {g : X' → Y'} :
+    ContinuouslyReduces f g ↔ ContinuouslyReduces_range_based f g :=
+  ⟨ContinuouslyReduces.to_range_based, ContinuouslyReduces_range_based.to_continuouslyReduces⟩
+
+/-- The empty function satisfies the memoir's image-based reduction to *any* `g` (vacuously). -/
+theorem ContinuouslyReduces_range_based.of_isEmpty_codomain [IsEmpty Y]
+    {f : X → Y} {g : X' → Y'} : ContinuouslyReduces_range_based f g := by
+  haveI : IsEmpty X := Function.isEmpty f
+  refine ⟨⟨fun x => isEmptyElim x, continuous_of_isEmpty_dom _⟩, ?_, fun x => isEmptyElim x⟩
+  haveI : IsEmpty (Set.range (g ∘ (fun x : X => (isEmptyElim x : X')))) := by
+    rw [Set.isEmpty_coe_sort]; exact Set.range_eq_empty _
+  exact ⟨fun p => isEmptyElim p, continuous_of_isEmpty_dom _⟩
+
+/-- …but it does *not* satisfy the total-`τ` reduction whenever the target codomain `Y'` is
+nonempty: there is no total map `Y' → Y` into the empty `Y`.  This is exactly the discrepancy
+between the two definitions. -/
+theorem not_continuouslyReduces_of_isEmpty_codomain [IsEmpty Y] [Nonempty Y']
+    {f : X → Y} {g : X' → Y'} : ¬ ContinuouslyReduces f g := by
+  rintro ⟨σ, -, τ, -, -⟩
+  exact (isEmptyElim (τ (Classical.arbitrary Y')) : False)
 
 end ContinuousReduction
 
@@ -241,6 +392,37 @@ theorem embedding_of_id_reduces {X Y : Type*}
   · simp +decide [nhds_induced, Filter.comap_comap]
     rfl
   · simp +decide [Function.Injective]
+
+/-- If `σ` and `g ∘ σ` are both topological embeddings, then `id` on the domain of `σ`
+continuously reduces to `g`.  The reduction is `(σ, τ)` where `τ` is the inverse of the
+embedding `g ∘ σ` on its image (a homeomorphism onto its range), extended arbitrarily off
+the image.  This is the bridge turning the `nonscattered_embeds_id…` lemmas into reductions
+`id_canonical ≤ f`. -/
+lemma id_reduces_of_embedding_pair {A B C : Type*}
+    [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C] [Nonempty A]
+    {g : B → C} {σ : A → B} (hσ : Continuous σ)
+    (hgσ : Topology.IsEmbedding (g ∘ σ)) :
+    ContinuouslyReduces (@id A) g := by
+  classical
+  let e : A ≃ₜ ↥(Set.range (g ∘ σ)) := hgσ.toHomeomorph
+  refine ⟨σ, hσ,
+    fun y => if h : y ∈ Set.range (g ∘ σ) then e.symm ⟨y, h⟩ else Classical.arbitrary A,
+    ?_, ?_⟩
+  · -- `τ` is `e.symm` on the image, hence continuous there.
+    rw [continuousOn_iff_continuous_restrict]
+    have hcongr : (Set.range (g ∘ σ)).restrict
+        (fun y => if h : y ∈ Set.range (g ∘ σ) then e.symm ⟨y, h⟩ else Classical.arbitrary A)
+        = fun p : Set.range (g ∘ σ) => e.symm p := by
+      funext p; simp only [Set.restrict_apply, dif_pos p.2, Subtype.coe_eta]
+    rw [hcongr]
+    exact e.symm.continuous
+  · -- correctness: `a = e.symm (e a)`.
+    intro a
+    have ha : g (σ a) ∈ Set.range (g ∘ σ) := ⟨a, rfl⟩
+    show a = dite (g (σ a) ∈ Set.range (g ∘ σ))
+      (fun h => e.symm ⟨g (σ a), h⟩) (fun _ => Classical.arbitrary A)
+    rw [dif_pos ha]
+    exact (e.symm_apply_apply a).symm
 
 end EmbeddingAndReduction
 
@@ -390,6 +572,25 @@ def ScatteredFun {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
   ∀ S : Set X, S.Nonempty → ∃ U : Set X, IsOpen U ∧ (U ∩ S).Nonempty ∧
     ∀ x ∈ U ∩ S, ∀ x' ∈ U ∩ S, f x = f x'
 
+/-- `ScatteredFun` is invariant under precomposition with a homeomorphism. -/
+lemma ScatteredFun.comp_homeomorph {X Y Z : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z]
+    {f : X → Z} (hf : ScatteredFun f) (e : Y ≃ₜ X) :
+    ScatteredFun (f ∘ e) := by
+  intro S hS
+  -- push S forward to X via e
+  have hSe : (e '' S).Nonempty := hS.image e
+  obtain ⟨U, hU_open, hU_ne, hU_const⟩ := hf (e '' S) hSe
+  -- pull U back to Y via e
+  refine ⟨e ⁻¹' U, e.continuous.isOpen_preimage U hU_open, ?_, ?_⟩
+  · obtain ⟨x, hxU, hxS⟩ := hU_ne
+    obtain ⟨y, hyS, hye⟩ := hxS
+    exact ⟨y, by rw [Set.mem_preimage, hye]; exact hxU, hyS⟩
+  · intro y hy y' hy'
+    have h1 : e y ∈ U ∩ e '' S := ⟨hy.1, ⟨y, hy.2, rfl⟩⟩
+    have h2 : e y' ∈ U ∩ e '' S := ⟨hy'.1, ⟨y', hy'.2, rfl⟩⟩
+    have := hU_const (e y) h1 (e y') h2
+    simpa [Function.comp] using this
 
 end Scattered
 
@@ -422,9 +623,4 @@ theorem isOpen_locallyConstantLocus {X Y : Type*}
 
 end CantorBendixson
 
-section Notations
-
-/-- `ω₁` as a countable ordinal. -/
-noncomputable def omega1 : Ordinal.{0} := (Cardinal.aleph 1).ord
-
-end Notations
+-- omega1 is defined in BQO.WQO (imported via BQO.OrdinalBQO)

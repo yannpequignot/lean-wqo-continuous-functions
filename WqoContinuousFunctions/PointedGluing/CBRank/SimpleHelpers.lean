@@ -41,7 +41,7 @@ lemma mem_ray_or_eq_y {B : Set (ℕ → ℕ)} {y x : ℕ → ℕ} (hx : x ∈ B)
       Nat.find_spec (Function.ne_iff.mp hxy)⟩
 
 lemma CBRank_le_of_CBLevel_empty {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) (α : Ordinal.{0}) (h : CBLevel f α = ∅) : CBRank f ≤ α := by
+    (f : X → Y) (α : Ordinal) (h : CBLevel f α = ∅) : CBRank f ≤ α := by
   refine csInf_le' ?_; simp +decide [h, CBLevel_succ']
 
 lemma ray_CBLevel_alpha_empty {A B : Set (ℕ → ℕ)}
@@ -80,7 +80,7 @@ lemma CBLevel_all_rays_le_implies_const {A B : Set (ℕ → ℕ)}
   exact ⟨n, ⟨⟨x, hn⟩, CBLevel_open_restrict f _ (ray_subtype_isOpen A B f hfB hf y n) _ _ |>.2 hx⟩⟩
 
 lemma CBLevel_const_succ_empty {X Y : Type*} [TopologicalSpace X]
-    (f : X → Y) (β : Ordinal.{0})
+    (f : X → Y) (β : Ordinal)
     (hconst : ∀ x ∈ CBLevel f β, ∀ x' ∈ CBLevel f β, f x = f x') :
     CBLevel f (Order.succ β) = ∅ := by
   rw [CBLevel_succ']

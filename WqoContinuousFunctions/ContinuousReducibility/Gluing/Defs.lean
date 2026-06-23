@@ -275,4 +275,135 @@ theorem gluingFun_id (A : ℕ → Set (ℕ → ℕ)) :
   unfold GluingFunVal
   unfold prepend; induction ‹ℕ› <;> aesop
 
+/-- **Fact 2.16, Part 1 (continuity).**  The gluing of continuous functions is
+continuous.  If each block `fᵢ : Aᵢ → Bᵢ` is continuous, then the glued map
+`(i)⌢x ↦ (i)⌢fᵢ(x)` on `GluingSet A` is continuous.
+
+**Proof strategy (informal).**  `GluingSet A` is partitioned by the first
+coordinate into the relatively-clopen blocks `{x | x 0 = i}`; on each block the
+glued map agrees with `prepend i ∘ fᵢ ∘ unprepend`, a composition of continuous
+maps.  Continuity then follows from the pasting lemma
+`continuous_of_relativeClopenPartition_seq`.
+
+TODO (geometry, Fact 2.16): discharge this `sorry`. -/
+theorem gluingFunVal_preserves_continuity
+    (A B : ℕ → Set (ℕ → ℕ))
+    (f : ∀ i, A i → B i)
+    (hf : ∀ i, Continuous (f i)) :
+    Continuous (fun (x : GluingSet A) => GluingFunVal A B f x) := by
+  -- Continuity of the basic `prepend`/`unprepend` reindexings (proved here since the named
+  -- lemmas live downstream in `Gluing/UpperBound.lean`).
+  have hpre : ∀ n, Continuous (prepend n) := by
+    intro n; apply continuous_pi; intro k; dsimp [prepend]
+    split_ifs with h
+    · exact continuous_const
+    · exact continuous_apply (k - 1)
+  have hunpre : Continuous unprepend := by
+    apply continuous_pi; intro k; exact continuous_apply (k + 1)
+  -- Present `GluingSet A = ⋃ i, prepend i '' (A i)` as a relative clopen partition by first
+  -- coordinate, and use the pasting lemma `continuous_of_relativeClopenPartition_seq`.
+  have hpart : IsRelativeClopenPartition (fun i => prepend i '' (A i)) := by
+    refine ⟨?_, ?_⟩
+    · -- distinct blocks are disjoint: they disagree at coordinate `0`.
+      intro i j hij
+      rw [Set.disjoint_left]
+      rintro x ⟨a, ha, rfl⟩ ⟨b, hb, hjb⟩
+      have hji : j = i := by have := congr_fun hjb 0; simpa [prepend] using this
+      exact hij hji.symm
+    · -- each block is relatively clopen: on the union it is `{z | z 0 = i}`.
+      intro i
+      have hset : (Subtype.val : (⋃ j, prepend j '' (A j)) → (ℕ → ℕ)) ⁻¹' (prepend i '' (A i))
+          = Subtype.val ⁻¹' {z : ℕ → ℕ | z 0 = i} := by
+        ext x
+        simp only [Set.mem_preimage, Set.mem_setOf_eq]
+        constructor
+        · rintro ⟨a, ha, hax⟩; rw [← hax]; rfl
+        · intro hx0
+          obtain ⟨j, a, ha, hax⟩ := Set.mem_iUnion.mp x.2
+          have hji : j = i := by rw [← hax] at hx0; simpa [prepend] using hx0
+          exact ⟨a, hji ▸ ha, hji ▸ hax⟩
+      rw [hset]
+      exact (baire_fiber_isClopen 0 i).2.preimage continuous_subtype_val
+  apply continuous_of_relativeClopenPartition_seq hpart
+  intro i
+  -- On block `i` the glued map is `prepend i ∘ (·).val ∘ f i ∘ (unprepend into A i)`.
+  have hblk : ∀ (y : (prepend i '' (A i) : Set (ℕ → ℕ))), unprepend y.val ∈ A i := by
+    rintro ⟨_, a, ha, rfl⟩; rw [unprepend_prepend]; exact ha
+  have heq : (fun (x : GluingSet A) => GluingFunVal A B f x) ∘
+        Set.inclusion (Set.subset_iUnion (fun i => prepend i '' (A i)) i)
+      = fun y => prepend i (f i ⟨unprepend y.val, hblk y⟩).val := by
+    funext y
+    -- Destructure `y = ⟨prepend i a, …⟩`; then both sides reduce definitionally
+    -- (`unprepend (prepend i a) = a`, and the membership proofs are irrelevant).
+    obtain ⟨_, a, ha, rfl⟩ := y
+    rfl
+  rw [heq]
+  exact (hpre i).comp (continuous_subtype_val.comp
+    ((hf i).comp (Continuous.subtype_mk (hunpre.comp continuous_subtype_val) hblk)))
+
+/-- **Fact 2.16, Part 2 (scatteredness).**  The gluing of scattered functions is
+scattered.  If each block `fᵢ : Aᵢ → Bᵢ` is scattered (as a `ℕ → ℕ`-valued map),
+then the glued map on `GluingSet A` is scattered.
+
+**Proof strategy (informal).**  Given a nonempty `S ⊆ GluingSet A`, pick any
+`y ∈ S`; its first coordinate `i = y 0` selects a block.  Apply scatteredness of
+`fᵢ` to the projection of `S ∩ {first coord = i}` into `Aᵢ` to obtain an open set
+on which the block — hence the glued map — is constant.  (This mirrors
+`pointedGluing_scattered`, without the `0^ω` base-point case.)
+
+TODO (geometry, Fact 2.16): discharge this `sorry`. -/
+theorem gluingFun_scattered
+    (A B : ℕ → Set (ℕ → ℕ))
+    (f : ∀ i, A i → B i)
+    (hf_scat : ∀ i, ScatteredFun (fun (x : A i) => (f i x : ℕ → ℕ))) :
+    ScatteredFun (fun (x : GluingSet A) => GluingFunVal A B f x) := by
+  have hunpre : Continuous unprepend := by
+    apply continuous_pi; intro k; exact continuous_apply (k + 1)
+  -- `GluingFunVal` on a `prepend i a` reduces definitionally.
+  have block_eval : ∀ (i : ℕ) (a : ℕ → ℕ) (ha : a ∈ A i) (hmem : prepend i a ∈ GluingSet A),
+      GluingFunVal A B f ⟨prepend i a, hmem⟩ = prepend i (f i ⟨a, ha⟩).val :=
+    fun i a ha hmem => by convert rfl
+  have mem_Ai : ∀ (i : ℕ) (z : GluingSet A), z.val 0 = i → unprepend z.val ∈ A i := by
+    intro i z hz0
+    obtain ⟨j, hj0, hji⟩ := GluingSet_inverse_short A z
+    rwa [show j = i from by rw [← hj0]; exact hz0] at hji
+  intro S hS_nonempty
+  obtain ⟨y, hyS⟩ := hS_nonempty
+  obtain ⟨i, hi0, hyi⟩ := GluingSet_inverse_short A y
+  obtain ⟨V, hV_open, hV_ne, hV_const⟩ := hf_scat i
+    {z : A i | ∃ w ∈ S ∩ {z : GluingSet A | z.val 0 = i}, unprepend w.val = z.val}
+    ⟨⟨unprepend y.val, hyi⟩, ⟨y, ⟨hyS, hi0⟩, rfl⟩⟩
+  obtain ⟨V₀, hV₀_open, rfl⟩ := hV_open
+  refine ⟨{z : GluingSet A | z.val 0 = i} ∩ {z : GluingSet A | unprepend z.val ∈ V₀},
+    ?_, ?_, ?_⟩
+  · -- open: the first-coordinate fibre is clopen; the second factor is a preimage of `V₀`.
+    refine IsOpen.inter ?_ (hV₀_open.preimage (hunpre.comp continuous_subtype_val))
+    exact (baire_fiber_isClopen 0 i).2.preimage continuous_subtype_val
+  · -- the witness set meets `S`.
+    obtain ⟨z, hzV, w, ⟨hwS, hwBlock⟩, hwz⟩ := hV_ne
+    exact ⟨w, ⟨⟨hwBlock, by show unprepend w.val ∈ V₀; rw [hwz]; exact hzV⟩, hwS⟩⟩
+  · -- the glued map is constant on the witness set ∩ S.
+    intro x hx x' hx'
+    obtain ⟨ax, hax, hxe⟩ : ∃ a ∈ A i, prepend i a = x.val :=
+      ⟨unprepend x.val, mem_Ai i x hx.1.1, by rw [← hx.1.1]; exact prepend_unprepend x.val⟩
+    obtain ⟨ax', hax', hxe'⟩ : ∃ a ∈ A i, prepend i a = x'.val :=
+      ⟨unprepend x'.val, mem_Ai i x' hx'.1.1, by rw [← hx'.1.1]; exact prepend_unprepend x'.val⟩
+    have haxeq : ax = unprepend x.val := by rw [← hxe, unprepend_prepend]
+    have haxeq' : ax' = unprepend x'.val := by rw [← hxe', unprepend_prepend]
+    have ex : GluingFunVal A B f x = prepend i (f i ⟨ax, hax⟩).val := by
+      rw [show x = (⟨prepend i ax, by rw [hxe]; exact x.2⟩ : GluingSet A) from Subtype.ext hxe.symm]
+      exact block_eval i ax hax _
+    have ex' : GluingFunVal A B f x' = prepend i (f i ⟨ax', hax'⟩).val := by
+      rw [show x' = (⟨prepend i ax', by rw [hxe']; exact x'.2⟩ : GluingSet A) from
+            Subtype.ext hxe'.symm]
+      exact block_eval i ax' hax' _
+    show GluingFunVal A B f x = GluingFunVal A B f x'
+    rw [ex, ex']
+    congr 1
+    refine hV_const ⟨ax, hax⟩ ⟨?_, ?_⟩ ⟨ax', hax'⟩ ⟨?_, ?_⟩
+    · show ax ∈ V₀; rw [haxeq]; exact hx.1.2
+    · exact ⟨x, ⟨hx.2, hx.1.1⟩, haxeq.symm⟩
+    · show ax' ∈ V₀; rw [haxeq']; exact hx'.1.2
+    · exact ⟨x', ⟨hx'.2, hx'.1.1⟩, haxeq'.symm⟩
+
 end GluingBasicFacts

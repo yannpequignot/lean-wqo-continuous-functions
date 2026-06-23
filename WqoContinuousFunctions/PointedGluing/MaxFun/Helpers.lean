@@ -63,7 +63,6 @@ lemma gluingSet_CBLevel_empty
   set S : ℕ → Set (GluingSet F) := fun n => {x | x.val 0 = n}
   convert CBLevel_open_union_empty _ _ _ _ _ _
   exact Pi.topologicalSpace
-  exact small_subtype (ℕ → ℕ) (Membership.mem (GluingSet F))
   -- convert hF_scat
   exact fun n => { x : GluingSet F | x.val 0 = n }
   · intro n
@@ -159,7 +158,7 @@ lemma CBLevel_pointedGluing_le
 CBLevel singleton implies successor is empty
 -/
 lemma CBLevel_succ_empty_of_subset_singleton {X Y : Type*} [TopologicalSpace X]
-    (f : X → Y) (β : Ordinal.{0}) (x : X)
+    (f : X → Y) (β : Ordinal) (x : X)
     (h_subset : CBLevel f β ⊆ {x}) :
     CBLevel f (Order.succ β) = ∅ := by
   by_cases h : x ∈ CBLevel f β <;> simp_all +decide [CBLevel]

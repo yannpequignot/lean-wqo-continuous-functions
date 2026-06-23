@@ -2,7 +2,7 @@ import WqoContinuousFunctions.ContinuousReducibility.Scattered.NonScattered
 import WqoContinuousFunctions.ContinuousReducibility.Gluing
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
-import WqoContinuousFunctions.BaireSpace.Basics
+import ZeroDimensionalSpaces.Basics
 
 open scoped Topology
 open Set Function TopologicalSpace
@@ -10,7 +10,7 @@ open Set Function TopologicalSpace
 set_option autoImplicit false
 
 /-!
-# Simple Functions, First Reduction, and Decomposition Lemma
+# Simple Functions and Decomposition Lemma
 
 ## Main definitions
 
@@ -18,52 +18,25 @@ set_option autoImplicit false
 
 ## Main results
 
-* `first_reduction_theorem` — Theorem 2.12
 * `decomposition_lemma_baire` — Lemma 2.15
+
+The First Reduction Theorem (Theorem 2.12, `first_reduction_theorem`) lives in
+`MainResults/Main.lean`: it is informative but off the critical path for the WQO program.
 -/
 
 section SimpleFunctions
 
-/-- A function is simple if it is scattered and has CB-degree 1: the last CB-level
-maps to a single point. -/
+/-- A function is simple if it has CB-degree 1: there is a last nonempty CB-level,
+on which `f` is constant.  (Scatteredness is automatic, since `CBLevel f (succ α) = ∅`
+already forces the perfect kernel to be empty — see `scatteredFun_of_CBLevel_empty`.) -/
 def SimpleFun {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) : Prop :=
-  ScatteredFun f ∧
-  ∃ α : Ordinal.{0},
+  ∃ α : Ordinal,
     (CBLevel f α).Nonempty ∧
     CBLevel f (Order.succ α) = ∅ ∧
     ∃ y, ∀ x ∈ CBLevel f α, f x = y
 
 end SimpleFunctions
-
-section FirstReductionTheorem
-
-/-!
-## Theorem 2.12 (FirststepforBQOthm)
-
-Every continuous function from a zero-dimensional separable metrizable space to a
-metrizable space is either scattered, equivalent to `id_ℚ`, or equivalent to `id_{ℕ→ℕ}`.
--/
-
-/-- **First Reduction Theorem.** Every continuous function from a zero-dimensional
-separable metrizable space to a metrizable space is either scattered, or continuously
-equivalent to `id_ℚ`, or continuously equivalent to `id_{ℕ → ℕ}`.
-
-This theorem combines deep results: the Cantor scheme construction (Theorem 2.5),
-universality results for `ℚ` and the Baire space `ℕ → ℕ`, and the Perfect Function
-Property. -/
-theorem first_reduction_theorem
-    {X Y : Type*}
-    [TopologicalSpace X] [SeparableSpace X] [MetrizableSpace X]
-    [TotallyDisconnectedSpace X]
-    [TopologicalSpace Y] [MetrizableSpace Y]
-    {f : X → Y} (hf : Continuous f) :
-    ScatteredFun f ∨
-    ContinuouslyEquiv f (@id ℚ) ∨
-    ContinuouslyEquiv f (@id (ℕ → ℕ)) := by
-  sorry
-
-end FirstReductionTheorem
 
 section ZeroDimAndDisjointUnion
 
@@ -172,7 +145,7 @@ Let $f$ be a scattered function and $(A_i)_{i\in I}$ be an open covering of $\do
 Then $\CB(f)=\sup_{i\in I}\CB(f\restr{A_i})$.
 -/
 theorem cb_rank_of_clopen_union {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    [Small.{0} X]
+
     (f : X → Y) (hf : ScatteredFun f) (A : ℕ → Set X)
     (h_cover : ∀ x, ∃ n, x ∈  A n)
     (h_open : ∀ i, IsOpen (A i)) :
@@ -285,8 +258,7 @@ The proof requires several ingredients:
 lemma simpleFun_const {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     {U : Set X} (hU : U.Nonempty) (y : Y) :
     SimpleFun (fun (_ : U) => y) := by
-  refine ⟨fun S hS => ⟨univ, isOpen_univ, ⟨hS.some, trivial, hS.some_mem⟩,
-    fun _ _ _ _ => rfl⟩, 0, ⟨⟨hU.some, hU.some_mem⟩, by simp [CBLevel_zero]⟩, ?_, y, fun x _ => rfl⟩
+  refine ⟨0, ⟨⟨hU.some, hU.some_mem⟩, by simp [CBLevel_zero]⟩, ?_, y, fun x _ => rfl⟩
   rw [CBLevel_succ', CBLevel_zero]
   ext ⟨z, hz⟩
   simp only [mem_diff, mem_univ, true_and, mem_empty_iff_false, iff_false, not_not]
@@ -297,9 +269,9 @@ For a scattered function `f : A → Y`, the stabilizing set is nonempty
 (the CB levels must stabilize since `A` is `Small.{0}`).
 -/
 lemma cb_stabilizing_set_nonempty {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
+    [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (_hf : ScatteredFun f) :
-    {α : Ordinal.{0} | CBLevel f α = CBLevel f (Order.succ α)}.Nonempty := by
+    {α : Ordinal | CBLevel f α = CBLevel f (Order.succ α)}.Nonempty := by
   -- By definition of scattered, the CB level at sometimes stabilizes.
   have hCBStabilize : ∃ α, CBLevel f α = CBLevel f (Order.succ α) := by
     by_contra h
@@ -312,7 +284,7 @@ lemma cb_stabilizing_set_nonempty {X Y : Type*}
 For a scattered function, the CB level at CBRank is empty.
 -/
 lemma cbLevel_at_cbRank_empty {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
+    [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (hf : ScatteredFun f) :
     CBLevel f (CBRank f) = ∅ := by
   by_cases h_empty : (CBLevel f (CBRank f)).Nonempty
@@ -343,7 +315,7 @@ From x ∈ isolatedLocus f (CBLevel f β), get open U with f constant on
 lemma isolatedLocus_gives_simple_neighborhood {X Y : Type*}
     [TopologicalSpace X]
     {f : X → Y}
-    (β : Ordinal.{0})
+    (β : Ordinal)
     (x : X)
     (hx : x ∈ isolatedLocus f (CBLevel f β)) :
     ∃ U : Set X, IsOpen U ∧ x ∈ U ∧
@@ -362,17 +334,15 @@ Key lemma for decomposition: the restriction of f to a Baire-clopen set
 lemma restriction_to_clopen_is_simple
     {A : Set Baire}
     (f : A → Baire)
-    (hf : ScatteredFun f)
-    (β : Ordinal.{0})
+    (_ : ScatteredFun f)
+    (β : Ordinal)
     (V : Set Baire)
     (hV : IsClopen V)
     (hx_exists : ∃ x : A, (x : Baire) ∈ V ∧ x ∈ CBLevel f β)
     (hempty : CBLevel f (Order.succ β) ∩ (Subtype.val ⁻¹' V : Set A) = ∅)
     (hconst : ∃ y : Baire, ∀ z ∈ (Subtype.val ⁻¹' V : Set A) ∩ CBLevel f β, f z = y) :
     SimpleFun (f ∘ (Subtype.val : {a : A | (a : Baire) ∈ V} → A)) := by
-  refine ⟨?_, β, ?_, ?_, ?_⟩
-  · apply_rules [ScatteredFun, scattered_restriction_open]
-    exact hV.isOpen.preimage continuous_subtype_val
+  refine ⟨β, ?_, ?_, ?_⟩
   · obtain ⟨x, hx₁, hx₂⟩ := hx_exists; use ⟨x, hx₁⟩ ; simp_all +decide
     have h_local : Subtype.val '' CBLevel (f ∘ (Subtype.val : {a : A | a.val ∈ V} → A)) β = (CBLevel f β) ∩ Subtype.val ⁻¹' V := by
       convert local_cb_derivative (Subtype.val ⁻¹' V) (hV.2.preimage (continuous_subtype_val)) β using 1
@@ -388,22 +358,7 @@ lemma restriction_to_clopen_is_simple
     exact ⟨x.2, local_cb_derivative _ (show IsOpen (Subtype.val ⁻¹' V) from hV.isOpen.preimage continuous_subtype_val) _ |>.subset (Set.mem_image_of_mem _ hx) |> fun h => h.1⟩
 
 /-
-**Decomposition Lemma.** Any scattered function from a zero-dimensional separable
-metrizable space is locally simple: around each point there is a clopen neighborhood
-on which `f` is simple.
-The proof uses `exists_clopen_subset_of_open` (clopen basis) and the CB analysis.
-commented this abstract version for a concrete one in the Baire space
-theorem decomposition_lemma {X Y : Type*}
-[TopologicalSpace X] [SeparableSpace X] [MetrizableSpace X]
-[TotallyDisconnectedSpace X]
-[TopologicalSpace Y]
-{f : X → Y} (hf : ScatteredFun f) :
-∀ x : X, ∃ U : Set X, IsClopen U ∧ x ∈ U ∧
-SimpleFun (f ∘ (Subtype.val : U → X)) := by
-sorry
-
-
-**Decomposition Lemma (corrected).** Any scattered function `f : A → Baire`
+**Decomposition Lemma.** Any scattered function `f : A → Baire`
 with `A ⊆ Baire` is locally simple: around each point of `A` there is a clopen
 neighborhood (in the Baire space) on which `f` is simple.
 -/
@@ -416,11 +371,11 @@ theorem decomposition_lemma_baire
      := by
   -- proof differ from the mmemoir. It relies on the exit ordinal for each point in the domain.
   intros x
-  obtain ⟨β, hβ⟩ : ∃ β : Ordinal.{0}, x ∈ CBLevel f β ∧ x ∉ CBLevel f (Order.succ β) := by
+  obtain ⟨β, hβ⟩ : ∃ β : Ordinal, x ∈ CBLevel f β ∧ x ∉ CBLevel f (Order.succ β) := by
     have h_empty : CBLevel f (CBRank f) = ∅ := by
       -- Apply the lemma that states the CBLevel at the CB rank is empty.
       apply cbLevel_at_cbRank_empty; assumption
-    have h_exists_beta : ∃ β : Ordinal.{0}, x ∉ CBLevel f β := by
+    have h_exists_beta : ∃ β : Ordinal, x ∉ CBLevel f β := by
       exact ⟨_, fun hx => h_empty.subset hx⟩
     exact exit_ordinal_is_successor x _ h_exists_beta.choose_spec |> fun ⟨β, hβ₁, hβ₂, hβ₃⟩ => ⟨β, hβ₂, hβ₃⟩
   obtain ⟨U, hU_open, hxU, hU_empty, hU_const⟩ : ∃ U : Set A, IsOpen U ∧ x ∈ U ∧ CBLevel f (Order.succ β) ∩ U = ∅ ∧ ∀ y ∈ U ∩ CBLevel f β, f y = f x := by

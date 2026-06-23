@@ -3,7 +3,7 @@ import Mathlib.Topology.Basic
 -- import WqoContinuousFunctions.PointedGluing.GeneralStructureHelpers.Helpers
 import WqoContinuousFunctions.ContinuousReducibility.Gluing
 import WqoContinuousFunctions.ContinuousReducibility.Scattered
-import WqoContinuousFunctions.BaireSpace.Basics
+import ZeroDimensionalSpaces.Basics
 import WqoContinuousFunctions.PointedGluing.MaxFun.Helpers
 import WqoContinuousFunctions.PointedGluing.MaxFun.LimitRankHelpers.Helpers
 
@@ -81,13 +81,23 @@ private lemma gluingSet_blockwise_sigma_cont
     have h_cont_unprepend : Continuous (fun x : GluingSet A => unprepend x.val) := by
       exact continuous_unprepend.comp continuous_subtype_val
     have h_cont_on_block : ContinuousOn (fun x : {y : GluingSet A | y.val 0 = x.val 0} => σ_n (x.val.val 0) ⟨unprepend x.val.val, gluingSet_unprepend_mem A x.val⟩) Set.univ := by
-      refine Continuous.continuousOn ?_
-      convert hσ_cont (x.val 0) |> Continuous.comp <| show Continuous fun y : { y : GluingSet A | y.val 0 = x.val 0 } => ⟨unprepend y.val.val, by
-                                                          convert gluingSet_unprepend_mem A y.val using 1
-                                                          exact y.2.symm ▸ rfl⟩ from ?_ using 1
-      generalize_proofs at *
-      · grind
-      · exact Continuous.subtype_mk (h_cont_unprepend.comp <| continuous_subtype_val) _
+      -- On the block the running first coordinate `z.val.val 0` is constant `= x.val 0`, so the
+      -- block-wise map agrees with the fixed-index composite `σ_n (x.val 0) ∘ (z ↦ unprepend z)`,
+      -- which is continuous.  The previous proof let `grind` build a congruence across the two
+      -- indices; that crashed (`mkCongrProof` assertion violation).  Instead we transport along the
+      -- index equality `z.2 : z.val.val 0 = x.val 0` with a `subst` over genuine index variables,
+      -- where proof irrelevance closes the remaining membership-proof mismatch.
+      refine Continuous.continuousOn (Continuous.congr
+        ((hσ_cont (x.val 0)).comp (Continuous.subtype_mk
+          (h_cont_unprepend.comp continuous_subtype_val)
+          (fun z => by
+            have hmem := gluingSet_unprepend_mem A z.val
+            rwa [(z.2 : z.val.val 0 = x.val 0)] at hmem))) ?_)
+      intro z
+      have congr_index : ∀ {i j : ℕ} (_ : i = j) {v : ℕ → ℕ}
+          (hi : v ∈ A i) (hj : v ∈ A j), σ_n i ⟨v, hi⟩ = σ_n j ⟨v, hj⟩ := by
+        intro i j h v hi hj; subst h; rfl
+      exact congr_index (z.2 : z.val.val 0 = x.val 0).symm _ _
     rw [continuousOn_iff_continuous_restrict] at *
     convert h_cont_on_block.comp (show Continuous fun y : { y : GluingSet A // y.val 0 = x.val 0 } => ⟨⟨y.val, by aesop⟩, by aesop⟩ from ?_) using 1
     fun_prop

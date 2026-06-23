@@ -9,7 +9,7 @@ This repository contains the ongoing formal verification of mathematical results
 
 ## 🎯 Motivation: From Hilbert to AI Safety
 
-The original motivation for formalizing the concept of a program (or algorithm) was to answer Hilbert's *Entscheidungsproblem* regarding the provability of mathematical statements. While this endeavor culminated in Gödel's incompleteness theorems—establishing fundamental limits on what algorithms can do regarding mathematical truth—it also yielded one of computer science's greatest triumphs: **while no program can decide if any given statement is true, we have a program that *can* definitively decide if a formalized reasoning is sound.**
+The original motivation for formalizing the concept of a program (or algorithm) was to answer Hilbert's *Entscheidungsproblem* regarding the provability of mathematical statements. While this endeavor culminated in Gödel's incompleteness theorems—establishing fundamental limits on what algorithms can do regarding mathematical truth—it also yielded one of computer science's greatest triumphs: **while a program cannot prove every truth, it *can* definitively decide if a formalized reasoning is sound.**
 
 Less than a century later, we are witnessing a paradigm shift. Data-driven approaches, trained on natural language—one of humanity's greatest achievements and an incredibly compressed way to model the world using a small vocabulary of tokens—have reached a level where they can help formalize mathematics, bridge gaps in proofs, and generate meaningful mathematical reasoning. It is a tremendously exciting time.
 
@@ -40,6 +40,7 @@ flowchart LR
     style B fill:transparent,stroke-width:0px,stroke-dasharray:0
 ```
 
+<!--<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">-->
 
 The main result states that this quasi-order is a WQO on a large class of functions
 
@@ -50,13 +51,20 @@ Because WQOs lack closure properties under infintary operations, this is achieve
 
 ## 🚀 Current Status
 
-- [x] **Core Definitions:** Formalized main concepts about functions and the concept of 2-BQO an intermediate strengthening of WQO which I believe to be enough to carry out the proof.
-- [x] **Preliminary Lemmas and intermediate Theorems:** Proved intermediate results concerning Scattered functions and the Pointed Gluing operation.
-- [ ] **Main Theorem:** A major step has been already formally proved with the General Structure theorem and its corollaries (more information in [Summary](STRUCTURE.md)).
+- [x] **Core Definitions:** Formalized the main concepts about functions and the notion of 2-BQO, an intermediate strengthening of WQO sufficient to carry out the proof.
+- [x] **Preliminary Lemmas and intermediate Theorems:** Proved intermediate results concerning scattered functions and the Pointed Gluing operation, including the General Structure theorem and its corollaries.
+- [x] **Standalone foundational libraries:** Extracted two Mathlib-only libraries that the main development builds on:
+  - **`ZeroDimensionalSpaces`** — Baire/Cantor space basics, zero-dimensional spaces, the Cantor-scheme embedding machinery, and **Sierpiński universality** (`sierpinski_universal`: every countable metrizable space embeds into any nonempty perfect countable metrizable space). This is fully proved (`#print axioms` shows no `sorryAx`) and yields the universality of `CantorRat` used as the top element in Main Theorem 2.
+  - **`BQO`** — better-quasi-order foundations (Ramsey theorems, 2-BQO closure properties, ordinal BQO).
+- [~] **Main Theorems 1–3:** All three are stated and their full proof architecture is wired end-to-end (the scattered/non-scattered dichotomy, the WQO/BQO machinery, and the universality top elements). They currently still rest on a handful of remaining lemmas (`sorry`) in the gluing / centered-function / finite-gluing components; closing these is ongoing work. See [STRUCTURE.md](STRUCTURE.md) for the detailed proof tree.
 
-### Most Advanced Formally Verified Result
+### 🏆 Most Advanced Formally Verified Result
 
-The screenshot below shows Lean 4's kernel accepting the proof of `ScatFun.Reduces.isTwoBQO` — that continuous reducibility is a **2-BQO on scattered functions** — which is the central claim of the project (fully proved up to `ScatFun.Level.no_bad: by sorry`, the topic of the last chapters yet to be formalized):
+The screenshot below shows Lean 4's kernel accepting the proof of `ScatFun.Reduces.isTwoBQO`
+— that continuous reducibility is a **2-BQO on scattered functions** — the central claim of
+the project. It is fully proved up to the single remaining structural input
+`ScatFun.levels_finitely_generated` (finite generation of each CB-rank level), the subject of
+the last chapters yet to be formalized:
 
 ![Lean 4 proof of ScatFun.Reduces.isTwoBQO](proof_isTwoBQO.png)
 
@@ -86,16 +94,19 @@ def ScatteredFun {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
   ∀ S : Set X, S.Nonempty → ∃ U : Set X, IsOpen U ∧ (U ∩ S).Nonempty ∧
     ∀ x ∈ U ∩ S, ∀ x' ∈ U ∩ S, f x = f x'
     
+/-- Continuous reducibility is a well-quasi-order on scattered continuous functions
+from a zero-dimensional separable metrizable space to a metrizable space.  Proved via
+the stronger 2-BQO property of the associated `ScatFun` invariants. -/
 theorem MainTheorem3
     (X : ℕ → Type*) (Y : ℕ → Type*)
     [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
     [∀ n, SeparableSpace (X n)] [∀ n, MetrizableSpace (X n)]
-    [∀ n, TotallyDisconnectedSpace (X n)]
+    [∀ n, ZeroDimensionalSpace (X n)]
     [∀ n, MetrizableSpace (Y n)]
     (f : ∀ n, X n → Y n) (hf : ∀ n, Continuous (f n))
     (hsc : ∀ n, ScatteredFun (f n)) :
-    ∃ m n : ℕ, m < n ∧ ContinuouslyReduces (f m) (f n) := by
-  sorry
+    ∃ m n : ℕ, m < n ∧ ContinuouslyReduces_range_based (f m) (f n) := by
+  ...
 
 ```
 ## 📄 References

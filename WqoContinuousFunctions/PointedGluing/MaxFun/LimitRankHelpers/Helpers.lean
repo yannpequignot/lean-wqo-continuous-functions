@@ -3,7 +3,7 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Logic.Function.Basic
 import Mathlib.Order.Monotone.Basic
-import WqoContinuousFunctions.BaireSpace.Basics
+import ZeroDimensionalSpaces.Basics
 
 open scoped Topology
 open Set Function TopologicalSpace Classical

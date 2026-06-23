@@ -1,4 +1,4 @@
-import WqoContinuousFunctions.ContinuousReducibility.Defs
+import ZeroDimensionalSpaces.Basics
 
 open scoped Topology
 open Set Function TopologicalSpace

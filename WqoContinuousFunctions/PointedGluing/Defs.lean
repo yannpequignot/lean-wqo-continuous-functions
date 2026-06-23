@@ -1,4 +1,5 @@
 import WqoContinuousFunctions.ContinuousReducibility.Gluing
+import BQO.OrdinalBQO
 
 open scoped Topology
 open Set Function TopologicalSpace Classical
@@ -205,61 +206,6 @@ definition in the memoir).
 The notation `MinDom α` corresponds to the domain of `k_{α+1}`, not `k_α`.
 -/
 
-/-- An enumeration of ordinals below a countable ordinal `α`.
-For a nonzero `α`, returns a function `ℕ → Ordinal.{0}` whose range covers `{β | β < α}`
-whenever `α < ω₁` (i.e., when `Iio α` is countable).
-For `α = 0`, returns the constant 0 function. The specific enumeration is chosen
-by `Classical.choice`; up to continuous equivalence, the definitions do not depend
-on this choice (see the remark after Definition 3.5 in the memoir). -/
-noncomputable def enumBelow (α : Ordinal.{0}) : ℕ → Ordinal.{0} :=
-  if h : α = 0 then fun _ => 0
-  else
-    have : Nonempty (Iio α) := ⟨⟨0, bot_lt_iff_ne_bot.mpr h⟩⟩
-    if hc : ∃ f : ℕ → Iio α, Function.Surjective f then
-      fun n => (hc.choose n).val
-    else
-      fun n => (Classical.arbitrary (ℕ → Iio α) n).val
-
-/-- `enumBelow α n < α` whenever `α > 0`. -/
-theorem enumBelow_lt (α : Ordinal.{0}) (hα : α ≠ 0) (n : ℕ) : enumBelow α n < α := by
-  have hne : Nonempty (Set.Iio α) := ⟨⟨0, bot_lt_iff_ne_bot.mpr hα⟩⟩
-  unfold enumBelow; rw [dif_neg hα]
-  split
-  · exact (‹∃ f : ℕ → Iio α, Function.Surjective f›.choose _).prop
-  · exact (Classical.arbitrary (ℕ → Set.Iio α) n).prop
-
-/-- `enumBelow α` is surjective onto `Iio α` whenever `α < ω₁` and `α ≠ 0`. -/
-theorem enumBelow_surj (α : Ordinal.{0}) (hα : α < omega1) (hne : α ≠ 0) :
-    Function.Surjective (fun n => ⟨enumBelow α n, enumBelow_lt α hne n⟩ : ℕ → Iio α) := by
-  have hne' : Nonempty (Set.Iio α) := ⟨⟨0, bot_lt_iff_ne_bot.mpr hne⟩⟩
-  have hc : (Set.Iio α).Countable := by
-    rw [Cardinal.countable_iff_lt_aleph_one, Ordinal.mk_Iio_ordinal, Cardinal.lift_lt_aleph_one]
-    unfold omega1 at hα; by_contra h; push_neg at h; exact not_le.mpr hα (Cardinal.ord_le.mpr h)
-  have hc' : Countable (Set.Iio α) := hc.to_subtype
-  have hsurj : ∃ f : ℕ → Iio α, Function.Surjective f := exists_surjective_nat (Set.Iio α)
-  intro ⟨β, hβ⟩
-  have key : ∃ n, (hsurj.choose n) = ⟨β, hβ⟩ := hsurj.choose_spec ⟨β, hβ⟩
-  obtain ⟨n, hn⟩ := key
-  use n
-  simp only [Subtype.mk.injEq]
-  show enumBelow α n = β
-  unfold enumBelow; rw [dif_neg hne, dif_pos hsurj]
-  exact congr_arg Subtype.val hn
-
-/-- An arbitrary cofinal sequence in a countable limit ordinal `α`.
-For limit `α > 0`, returns a sequence `(α_n)_n` that is cofinal in `α` and
-satisfies `α_n < α` for all `n`. For non-limit or zero `α`, returns the constant
-0 function. -/
-noncomputable def cofinalSeq (α : Ordinal.{0}) : ℕ → Ordinal.{0} :=
-  if _ : Order.IsSuccLimit α ∧ α ≠ 0 then enumBelow α
-  else fun _ => 0
-
-/-- `cofinalSeq α n < α` whenever `α` is a nonzero limit ordinal. -/
-theorem cofinalSeq_lt (α : Ordinal.{0}) (hlim : Order.IsSuccLimit α) (hα : α ≠ 0) (n : ℕ) :
-    cofinalSeq α n < α := by
-  unfold cofinalSeq; rw [dif_pos ⟨hlim, hα⟩]
-  exact enumBelow_lt α hα n
-
 /-- Domain of the maximum function `ℓ_α` (Definition 3.5 in the memoir).
 `MaxDom α` is the domain of the function `ℓ_α`, which is the maximum
 of `𝒞_{≤α}` (all scattered functions of CB-rank at most `α`). -/
@@ -270,7 +216,7 @@ noncomputable def MaxDom : Ordinal.{0} → Set (ℕ → ℕ) :=
     (fun o hlim ih => GluingSet (fun n => ih (enumBelow o n)
       (enumBelow_lt o (Order.IsSuccLimit.ne_bot hlim) n)))
 
-/-- Domain of the successor maximum function `ℓ_{succ α}` (Definition 3.5).
+/-- Domain of the pointed gluing of the max function `pgl ℓ_{α}` (Definition 3.5).
 `SuccMaxDom α = PointedGluingSet (fun _ => MaxDom α)`. -/
 noncomputable def SuccMaxDom : Ordinal.{0} → Set (ℕ → ℕ) :=
   fun α => PointedGluingSet (fun _ => MaxDom α)

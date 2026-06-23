@@ -1,6 +1,7 @@
 # Repository Structure and Proof Tree for Main Theorem 3
 
-**Project:** `WqoContinuousFunctions` (Lean 4 + Mathlib v4.28.0)  
+**Project:** three Lean 4 libraries in one package (Mathlib v4.28.0) — the Mathlib-only
+foundations `ZeroDimensionalSpaces` and `BQO`, and the main development `WqoContinuousFunctions`  
 **Goal:** Formalize the memoir on continuous reducibility of continuous functions,
 with Main Theorem 3 as the primary target.
 
@@ -11,25 +12,33 @@ with Main Theorem 3 as the primary target.
 ```mermaid
 treeView-beta
   "📁 wqo_functions/"
-    "📄 lakefile.toml - lake build configuration"
-    "📁 WqoContinuousFunctions/"
+    "📄 lakefile.toml - three libraries in one package (Mathlib required once)"
+    "📁 ZeroDimensionalSpaces/ — standalone Mathlib-only library"
+      "📄 Basics.lean - Baire/Cantor topology, clopen basis, ZeroDimensionalSpace, embeds-in-Baire"
+      "📄 GenRedProp.lean - disjointification of open families in Baire subspaces"
+      "📄 CantorRat.lean - CantorRat (eventually-zero sequences): metrizable, countable, perfect"
+      "📄 Engine.lean - clopen-ball / clopen-split engine for the back-and-forth"
+      "📄 CantorScheme.lean - Cantor scheme ⟹ CantorRat embedding machinery"
+      "📄 CantorSchemeComplete.lean - full scheme over a complete carrier (2^ℕ embedding)"
+      "📄 SierpinskiForth.lean - every countable metrizable space ↪ CantorRat (forth direction)"
+      "📄 SierpinskiAux.lean - CantorRat ↪ any nonempty perfect countable metrizable space"
+      "📄 Universality.lean - ★ sierpinski_universal (proved, no sorry); countable_metrizable_embeds_cantorRat"
+    "📁 BQO/ — standalone Mathlib-only library"
+      "📄 Ramsey.lean - RT² and RT³ for ℕ (finite colorings)"
+      "📄 TwoBQO.lean - 2-BQO definition, closure under products and lex sums"
+      "📄 OrdinalBQO.lean - ≤• on ordinals is 2-BQO; ordinal arithmetic helpers"
+    "📁 WqoContinuousFunctions/ — main development"
       "📄 Main.lean - top-level entry point (re-exports)"
       "📁 MainResults/"
-        "📄 Main.lean - statements of Thm 1–3 (all sorry)"
-        "📄 ScatFunBQO.lean - Main Theorem 3 proved (see §3)"
-      "📁 BaireSpace/"
-        "📄 Basics.lean - Baire space topology, cylinder sets, clopen basis"
-        "📄 GenRedProp.lean - disjointification of open families"
-      "📁 BQO/"
-        "📄 Ramsey.lean - RT² and RT³ for ℕ (finite colorings)"
-        "📄 TwoBQO.lean - 2-BQO definition, closure under products and lex sums"
-        "📄 OrdinalBQO.lean - ≤• on ordinals is 2-BQO; ordinal arithmetic helpers"
+        "📄 Main.lean - Main Theorems 1–3: stated and fully wired (rest on remaining lemmas)"
+        "📄 ScatFunBQO.lean - ScatFun is 2-BQO ⟹ Main Theorem 3 (see §3)"
       "📁 ContinuousReducibility/"
         "📄 Defs.lean - ContinuouslyReduces, ScatteredFun, CBRank (core defs)"
+        "📄 Universality.lean - reducibility universality (CantorRat top for Thm 2, via ZeroDimensionalSpaces)"
         "📄 Scattered.lean - re-export of Scattered/*"
         "📁 Scattered/"
           "📄 CBAnalysis.lean - CB derivative, CB rank, scattered ↔ empty kernel"
-          "📄 NonScattered.lean - non-scattered ⟹ ℚ embeds (Thm 2.5) — fully proved"
+          "📄 NonScattered.lean - non-scattered ⟹ CantorRat (Thm 2) / 2^ℕ (Thm 1) embeds — fully proved"
           "📄 Decomposition.lean - locally simple decomposition (Lem 2.15)"
         "📄 Gluing.lean - re-export of Gluing/*"
         "📁 Gluing/"
@@ -69,7 +78,8 @@ treeView-beta
       "📁 ScatFun/"
         "📄 Defs.lean - ScatFun type, Level/LevelLE/LevelLT subtypes"
         "📄 LiftToLex.lean - bad sequence in ScatFun ⟹ bad in lex sum"
-        "📄 ReflectLevel.lean - bad_restricts_to_level ✓; Level.no_bad ✗ (sorry)"
+        "📄 ReflectLevel.lean - bad_restricts_to_level ✓ (concentration on one level)"
+        "📄 FiniteGluing.lean - FinGl + FinGl.isTwoBQO ✓; levels_finitely_generated ✗ (sorry)"
       "📁 CenteredFunctions/"
         "📄 Defs.lean - IsCenterFor, IsCentered, IsLocallyCentered, RayFun"
         "📄 Helpers.lean - helpers for centered function theorems (mostly proved)"
@@ -95,10 +105,10 @@ The following diagram shows the logical import order from foundations to the mai
 ```mermaid
 flowchart LR
     MB((Mathlib v4.28.0))
-    MB --> BSB[BaireSpace/Basics]
+    MB --> BSB[ZeroDimensionalSpaces/Basics]
 
     BSB --> CRD[ContinuousReducibility/Defs]
-    CRD --> BSGRP[BaireSpace/GenRedProp]
+    CRD --> BSGRP[ZeroDimensionalSpaces/GenRedProp]
     CRD --> GD[Gluing/Defs]
     CRD --> SCBA[Scattered/CBAnalysis]
 
@@ -266,34 +276,35 @@ ScatFun.bad_restricts_to_level                                [PROVED ✓]
         Uses Ordinal.leBullet.isTwoBQO: (Ordinal.{0}, ≤•) is 2-BQO     [PROVED ✓]
 ```
 
-### Pillar B — No bad sequence at any single CB-rank level
+### Pillar B — Every CB-rank level is 2-BQO (finite generation)
 
 ```
-ScatFun.no_bad_all_levels                                     [PROVED ✓, uses sorry below]
-  "∀ β < ω₁, the level ScatFun.Level β has no bad pair-sequence"
-  ↓ by transfinite induction on β
-ScatFun.Level.no_bad  (β : Ordinal, β < ω₁)                  [★ SORRY ★]
-  "If all levels < β are 2-BQO, then level β is 2-BQO"
+ScatFun.Reduces.isTwoBQO                                      [PROVED ✓, uses sorry below]
+  "ScatFun is 2-BQO"                       (MainResults/ScatFunBQO.lean)
+  ↑ bad_restricts_to_level (Pillar A) reduces this to: every level is 2-BQO
+ScatFun.Level.isTwoBQO / levels_no_bad  (α < ω₁)             [PROVED ✓, uses sorry below]
+  "level α is 2-BQO / has no bad pair-sequence"   (MainResults/ScatFunBQO.lean)
+  ↓ via TwoBQO.comap along  Level α ↪ FinGl B
+ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [★ SORRY ★]
+  "every function of CB-rank α lies in a single finite gluing FinGl B"
+                                           (ScatFun/FiniteGluing.lean)
   │
-  This is the key missing step. The intended mathematical proof is:
+  This is the single key missing step. The intended mathematical proof is:
   │
-  ├── Finite Generation Theorem (PreciseStructure/Theorems.lean)  [SORRY]
-  │     "Every function in Level β is continuously equivalent to a
+  ├── Finite Generation / Precise Structure Theorem               [SORRY, stub chapter]
+  │     (PreciseStructure/Theorems.lean — excluded from the public mirror)
+  │     "Every function in Level α is continuously equivalent to a
   │      finite gluing of finitely many generators (MaxFun and centered functions)"
-  │     │
-  │     ├── Precise Structure Theorem                              [SORRY]
-  │     │     Uses: CenteredFunctions/Theorems + DoubleSuccessor/Theorems
   │     │
   │     ├── CenteredFunctions/Theorems.lean                        [MOSTLY SORRY]
   │     │     "centeredSuccessor, simpleFunctionsLambdaPlusOne, ..."
   │     │     partial prerequisites: Helpers.lean (mostly proved)
   │     │
-  │     └── DoubleSuccessor/Theorems.lean                          [ALL SORRY]
+  │     └── DoubleSuccessor/Theorems.lean                          [ALL SORRY, stub chapter]
   │           "vertical_theorem, diagonal_theorem, solvable_decomposition, ..."
   │
-  └── TwoBQO.prod / TwoBQO.pi (Dickson's lemma for 2-BQO)        [PROVED ✓]
-        "Finite products of 2-BQOs are 2-BQO"
-        Used to combine finitely many generator-level 2-BQO facts.
+  └── ScatFun.FinGl.isTwoBQO + TwoBQO.prod / TwoBQO.pi (Dickson)  [PROVED ✓]
+        "a finite gluing FinGl B is 2-BQO; finite products of 2-BQOs are 2-BQO"
 ```
 
 ### Summary: What is proved vs. open
@@ -306,7 +317,7 @@ ScatFun.Level.no_bad  (β : Ordinal, β < ω₁)                  [★ SORRY ★
 | `CBRank_lt_omega1` | ✓ fully proved | `Scattered/CBAnalysis.lean` |
 | Non-scattered ⟹ ℚ embeds (Thm 2.5) | ✓ fully proved | `Scattered/NonScattered.lean` |
 | Locally-simple decomposition (Lem 2.15) | ✓ fully proved | `Scattered/Decomposition.lean` |
-| First Reduction Theorem (Thm 2.12) | ✗ sorry | `Scattered/Decomposition.lean` |
+| First Reduction Theorem (Thm 2.12) | ✓ fully proved (CantorRat/CantorSpace models) | `MainResults/Main.lean` |
 | Gluing upper/lower bound | ✓ fully proved | `Gluing/*` |
 | Ramsey RT² and RT³ | ✓ fully proved | `BQO/Ramsey.lean` |
 | 2-BQO framework (products, lex sums) | ✓ fully proved | `BQO/TwoBQO.lean` |
@@ -319,7 +330,9 @@ ScatFun.Level.no_bad  (β : Ordinal, β < ω₁)                  [★ SORRY ★
 | ScatFun type definitions | ✓ fully proved | `ScatFun/Defs.lean` |
 | Lift bad seq to lex sum | ✓ fully proved | `ScatFun/LiftToLex.lean` |
 | Bad seq concentrates on one level | ✓ fully proved | `ScatFun/ReflectLevel.lean` |
-| **`Level.no_bad`** (inductive step) | ✗ **sorry** | `ScatFun/ReflectLevel.lean` |
+| Each level / `ScatFun` is 2-BQO (given finite gen.) | ✓ fully proved | `MainResults/ScatFunBQO.lean` |
+| Finite gluing `FinGl B` is 2-BQO | ✓ fully proved | `ScatFun/FiniteGluing.lean` |
+| **`levels_finitely_generated`** (finite generation) | ✗ **sorry** | `ScatFun/FiniteGluing.lean` |
 | CenteredFunctions helpers | ✓ mostly proved | `CenteredFunctions/Helpers.lean` |
 | CenteredFunctions theorems | ✗ mostly sorry | `CenteredFunctions/Theorems.lean` |
 | PreciseStructure definitions | ✓ fully proved | `PreciseStructure/Defs.lean` |
@@ -398,11 +411,15 @@ def TwoBQO (r : α → α → Prop) : Prop := ∀ f : PairSeq α, ¬ IsBad r f
 The single blocking sorry for Main Theorem 3 is:
 
 ```lean
-theorem ScatFun.Level.no_bad (β : Ordinal) (hβ : β < omega1)
-    (ih : ∀ γ < β, ¬ ∃ bad in Level γ) :
-    ¬ ∃ bad in Level β := by
+theorem ScatFun.levels_finitely_generated (α : Ordinal.{0}) (hα : α < omega1) :
+    ∃ (n : ℕ) (B : Fin n → ScatFun),
+      ∀ F : ScatFun, CBRank F.func = α → F ∈ FinGl B := by
   sorry
 ```
+
+Everything downstream of it (each level is 2-BQO ⟹ `ScatFun` is 2-BQO ⟹ WQO) is proved
+in `MainResults/ScatFunBQO.lean`; the transfinite induction is encapsulated in the eventual
+proof of `levels_finitely_generated`.
 
 Proving this result is the purpose of the three last chapters of  the memoir:
 

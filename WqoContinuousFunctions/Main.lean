@@ -1,5 +1,6 @@
 import WqoContinuousFunctions.MainResults.Main
 import WqoContinuousFunctions.MainResults.ScatFunBQO
+import WqoContinuousFunctions.ScatFun.FiniteGluing
 
 /-!
 # Main entry point

@@ -145,30 +145,6 @@ lemma BaNbhd_incomparable_disjoint {n m : ℕ} (s : Fin n → ℕ) (t : Fin m �
   · obtain ⟨i, hi⟩ := hts hnm
     exact hi ((ht i).symm.trans (hs ⟨i, i.isLt.trans_le hnm⟩))
 
-lemma CBLevel_comp_homeomorph {X Y Z : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    [TopologicalSpace Z]
-    (f : X → Z) (φ : Y ≃ₜ X) (α : Ordinal.{0}) :
-    CBLevel (f ∘ φ) α = φ ⁻¹' (CBLevel f α) := by
-      induction' α using Ordinal.limitRecOn with α ih
-      · simp +decide [CBLevel_zero]
-      · -- By definition of isolatedLocus, we have that the isolated locus of a composition is the preimage of the isolated locus of the original function.
-        have h_isolatedLocus : isolatedLocus (f ∘ φ) (φ ⁻¹' (CBLevel f α)) = φ ⁻¹' isolatedLocus f (CBLevel f α) := by
-          ext y
-          constructor <;> rintro ⟨h₁, U, hU, hy, hU'⟩
-          · refine ⟨h₁, φ '' U, ?_, ?_, ?_⟩ <;> simp_all +decide
-          · refine ⟨?_, φ ⁻¹' U, hU.preimage φ.continuous, ?_, ?_⟩ <;> aesop
-        simp_all +decide [CBLevel_succ']
-      · exact CBLevel_homeomorph φ f _
-
-lemma CBRank_comp_homeomorph {X Y Z : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    [TopologicalSpace Z]
-    (f : X → Z) (φ : Y ≃ₜ X) :
-    CBRank (f ∘ φ) = CBRank f := by
-      unfold CBRank
-      congr! 3
-      rw [CBLevel_comp_homeomorph, CBLevel_comp_homeomorph]
-      constructor <;> intro h <;> ext x <;> simp_all +decide [Set.ext_iff]
-      simpa using h (φ.symm x)
 
 /-- Homeomorphism between `{b : B | g b ∈ C}` and `PreImage B g C`. -/
 def PreImageEquiv (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ)) :
@@ -217,8 +193,7 @@ lemma CBLevel_succ_succ_empty_of_finite_image
 If CBRank ≤ β for a scattered function, then CBLevel at β is empty.
 -/
 lemma CBLevel_empty_of_le_rank {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    [Small.{0} X]
-    (f : X → Y) (hf : ScatteredFun f) (β : Ordinal.{0}) (hle : CBRank f ≤ β) :
+    (f : X → Y) (hf : ScatteredFun f) (β : Ordinal) (hle : CBRank f ≤ β) :
     CBLevel f β = ∅ := by
   -- Since f is scattered, CBLevel_eq_empty_at_rank gives CBLevel f (CBRank f) = ∅.
   have h_empty : CBLevel f (CBRank f) = ∅ := by
@@ -233,7 +208,7 @@ If b ∈ an open set S ⊆ B and CBLevel of g restricted to S at α is empty,
 lemma not_mem_CBLevel_of_open_restrict_empty
     {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (S : Set X) (hS : IsOpen S)
-    (b : X) (hb : b ∈ S) (α : Ordinal.{0})
+    (b : X) (hb : b ∈ S) (α : Ordinal)
     (hempty : CBLevel (f ∘ Subtype.val : S → Y) α = ∅) :
     b ∉ CBLevel f α := by
   by_contra h_contra

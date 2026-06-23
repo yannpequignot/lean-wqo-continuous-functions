@@ -211,8 +211,8 @@ lemma CBLevel_block_backward
 CBLevel f_n γ is nonempty when γ < CBRank f_n and f_n is scattered.
 -/
 lemma CBLevel_nonempty_below_rank {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
-    (f : X → Y) (_hf : ScatteredFun f) (γ : Ordinal.{0})
+    [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) (_hf : ScatteredFun f) (γ : Ordinal)
     (hγ : γ < CBRank f) : (CBLevel f γ).Nonempty := by
   contrapose! hγ
   refine csInf_le' ?_

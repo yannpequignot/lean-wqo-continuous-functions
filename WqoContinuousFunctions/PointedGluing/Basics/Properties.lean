@@ -375,9 +375,9 @@ lemma CBLevel_zero_ne_succ_of_scattered_nonempty {X Y : Type*}
 For scattered functions on a Small.{0} type, the stabilization set for CBRank is nonempty.
 -/
 lemma CBRank_stabilization_set_nonempty {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
+    [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (hf : ScatteredFun f) (_hne : Nonempty X) :
-    {α : Ordinal.{0} | CBLevel f α = CBLevel f (Order.succ α)}.Nonempty := by
+    {α : Ordinal | CBLevel f α = CBLevel f (Order.succ α)}.Nonempty := by
   contrapose! hf
   obtain ⟨g, hg⟩ := CBLevel_strictAnti_of_ne f (by
   exact fun α => fun h => hf.subset h)
@@ -387,7 +387,7 @@ lemma CBRank_stabilization_set_nonempty {X Y : Type*}
 If f is scattered on a nonempty Small.{0} domain, then CBRank f > 0.
 -/
 lemma CBRank_pos_of_scattered_nonempty {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y] [Small.{0} X]
+    [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (hf : ScatteredFun f) (hne : Nonempty X) :
     CBRank f > 0 := by
   refine pos_iff_ne_zero.mpr ?_
@@ -763,3 +763,46 @@ lemma pointedGluing_scattered
         grind +suggestions
       · exact ne_zeroStream_of_block _ _ hx'.1.1
       · exact ne_zeroStream_of_block _ _ hx.1.1
+
+/-! ## Joint / relative continuity of the pointed-gluing coding maps
+
+Relocated from `ScatFun/FiniteGluing.lean`; used by `ScatFun.gl_reduces_pgl_direct`. -/
+
+/-
+**Joint continuity of `prependZerosOne`.**  The depth index lives in the
+discrete space `ℕ`, so `prependZerosOne` is continuous in both arguments at once.
+-/
+lemma continuous_prependZerosOne_uncurry :
+    Continuous (fun p : ℕ × Baire => prependZerosOne p.1 p.2) := by
+  refine' continuous_iff_continuousAt.mpr _;
+  intro p;
+  refine' ContinuousAt.congr _ _;
+  exact fun q => prependZerosOne p.1 q.2;
+  · exact Continuous.continuousAt ( continuous_prependZerosOne p.1 |> Continuous.comp <| continuous_snd );
+  · filter_upwards [ IsOpen.mem_nhds ( isOpen_discrete { p.1 } |> IsOpen.preimage continuous_fst ) ( Set.mem_singleton p.1 ) ] with q hq ; aesop
+
+/-
+`firstNonzero` is continuous on any set that avoids the base point `0^ω`
+(there it is locally constant).
+-/
+lemma firstNonzero_continuousOn {S : Set Baire} (hS : ∀ y ∈ S, y ≠ zeroStream) :
+    ContinuousOn firstNonzero S := by
+  intro y hy;
+  refine' Filter.Tendsto.mono_left _ nhdsWithin_le_nhds;
+  intro ε hε;
+  -- Since `y ≠ zeroStream`, there exists a neighborhood around `y` where `firstNonzero` is constant.
+  obtain ⟨N, hN⟩ : ∃ N, ∀ x, (∀ i ≤ N, x i = y i) → firstNonzero x = firstNonzero y := by
+    obtain ⟨N, hN⟩ : ∃ N, firstNonzero y ≤ N ∧ ∀ i < N, y i = 0 := by
+      unfold firstNonzero;
+      split_ifs <;> simp_all +decide;
+      exact ⟨ Nat.find ‹∃ k, y k ≠ 0›, ⟨ _, le_rfl, Nat.find_spec ‹∃ k, y k ≠ 0› ⟩, fun i hi => by_contra fun hi' => Nat.find_min ‹∃ k, y k ≠ 0› hi hi' ⟩;
+    use N;
+    intro x hx;
+    unfold firstNonzero at *;
+    split_ifs <;> simp_all +decide [ Nat.find_eq_iff ];
+    · grind;
+    · exact hS y hy ( funext ‹_› );
+    · grind;
+  rw [ nhds_pi ];
+  refine' Filter.mem_pi.mpr _;
+  refine' ⟨ Finset.range ( N + 1 ), Finset.finite_toSet _, fun i => if i ≤ N then { y i } else Set.univ, _, _ ⟩ <;> simp_all +decide [ Set.subset_def ]

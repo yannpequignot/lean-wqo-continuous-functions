@@ -1,6 +1,6 @@
 
 import WqoContinuousFunctions.PointedGluing.Defs
-import WqoContinuousFunctions.BaireSpace.GenRedProp
+import ZeroDimensionalSpaces.GenRedProp
 import WqoContinuousFunctions.PointedGluing.LowerBoundLemma
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.Decomposition
 
@@ -371,7 +371,9 @@ private lemma minFun_local_condition'
   set A_W : Set (ℕ → ℕ) := {z | z ∈ A ∧ z ∈ W}
   set f_W : A_W → ℕ → ℕ := fun ⟨z, hz⟩ => f ⟨z, hz.1⟩
   -- Step 5: Unpack SimpleFun for {a:A|a.val∈W} and f∘Subtype.val
-  obtain ⟨hf_W_scat, δ, hδ_ne, hδ_succ, y_W, hy_W⟩ := hW_simple
+  obtain ⟨δ, hδ_ne, hδ_succ, y_W, hy_W⟩ := hW_simple
+  have hf_W_scat : ScatteredFun (f ∘ (Subtype.val : {a : A | a.val ∈ W} → A)) :=
+    scatteredFun_of_CBLevel_empty _ (Order.succ δ) hδ_succ
   have hf_W_cont : Continuous (f ∘ (Subtype.val : {a : A | a.val ∈ W} → A)) :=
     hf.comp continuous_subtype_val
   -- Step 6: Transfer CB data from {a:A|a.val∈W} to A_W using CBLevel_AW_iff

@@ -1,4 +1,8 @@
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.CBAnalysis
+import Mathlib.Topology.MetricSpace.Polish
+import ZeroDimensionalSpaces.CantorRat
+import ZeroDimensionalSpaces.CantorScheme
+import ZeroDimensionalSpaces.CantorSchemeComplete
 
 open scoped Topology
 open Set Function TopologicalSpace
@@ -9,12 +13,15 @@ set_option autoImplicit false
 # Non-Scattered Embedding Theorem
 
 If `f : X → Y` is continuous from a metrizable space to a Hausdorff space and `f` is
-not scattered, then `id_ℚ` continuously reduces to `f`.
+not scattered, then a perfect countable space (`CantorRat`, or the full `2^ℕ` when the
+domain is complete) continuously reduces to `f`.
 
 ## Main results
 
-* `nonscattered_embeds_idQ` — Theorem 2.5: non-scattered implies ℚ-embedding
-* `nlc_to_rat_embedding` — Key helper: NLC implies ℚ-embedding
+* `nonscattered_embeds_idCantorRat` — non-scattered implies a `CantorRat`-embedding (the
+  Sierpiński-free lower bound used by `MainTheorem2`)
+* `nonscattered_embeds_idCantor` — non-scattered implies a `2^ℕ`-embedding (used by
+  `MainTheorem1`)
 -/
 
 section NonScatteredTheorem
@@ -87,37 +94,12 @@ lemma splitting_lemma_nlc {X Y : Type*}
   · intro y hy; have := dist_triangle_left x x' y; have := dist_triangle_right x x' y; norm_num at *; linarith
   · exact ⟨U₀, hU₀, U₁, hU₁, h_disjoint.1, fun y hy => hδ₁ <| Metric.ball_subset_ball (by linarith) hy, fun y hy => hδ₂ <| Metric.ball_subset_ball (by linarith) hy⟩
 
-/-- **Sierpiński’s Theorem.** Every nonempty countable metrizable space without
-isolated points is homeomorphic to ℚ. -/
-theorem sierpinski_rat_homeomorph {X : Type*}
-    [TopologicalSpace X] [MetrizableSpace X]
-    [Countable X] [Nonempty X]
-    (hni : ∀ x : X, ¬ IsOpen ({x} : Set X)) :
-    Nonempty (X ≃ₜ ℚ) := by
-  sorry
 
 
 
--- 1. Define the base Cantor Space (infinite binary sequences)
-abbrev CantorSpace := ℕ → Fin 2
-
--- 2. Define the property of being eventually zero
-def IsEventuallyZero (x : CantorSpace) : Prop :=
-  ∃ N : ℕ, ∀ n ≥ N, x n = 0
-
--- 3. Define the Subspace
-def CantorEventuallyZero : Type :=
-  { x : CantorSpace // IsEventuallyZero x }
-
--- 4. Define your custom shorthand notation
-notation "CantorRat" => CantorEventuallyZero
-
-instance : TopologicalSpace CantorEventuallyZero := instTopologicalSpaceSubtype
-
-/-- Helper: extract the canonical prefix of an eventually-zero sequence. -/
-noncomputable def cantorRatPrefix (x : CantorEventuallyZero) : List (Fin 2) := by
-  classical
-  exact PiNat.res x.val (Nat.find x.prop)
+-- The `CantorRat` (`CantorEventuallyZero`) definitions — `IsEventuallyZero`,
+-- `CantorEventuallyZero`, the `CantorRat` notation, its `TopologicalSpace` instance, and
+-- `cantorRatPrefix` — now live in `ZeroDimensionalSpaces.CantorRat` (imported above).
 
 /--
 **Splitting lemma.** In a nowhere locally constant continuous function on a metric space
@@ -170,444 +152,6 @@ lemma cantor_scheme_exists {X Y : Type*}
   · intro l; specialize hε'_disjoint (F l |>.1) (F l |>.2.1) (hF₂ l) ; simp_all +decide [Set.disjoint_left]
   · intro l; specialize hU₀_image (F l |>.1) (F l |>.2.1) (hF₂ l) ; specialize hU₁_image (F l |>.1) (F l |>.2.1) (hF₂ l) ; simp_all +decide [Set.subset_def]
 
-/--
-Centers are nested: any descendant's center lies in the ancestor's closed ball.
--/
-lemma scheme_center_in_closedBall {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    (hr_pos : ∀ l, 0 < r l)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l)) :
-    ∀ (l₁ l₂ : List (Fin 2)), c (l₁ ++ l₂) ∈ Metric.closedBall (c l₂) (r l₂) := by
-  intro l₁ l₂
-  induction' l₁ with a l₁ ih
-  · exact Metric.mem_closedBall_self (le_of_lt (hr_pos _))
-  · have h_center : ∀ l₁ l₂, Metric.closedBall (c (l₁ ++ l₂)) (r (l₁ ++ l₂)) ⊆ Metric.closedBall (c l₂) (r l₂) := by
-      intro l₁ l₂; induction' l₁ with a l₁ ih generalizing l₂; aesop
-      exact Set.Subset.trans (hball _ _) (Metric.ball_subset_closedBall.trans (ih _))
-    exact h_center (a :: l₁) l₂ (Metric.mem_closedBall_self (hr_pos _ |> le_of_lt))
-
-/--
-Radius bound: the radius at depth n is at most r([]) / 2^n.
--/
-lemma scheme_radius_bound {r : List (Fin 2) → ℝ}
-    (hr_half : ∀ l (a : Fin 2), r (a :: l) ≤ r l / 2) :
-    ∀ (l : List (Fin 2)), r l ≤ r [] / 2 ^ l.length := by
-  intro l
-  induction' l with l ih
-  · norm_num
-  · simpa only [pow_succ', div_div, List.length_cons] using le_trans (hr_half _ _) (by ring_nf at *; linarith)
-
-/--
-Two list prefixes (in Cantor scheme convention) that diverge give centers
-in disjoint closed balls. This implies injectivity of the center map.
--/
-lemma scheme_disjoint_of_ne {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    (hr_pos : ∀ l, 0 < r l)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l))
-    (hdisj : ∀ l, Disjoint (Metric.closedBall (c (0 :: l)) (r (0 :: l)))
-                            (Metric.closedBall (c (1 :: l)) (r (1 :: l))))
-    {l₁ l₂ : List (Fin 2)} (hne : l₁ ≠ l₂) (hlen : l₁.length = l₂.length) :
-    c l₁ ≠ c l₂ := by
-  -- By induction on the length of the lists, we can show that for any two different lists of the same length, their corresponding closed balls are disjoint.
-  have h_ind : ∀ n : ℕ, ∀ (l₁ l₂ : List (Fin 2)), l₁.length = n → l₂.length = n → l₁ ≠ l₂ → Disjoint (Metric.closedBall (c l₁) (r l₁)) (Metric.closedBall (c l₂) (r l₂)) := by
-    intro n
-    induction' n with n ih
-    · aesop
-    · intro l₁ l₂ hl₁ hl₂ hne
-      obtain ⟨a₁, l₁', rfl⟩ : ∃ a₁ l₁', l₁ = a₁ :: l₁' := by
-        exact List.exists_cons_of_ne_nil (by rintro rfl; contradiction)
-      obtain ⟨a₂, l₂', rfl⟩ : ∃ a₂ l₂', l₂ = a₂ :: l₂' := by
-        exact List.exists_cons_of_ne_nil (by rintro rfl; contradiction)
-      by_cases h : l₁' = l₂' <;> simp_all +decide [Set.disjoint_left]
-      · fin_cases a₁ <;> fin_cases a₂ <;> simp_all +decide
-        intro a ha; specialize hdisj l₂'; contrapose! hdisj; aesop
-      · intro x hx; specialize ih l₁' l₂' hl₁ hl₂ h; fin_cases a₁ <;> fin_cases a₂ <;> simp_all +decide
-        · contrapose! ih
-          exact ⟨x, hball l₁' |>.1 hx |> fun h => by simpa using h.le, hball l₂' |>.1 ih |> fun h => by simpa using h.le⟩
-        · contrapose! ih
-          exact ⟨x, hball _ |>.1 hx |> Metric.mem_ball.mp |> le_of_lt, hball _ |>.2 ih |> Metric.mem_ball.mp |> le_of_lt⟩
-        · contrapose! ih
-          exact ⟨x, hball _ |>.2 hx |> fun h => by simpa using h.le, hball _ |>.1 ih |> fun h => by simpa using h.le⟩
-        · contrapose! ih
-          exact ⟨x, hball _ |>.2 hx |> fun h => by simpa using h.le, hball _ |>.2 ih |> fun h => by simpa using h.le⟩
-  exact fun h => Set.disjoint_left.mp (h_ind _ _ _ hlen rfl hne) (Metric.mem_closedBall_self (le_of_lt (hr_pos _))) (h.symm ▸ Metric.mem_closedBall_self (le_of_lt (hr_pos _)))
-
-/--
-Prepending zeros to a list doesn't change the center.
--/
-lemma scheme_center_replicate_zero {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X}
-    (hc_zero : ∀ l, c (0 :: l) = c l) :
-    ∀ (n : ℕ) (l : List (Fin 2)), c (List.replicate n 0 ++ l) = c l := by
-  intro n l; induction' n with n ih generalizing l <;> simp_all +decide [List.replicate]
-
-/--
-cantorRatPrefix has length Nat.find x.prop.
--/
-lemma cantorRatPrefix_length (x : CantorEventuallyZero) :
-    (cantorRatPrefix x).length = @Nat.find _ (Classical.decPred _) x.prop := by
-  convert PiNat.res_length x.val (Nat.find x.prop)
-
-/--
-For n ≥ Nat.find, x.val n = 0.
--/
-lemma cantorRat_zero_beyond (x : CantorEventuallyZero) (n : ℕ)
-    (hn : n ≥ @Nat.find _ (Classical.decPred _) x.prop) : x.val n = 0 := by
-  grind
-
-/--
-Extending PiNat.res beyond the prefix length just prepends zeros.
--/
-lemma res_extends_prefix (x : CantorEventuallyZero) (n : ℕ)
-    (hn : n ≥ @Nat.find _ (Classical.decPred _) x.prop) :
-    PiNat.res x.val n = List.replicate (n - @Nat.find _ (Classical.decPred _) x.prop) 0 ++ cantorRatPrefix x := by
-  induction' n with n ih
-  · unfold cantorRatPrefix
-    grind +suggestions
-  · by_cases h : n ≥ Nat.find x.prop
-    · rw [Nat.succ_sub h, PiNat.res]
-      grind
-    · cases hn.eq_or_lt <;> simp_all +decide [Nat.sub_eq_zero_of_le, PiNat.res]
-      · unfold cantorRatPrefix
-        simp +decide [*]
-      · grind
-
-/--
-The center at PiNat.res x.val n equals the center at cantorRatPrefix x for n ≥ prefix length.
--/
-lemma center_of_extended_res {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X} (hc_zero : ∀ l, c (0 :: l) = c l)
-    (x : CantorEventuallyZero) (n : ℕ)
-    (hn : n ≥ @Nat.find _ (Classical.decPred _) x.prop) :
-    c (PiNat.res x.val n) = c (cantorRatPrefix x) := by
-  convert scheme_center_replicate_zero hc_zero (n - Nat.find x.prop) (cantorRatPrefix x) using 1
-  rw [res_extends_prefix x n hn]
-
-/--
-The σ map is injective: different CantorRat elements give different centers.
--/
-lemma cantor_sigma_injective {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    (hr_pos : ∀ l, 0 < r l)
-    (hc_zero : ∀ l, c (0 :: l) = c l)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l))
-    (hdisj : ∀ l, Disjoint (Metric.closedBall (c (0 :: l)) (r (0 :: l)))
-                            (Metric.closedBall (c (1 :: l)) (r (1 :: l)))) :
-    Function.Injective (fun x : CantorEventuallyZero => c (cantorRatPrefix x)) := by
-  intro x y hxy
-  have h_prefix_eq : PiNat.res x.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length) = PiNat.res y.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length) := by
-    have h_prefix_eq : c (PiNat.res x.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length)) = c (PiNat.res y.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length)) := by
-      convert hxy using 1
-      · apply center_of_extended_res hc_zero x (max (cantorRatPrefix x).length (cantorRatPrefix y).length)
-        exact le_max_of_le_left (by rw [cantorRatPrefix_length])
-      · apply center_of_extended_res hc_zero y (max (cantorRatPrefix x).length (cantorRatPrefix y).length) (by
-        exact le_max_of_le_right (by rw [cantorRatPrefix_length]))
-    have := @scheme_disjoint_of_ne X _ c r hr_pos hball hdisj (PiNat.res x.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length)) (PiNat.res y.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length)) ; simp_all +decide
-  refine Subtype.ext ?_
-  grind +suggestions
-
-/--
-σ(x) is always in the closed ball at any truncation level n.
--/
-lemma sigma_in_closedBall_res {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    (hr_pos : ∀ l, 0 < r l)
-    (hc_zero : ∀ l, c (0 :: l) = c l)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l))
-    (x : CantorEventuallyZero) (n : ℕ) :
-    c (cantorRatPrefix x) ∈ Metric.closedBall (c (PiNat.res x.val n)) (r (PiNat.res x.val n)) := by
-  by_cases h : n ≤ Nat.find x.prop
-  · -- Since cantorRatPrefix x is the prefix of x up to the point where it becomes zero, and n ≤ Nat.find x.prop, we can write cantorRatPrefix x as l₁ ++ PiNat.res x.val n for some l₁.
-    obtain ⟨l₁, hl₁⟩ : ∃ l₁ : List (Fin 2), cantorRatPrefix x = l₁ ++ PiNat.res x.val n := by
-      have h_decomp : ∀ m n : ℕ, m ≤ n → ∃ l₁ : List (Fin 2), PiNat.res x.val n = l₁ ++ PiNat.res x.val m := by
-        intro m n hmn
-        induction' hmn with n hn ih
-        · exact ⟨[ ], rfl⟩
-        · obtain ⟨l₁, hl₁⟩ := ih; use x.val n :: l₁; simp +decide [hl₁]
-      exact h_decomp _ _ h
-    convert scheme_center_in_closedBall hr_pos hball l₁ (PiNat.res x.val n) using 1
-    rw [hl₁]
-  · have h_center_eq : c (PiNat.res x.val n) = c (cantorRatPrefix x) := by
-      apply center_of_extended_res hc_zero x n (le_of_not_ge h)
-    simp +decide [h_center_eq]
-    exact le_of_lt (hr_pos _)
-
-set_option maxHeartbeats 8000000 in
-/--
-The σ map is continuous from CantorRat to X.
--/
-lemma cantor_sigma_continuous {X : Type*} [MetricSpace X]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    (hr_pos : ∀ l, 0 < r l)
-    (hc_zero : ∀ l, c (0 :: l) = c l)
-    (hr_half : ∀ l (a : Fin 2), r (a :: l) ≤ r l / 2)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l)) :
-    Continuous (fun x : CantorEventuallyZero => c (cantorRatPrefix x)) := by
-  refine continuous_iff_continuousAt.mpr ?_
-  intro x
-  refine Metric.tendsto_nhds.mpr ?_
-  intro ε εpos
-  obtain ⟨n, hn⟩ : ∃ n : ℕ, 2 * r (PiNat.res x.val n) < ε := by
-    -- Since $r(PiNat.res x.val n) \leq r([]) / 2^n$, we can choose $n$ such that $2 * r([]) / 2^n < \epsilon$.
-    have h_bound : ∃ n : ℕ, 2 * r [] / 2 ^ n < ε := by
-      simpa using tendsto_const_nhds.div_atTop (tendsto_pow_atTop_atTop_of_one_lt one_lt_two) |> fun h => h.eventually (gt_mem_nhds εpos) |> fun h => h.exists
-    obtain ⟨n, hn⟩ := h_bound
-    refine ⟨n, lt_of_le_of_lt ?_ hn⟩
-    convert mul_le_mul_of_nonneg_left (scheme_radius_bound hr_half (PiNat.res x.val n)) zero_le_two using 1 ; ring_nf
-    simp +decide
-  have h_open : IsOpen {y : CantorEventuallyZero | PiNat.res y.val n = PiNat.res x.val n} := by
-    have h_open : IsOpen (PiNat.cylinder x.val n) :=
-      PiNat.isOpen_cylinder (E := fun _ => Fin 2) x.val n
-    convert h_open.preimage _ using 1
-    rotate_left
-    use fun y => y.val
-    · exact continuous_subtype_val
-    · -- Goal: {y : CantorEventuallyZero | PiNat.res y.val n = PiNat.res x.val n} =
-      --       Subtype.val ⁻¹' PiNat.cylinder x.val n
-      ext y; simp [PiNat.cylinder_eq_res]
-  have h_cont : ∀ y : CantorEventuallyZero, PiNat.res y.val n = PiNat.res x.val n → dist (c (cantorRatPrefix y)) (c (cantorRatPrefix x)) < ε := by
-    intro y hy
-    have h_dist : dist (c (cantorRatPrefix y)) (c (cantorRatPrefix x)) ≤ 2 * r (PiNat.res x.val n) := by
-      have h_dist : c (cantorRatPrefix y) ∈ Metric.closedBall (c (PiNat.res x.val n)) (r (PiNat.res x.val n)) ∧ c (cantorRatPrefix x) ∈ Metric.closedBall (c (PiNat.res x.val n)) (r (PiNat.res x.val n)) := by
-        exact ⟨by simpa only [hy] using sigma_in_closedBall_res hr_pos hc_zero hball y n, by simpa only [hy] using sigma_in_closedBall_res hr_pos hc_zero hball x n⟩
-      exact le_trans (dist_triangle_right _ _ _) (by linarith [Metric.mem_closedBall.mp h_dist.1, Metric.mem_closedBall.mp h_dist.2])
-    linarith [h_dist]
-  exact Filter.mem_of_superset (IsOpen.mem_nhds h_open (by
-  rfl)) (by
-  exact fun y hy => h_cont y hy)
-
-set_option maxHeartbeats 8000000 in
-/--
-The embedding property of σ : CantorRat → X.
-Given a Cantor scheme with the standard properties, the map
-σ(x) = c(cantorRatPrefix x) is a topological embedding.
--/
-lemma cantor_sigma_isEmbedding {X Y : Type*}
-    [MetricSpace X] [TopologicalSpace Y] [T2Space Y]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    (g : X → Y) (_hg : Continuous g) (_hnlc : NowhereLocallyConstant g)
-    (hr_pos : ∀ l, 0 < r l)
-    (hc_zero : ∀ l, c (0 :: l) = c l)
-    (hr_half : ∀ l (a : Fin 2), r (a :: l) ≤ r l / 2)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l))
-    (hdisj : ∀ l, Disjoint (Metric.closedBall (c (0 :: l)) (r (0 :: l)))
-                            (Metric.closedBall (c (1 :: l)) (r (1 :: l)))) :
-    Topology.IsEmbedding (fun x : CantorEventuallyZero => c (cantorRatPrefix x)) := by
-  have h_embedding : Function.Injective (fun x : CantorEventuallyZero => c (cantorRatPrefix x)) ∧ Continuous (fun x : CantorEventuallyZero => c (cantorRatPrefix x)) := by
-    exact ⟨cantor_sigma_injective hr_pos hc_zero hball hdisj, cantor_sigma_continuous hr_pos hc_zero hr_half hball⟩
-  have h_embedding : ∀ x : CantorEventuallyZero, ∀ n : ℕ, ∃ V ∈ nhds (c (cantorRatPrefix x)), ∀ y : CantorEventuallyZero, c (cantorRatPrefix y) ∈ V → PiNat.res y.val n = PiNat.res x.val n := by
-    intro x n
-    use Metric.ball (c (PiNat.res x.val n)) (r (PiNat.res x.val n))
-    refine ⟨Metric.isOpen_ball.mem_nhds ?_, ?_⟩
-    · by_cases hN : @Nat.find _ (Classical.decPred _) x.prop ≤ n
-      · have h_sigma_in_closedBall_res : c (cantorRatPrefix x) = c (PiNat.res x.val n) := by
-          apply Eq.symm; exact (by
-            have := center_of_extended_res hc_zero x n hN
-            exact this
-          )
-        aesop
-      · have h_closedBall_subset_ball : Metric.closedBall (c (cantorRatPrefix x)) (r (cantorRatPrefix x)) ⊆ Metric.ball (c (PiNat.res x.val n)) (r (PiNat.res x.val n)) := by
-          have h_closedBall_subset_ball : ∀ k ≥ n + 1, Metric.closedBall (c (PiNat.res x.val k)) (r (PiNat.res x.val k)) ⊆ Metric.ball (c (PiNat.res x.val n)) (r (PiNat.res x.val n)) := by
-            intro k hk
-            induction' hk with k hk ih
-            · convert hball (PiNat.res x.val n) (x.val n) using 1
-            · refine Set.Subset.trans ?_ ih
-              convert hball (PiNat.res x.val k) (x.val k) |> Set.Subset.trans <| Metric.ball_subset_closedBall using 1
-          convert h_closedBall_subset_ball (Nat.find x.prop) (by linarith) using 1
-        exact h_closedBall_subset_ball (Metric.mem_closedBall_self (le_of_lt (hr_pos _)))
-    · intro y hy
-      by_contra h_neq
-      obtain ⟨k, hk⟩ : ∃ k < n, PiNat.res y.val (k + 1) ≠ PiNat.res x.val (k + 1) ∧ ∀ j < k, PiNat.res y.val (j + 1) = PiNat.res x.val (j + 1) := by
-        have h_exists_k : ∃ k < n, PiNat.res y.val (k + 1) ≠ PiNat.res x.val (k + 1) := by
-          exact ⟨n - 1, Nat.pred_lt (by aesop), by cases n <;> aesop⟩
-        generalize_proofs at *; (
-        exact ⟨Nat.find h_exists_k, Nat.find_spec h_exists_k |>.1, Nat.find_spec h_exists_k |>.2, fun j hj => Classical.not_not.1 fun h => Nat.find_min h_exists_k hj ⟨by linarith [Nat.find_spec h_exists_k |>.1], h⟩⟩)
-      generalize_proofs at *; (
-      -- Since $c(cantorRatPrefix y) \in Metric.ball(c(res x n), r(res x n))$, we have $c(cantorRatPrefix y) \in Metric.closedBall(c(res x (k+1)), r(res x (k+1)))$.
-      have h_closedBall : c (cantorRatPrefix y) ∈ Metric.closedBall (c (PiNat.res x.val (k + 1))) (r (PiNat.res x.val (k + 1))) := by
-        have h_closedBall : Metric.closedBall (c (PiNat.res x.val n)) (r (PiNat.res x.val n)) ⊆ Metric.closedBall (c (PiNat.res x.val (k + 1))) (r (PiNat.res x.val (k + 1))) := by
-          have h_closedBall : ∀ m ≥ k + 1, Metric.closedBall (c (PiNat.res x.val m)) (r (PiNat.res x.val m)) ⊆ Metric.closedBall (c (PiNat.res x.val (k + 1))) (r (PiNat.res x.val (k + 1))) := by
-            intro m hm
-            induction' hm with m hm ih
-            generalize_proofs at *; (
-            exact Set.Subset.rfl)
-            refine Set.Subset.trans ?_ ih
-            generalize_proofs at *; (
-            have := hball (PiNat.res x.val m) (x.val m) ; simp_all +decide [PiNat.res]
-            exact Set.Subset.trans this (Metric.ball_subset_closedBall))
-          generalize_proofs at *; (
-          exact h_closedBall n (by linarith))
-        generalize_proofs at *; (
-        exact h_closedBall <| Metric.ball_subset_closedBall hy)
-      generalize_proofs at *; (
-      have h_closedBall_y : c (cantorRatPrefix y) ∈ Metric.closedBall (c (PiNat.res y.val (k + 1))) (r (PiNat.res y.val (k + 1))) := by
-        apply sigma_in_closedBall_res
-        · exact hr_pos
-        · exact hc_zero
-        · exact hball
-      generalize_proofs at *; (
-      have h_disjoint : Disjoint (Metric.closedBall (c (PiNat.res y.val (k + 1))) (r (PiNat.res y.val (k + 1)))) (Metric.closedBall (c (PiNat.res x.val (k + 1))) (r (PiNat.res x.val (k + 1)))) := by
-        have h_disjoint : ∀ l : List (Fin 2), ∀ a b : Fin 2, a ≠ b → Disjoint (Metric.closedBall (c (a :: l)) (r (a :: l))) (Metric.closedBall (c (b :: l)) (r (b :: l))) := by
-          intro l a b hab; fin_cases a <;> fin_cases b <;> simp_all +decide
-          exact Disjoint.symm (hdisj l)
-        generalize_proofs at *; (
-        convert h_disjoint (PiNat.res (y.val) k) (y.val k) (x.val k) _ using 1 <;> simp_all +decide [PiNat.res]
-        · grind +suggestions
-        · grind +suggestions)
-      generalize_proofs at *; (
-      exact h_disjoint.le_bot ⟨h_closedBall_y, h_closedBall⟩))))
-  have h_embedding : ∀ x : CantorEventuallyZero, ∀ U ∈ nhds x, ∃ V ∈ nhds (c (cantorRatPrefix x)), ∀ y : CantorEventuallyZero, c (cantorRatPrefix y) ∈ V → y ∈ U := by
-    intro x U hU
-    obtain ⟨n, hn⟩ : ∃ n : ℕ, {y : CantorEventuallyZero | PiNat.res y.val n = PiNat.res x.val n} ⊆ U := by
-      rw [mem_nhds_iff] at hU
-      obtain ⟨t, ht₁, ht₂, ht₃⟩ := hU
-      rcases ht₂ with ⟨s, hs₁, rfl⟩
-      rw [isOpen_pi_iff] at hs₁
-      obtain ⟨I, u, hu₁, hu₂⟩ := hs₁ _ ht₃
-      use I.sup id + 1
-      intro y hy
-      refine ht₁ ?_
-      -- Goal: ↑y ∈ s. Since hu₂ : (↑I).pi u ⊆ s, it suffices to show ↑y ∈ (↑I).pi u.
-      -- For each i ∈ I, i ≤ I.sup id, so i < I.sup id + 1. From hy (res equality),
-      -- y.val i = x.val i. Since hu₁ gives x.val i ∈ u i, we get y.val i ∈ u i.
-      apply hu₂
-      simp only [Set.mem_pi, Finset.mem_coe]
-      intro i hi
-      have hle : i ≤ I.sup id := Finset.le_sup (f := id) hi
-      have heq : y.val i = x.val i := PiNat.res_eq_res.mp hy (Nat.lt_succ_of_le hle)
-      rw [heq]
-      exact (hu₁ i hi).2
-    exact Exists.elim (h_embedding x n) fun V hV => ⟨V, hV.1, fun y hy => hn (hV.2 y hy)⟩
-  refine ⟨?_, ?_⟩
-  · refine Topology.isInducing_iff_nhds.2 fun x => ?_
-    refine le_antisymm ?_ ?_
-    · exact Filter.tendsto_iff_comap.mp (‹ (Injective fun x => c (cantorRatPrefix x)) ∧ Continuous fun x => c (cantorRatPrefix x) ›.2.tendsto x)
-    · intro U hU
-      rcases h_embedding x U hU with ⟨V, hV, hV'⟩ ; exact ⟨V, hV, fun y hy => hV' y hy⟩
-  · exact And.left ‹_›
-
-/--
-g(σ(x)) is in the open set U at level n+1 when σ(x) is in the corresponding ball.
--/
-lemma g_sigma_in_U {X Y : Type*} [MetricSpace X] [TopologicalSpace Y]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    {U : List (Fin 2) → Set Y} (g : X → Y)
-    (hr_pos : ∀ l, 0 < r l)
-    (hc_zero : ∀ l, c (0 :: l) = c l)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l))
-    (hU_img : ∀ l (a : Fin 2), g '' Metric.ball (c (a :: l)) (r (a :: l)) ⊆ U (a :: l))
-    (x : CantorEventuallyZero) (n : ℕ) :
-    g (c (cantorRatPrefix x)) ∈ U (PiNat.res x.val (n + 1)) := by
-  by_cases h : @Nat.find _ (Classical.decPred _) x.prop ≤ n + 1
-  · have := center_of_extended_res hc_zero x (n + 1) h
-    rw [← this]
-    convert hU_img (PiNat.res x.val n) (x.val n) (Set.mem_image_of_mem _ _) using 1
-    convert Metric.mem_ball_self (hr_pos _) using 1
-  · have h_closed_ball : c (cantorRatPrefix x) ∈ Metric.closedBall (c (PiNat.res x.val (n + 1 + 1))) (r (PiNat.res x.val (n + 1 + 1))) := by
-      apply sigma_in_closedBall_res
-      · exact hr_pos
-      · exact hc_zero
-      · exact hball
-    grind +suggestions
-
-set_option maxHeartbeats 4000000 in
-/-- The embedding property of `g ∘ σ : CantorRat → Y`. -/
-lemma cantor_g_sigma_isEmbedding {X Y : Type*}
-    [MetricSpace X] [TopologicalSpace Y] [T2Space Y]
-    {c : List (Fin 2) → X} {r : List (Fin 2) → ℝ}
-    {U : List (Fin 2) → Set Y}
-    (g : X → Y) (hg : Continuous g) (_hnlc : NowhereLocallyConstant g)
-    (hr_pos : ∀ l, 0 < r l)
-    (hc_zero : ∀ l, c (0 :: l) = c l)
-    (hr_half : ∀ l (a : Fin 2), r (a :: l) ≤ r l / 2)
-    (hball : ∀ l (a : Fin 2), Metric.closedBall (c (a :: l)) (r (a :: l)) ⊆
-      Metric.ball (c l) (r l))
-    (hdisj : ∀ l, Disjoint (Metric.closedBall (c (0 :: l)) (r (0 :: l)))
-                            (Metric.closedBall (c (1 :: l)) (r (1 :: l))))
-    (hU_open : ∀ l (a : Fin 2), IsOpen (U (a :: l)))
-    (hU_disj : ∀ l, Disjoint (U (0 :: l)) (U (1 :: l)))
-    (hU_img : ∀ l (a : Fin 2), g '' Metric.ball (c (a :: l)) (r (a :: l)) ⊆ U (a :: l)) :
-    Topology.IsEmbedding (fun x : CantorEventuallyZero => g (c (cantorRatPrefix x))) := by
-  have h_subspace : Continuous (fun x : CantorEventuallyZero => g (c (cantorRatPrefix x))) := by
-    exact hg.comp (cantor_sigma_continuous hr_pos hc_zero hr_half hball)
-  have h_injective : Function.Injective (fun x : CantorEventuallyZero => g (c (cantorRatPrefix x))) := by
-    intro x y hxy
-    by_contra hneq
-    obtain ⟨k, hk⟩ : ∃ k, (PiNat.res x.val k) = (PiNat.res y.val k) ∧ x.val k ≠ y.val k := by
-      obtain ⟨k, hk⟩ : ∃ k, (PiNat.res x.val k) ≠ (PiNat.res y.val k) ∧ ∀ j < k, (PiNat.res x.val j) = (PiNat.res y.val j) := by
-        have h_exists_k : ∃ k, (PiNat.res x.val k) ≠ (PiNat.res y.val k) := by
-          contrapose! hneq
-          generalize_proofs at *
-          exact Subtype.ext (funext fun n => by have := hneq (n + 1) ; have := hneq n; simp_all +decide [PiNat.res])
-        generalize_proofs at *
-        exact ⟨Nat.find h_exists_k, Nat.find_spec h_exists_k, fun j hj => by simpa using Nat.find_min h_exists_k hj⟩
-      generalize_proofs at *
-      rcases k <;> simp_all +decide [PiNat.res]
-      grind
-    generalize_proofs at *
-    have h_contradiction : g (c (cantorRatPrefix x)) ∈ U (PiNat.res x.val (k + 1)) ∧ g (c (cantorRatPrefix y)) ∈ U (PiNat.res y.val (k + 1)) := by
-      exact ⟨g_sigma_in_U g hr_pos hc_zero hball hU_img x k, g_sigma_in_U g hr_pos hc_zero hball hU_img y k⟩
-    generalize_proofs at *; exact (by
-    cases Fin.exists_fin_two.mp ⟨x.val k, rfl⟩ <;> cases Fin.exists_fin_two.mp ⟨y.val k, rfl⟩ <;> simp_all +decide [PiNat.res]
-    · exact Set.disjoint_left.mp (hU_disj _) h_contradiction.1 h_contradiction.2
-    · exact Set.disjoint_left.mp (hU_disj _) h_contradiction.2 h_contradiction.1)
-  refine ⟨?_, ?_⟩
-  · refine Topology.isInducing_iff_nhds.2 fun x => le_antisymm ?_ ?_
-    · exact h_subspace.tendsto x |> fun h => h.le_comap
-    · intro s hs
-      -- Since $s$ is a neighborhood of $x$, there exists an $n$ such that the cylinder set $\{y \mid \text{res } y n = \text{res } x n\}$ is contained in $s$.
-      obtain ⟨n, hn⟩ : ∃ n : ℕ, {y : CantorEventuallyZero | PiNat.res y.val n = PiNat.res x.val n} ⊆ s := by
-        rw [mem_nhds_subtype] at hs
-        rcases hs with ⟨u, hu, hs⟩
-        rw [mem_nhds_iff] at hu
-        rcases hu with ⟨t, ht₁, ht₂, ht₃⟩
-        rw [isOpen_pi_iff] at ht₂
-        obtain ⟨I, u, hu₁, hu₂⟩ := ht₂ _ ht₃
-        use I.sup id + 1
-        intro y hy
-        refine hs (ht₁ (hu₂ ?_))
-        -- Goal: ↑y ∈ (↑I).pi u. For each i ∈ I, i ≤ I.sup id < I.sup id + 1,
-        -- so from hy (res equality) y.val i = x.val i, and hu₁ gives x.val i ∈ u i.
-        simp only [Set.mem_pi, Finset.mem_coe]
-        intro i hi
-        have hle : i ≤ I.sup id := Finset.le_sup (f := id) hi
-        have heq : y.val i = x.val i := PiNat.res_eq_res.mp hy (Nat.lt_succ_of_le hle)
-        rw [heq]
-        exact (hu₁ i hi).2
-      refine ⟨⋂ k ∈ Finset.range n, U (PiNat.res x.val (k + 1)), ?_, ?_⟩
-      · refine IsOpen.mem_nhds ?_ ?_
-        · refine isOpen_biInter_finset fun k hk => ?_
-          convert hU_open (PiNat.res x.val k) (x.val k) using 1
-        · exact Set.mem_iInter₂.2 fun k hk => g_sigma_in_U g hr_pos hc_zero hball hU_img x k
-      · intro y hy; contrapose! hy; simp_all +decide [Set.subset_def]
-        -- Since $y \notin s$, there exists some $k < n$ such that $y.val k \neq x.val k$.
-        obtain ⟨k, hk₁, hk₂⟩ : ∃ k < n, y.val k ≠ x.val k ∧ ∀ j < k, y.val j = x.val j := by
-          have h_exists_k : ∃ k < n, y.val k ≠ x.val k := by
-            grind +suggestions
-          exact ⟨Nat.find h_exists_k, Nat.find_spec h_exists_k |>.1, Nat.find_spec h_exists_k |>.2, fun j hj => Classical.not_not.1 fun h => Nat.find_min h_exists_k hj ⟨by linarith [Nat.find_spec h_exists_k |>.1], h⟩⟩
-        refine ⟨k, hk₁, ?_⟩
-        have h_g_sigma_in_U : g (c (cantorRatPrefix y)) ∈ U (PiNat.res y.val (k + 1)) := by
-          apply g_sigma_in_U
-          exact hr_pos
-          · exact hc_zero
-          · intro l a; specialize hball l; fin_cases a <;> simp_all +decide [Metric.closedBall, Metric.ball]
-          · intro l a; specialize hU_img l; fin_cases a <;> simp_all +decide [Set.image_subset_iff]
-            · exact fun x hx => hU_img.1 x hx
-            · exact fun x hx => hU_img.2 x <| by simpa using hx
-        have h_g_sigma_in_U : PiNat.res y.val (k + 1) = y.val k :: PiNat.res x.val k := by
-          grind +suggestions
-        cases Fin.exists_fin_two.mp ⟨y.val k, rfl⟩ <;> cases Fin.exists_fin_two.mp ⟨x.val k, rfl⟩ <;> simp_all +decide [Set.disjoint_left]
-        exact fun h => hU_disj _ h ‹_›
-  · exact h_injective
-
 set_option maxHeartbeats 4000000 in
 /-- The map `σ : CantorRat → X` defined by `σ(x) = c(prefix(x))` is an embedding,
 and `g ∘ σ` is also an embedding, given the Cantor scheme properties. -/
@@ -622,8 +166,8 @@ lemma nlc_countable_embedding_concrete {X Y : Type*}
     cantor_scheme_exists g hg hnlc x₀
   let σ : CantorRat → X := fun x => c (cantorRatPrefix x)
   refine ⟨σ, ?_, ?_⟩
-  · exact cantor_sigma_isEmbedding g hg hnlc hr_pos hc_zero hr_half hball hdisj
-  · exact cantor_g_sigma_isEmbedding (U := U) g hg hnlc hr_pos hc_zero hr_half hball hdisj
+  · exact cantor_sigma_isEmbedding hr_pos hc_zero hr_half hball hdisj
+  · exact cantor_g_sigma_isEmbedding (U := U) g hg hr_pos hc_zero hr_half hball hdisj
       hU_open hU_disj hU_img
 
 /-
@@ -642,12 +186,9 @@ lemma nlc_countable_embedding {X Y : Type*}
       Topology.IsEmbedding (fun (x : S) => g x.val) := by
   obtain ⟨σ, hσ₁, hσ₂⟩ := nlc_countable_embedding_concrete g hg hnlc
   refine ⟨Set.range σ, ?_, ?_, ?_, ?_⟩
-  · convert Set.countable_range σ
-    have h_countable : Set.Countable (⋃ N : ℕ, {x : ℕ → Fin 2 | ∀ n ≥ N, x n = 0}) := by
-      refine Set.countable_iUnion fun N => ?_
-      refine Set.Countable.mono ?_ (Set.countable_range (fun x : Fin N → Fin 2 => fun n => if h : n < N then x ⟨n, h⟩ else 0))
-      intro x hx; use fun n => x n; ext n; aesop
-    exact h_countable.mono fun x hx => by aesop
+  · -- `Countable CantorRat` is now in scope (from `ZeroDimensionalSpaces.CantorRat`), so the
+    -- range is countable directly; the former manual support-counting argument is unnecessary.
+    exact Set.countable_range σ
   · exact ⟨_, ⟨⟨fun _ => 0, ⟨0, fun _ _ => rfl⟩⟩, rfl⟩⟩
   · intro x hx
     -- Since CantorRat has no isolated points, the image of CantorRat under σ also has no isolated points.
@@ -686,37 +227,199 @@ lemma nlc_countable_embedding {X Y : Type*}
     · intro x y hxy
       rcases x with ⟨x, ⟨x', rfl⟩⟩ ; rcases y with ⟨y, ⟨y', rfl⟩⟩ ; have := hσ₂.2 (by aesop : g (σ x') = g (σ y')) ; aesop
 
-/-- **Key helper for Theorem 2.5.** If `g : X → Y` is continuous from a nonempty
-metrizable space to a T₂ space, and `g` is nowhere locally constant, then there exists
-a topological embedding `σ : ℚ → X` such that `g ∘ σ` is also a topological embedding. -/
-lemma nlc_to_rat_embedding {X Y : Type*}
-    [TopologicalSpace X] [MetrizableSpace X]
-    [TopologicalSpace Y] [T2Space Y]
-    (g : X → Y) (hg : Continuous g) (hnlc : NowhereLocallyConstant g) [Nonempty X] :
-    ∃ (σ : ℚ → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (g ∘ σ) := by
-  obtain ⟨S, hcount, hne, hni, hemb_g⟩ := nlc_countable_embedding g hg hnlc
-  haveI : Countable S := hcount.to_subtype
-  haveI : Nonempty S := hne.to_subtype
-  obtain ⟨h⟩ := sierpinski_rat_homeomorph hni
-  exact ⟨Subtype.val ∘ h.symm,
-    Topology.IsEmbedding.subtypeVal.comp h.symm.isEmbedding,
-    hemb_g.comp h.symm.isEmbedding⟩
 
-/-- **Theorem 2.5 (weakened formulation).** If `f` is continuous from a metrizable to a
-Hausdorff space and not scattered, then there exists a topological embedding `σ : ℚ → X`
-such that `f ∘ σ` is also a topological embedding (into `Y`). -/
-theorem nonscattered_embeds_idQ {X Y : Type*}
+/-- If `f` is continuous from a metrizable to a Hausdorff space and not scattered, then
+`id_CantorRat` topologically embeds in `f`.  This uses the Cantor scheme
+`nlc_countable_embedding_concrete` directly (which already lands in `CantorRat`), so it needs
+no Sierpiński input. -/
+theorem nonscattered_embeds_idCantorRat {X Y : Type*}
     [TopologicalSpace X] [MetrizableSpace X]
     [TopologicalSpace Y] [T2Space Y]
     {f : X → Y} (hf : Continuous f) (hns : ¬ ScatteredFun f) :
-    ∃ (σ : ℚ → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (f ∘ σ) := by
+    ∃ (σ : CantorRat → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (f ∘ σ) := by
   rw [not_scattered_iff_exists_nlc] at hns
   obtain ⟨A, hA, hnlc⟩ := hns
   haveI : Nonempty A := hA.to_subtype
   have hcont : Continuous (f ∘ Subtype.val : A → Y) := hf.comp continuous_subtype_val
-  obtain ⟨σ, hσ, hgσ⟩ := nlc_to_rat_embedding (f ∘ Subtype.val) hcont hnlc
+  obtain ⟨σ, hσ, hgσ⟩ := nlc_countable_embedding_concrete (f ∘ Subtype.val) hcont hnlc
   exact ⟨Subtype.val ∘ σ,
     Topology.IsEmbedding.subtypeVal.comp hσ,
+    hgσ⟩
+
+
+/-! ### A non-empty closed nowhere-locally-constant set (route to the Cantor embedding)
+
+For the Cantor-space embedding we need to run the Cantor scheme inside a *complete*
+carrier.  The perfect kernel `K = perfectKernelCB f` is closed (hence a complete Polish
+subspace), non-empty when `f` is not scattered, and `f|_K` is nowhere locally constant. -/
+
+section PerfectKernelNLC
+
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+
+omit [TopologicalSpace Y] in
+/-- Stability of the CB derivative propagates upward: if `CBLevel f α = CBLevel f (α+1)`
+then `CBLevel f β = CBLevel f α` for every `β ≥ α`. -/
+lemma CBLevel_eq_of_stable (f : X → Y) {α : Ordinal}
+    (hstab : CBLevel f α = CBLevel f (Order.succ α)) :
+    ∀ β, α ≤ β → CBLevel f β = CBLevel f α := by
+  intro β
+  induction' β using Ordinal.limitRecOn with γ ih lam hlam ih
+  · intro hβ; rw [nonpos_iff_eq_zero.mp hβ]
+  · intro hβ
+    rcases eq_or_lt_of_le hβ with h | h
+    · rw [← h]
+    · have hαγ : α ≤ γ := Order.lt_succ_iff.mp h
+      rw [CBLevel_succ', ih hαγ, ← CBLevel_succ' f α, ← hstab]
+  · intro hβ
+    rcases eq_or_lt_of_le hβ with h | h
+    · rw [← h]
+    · rw [CBLevel_limit f lam hlam]
+      apply le_antisymm
+      · exact Set.iInter₂_subset α h
+      · refine Set.subset_iInter₂ fun γ hγ => ?_
+        rcases le_total α γ with hαγ | hγα
+        · exact (ih γ hγ hαγ).ge
+        · exact CBLevel_antitone f hγα
+
+omit [TopologicalSpace Y] in
+/-- When `X` is `Small.{0}`, the CB derivative stabilises at some countable stage. -/
+lemma exists_CBLevel_stable (f : X → Y) :
+    ∃ α : Ordinal, CBLevel f α = CBLevel f (Order.succ α) := by
+  by_contra h
+  push_neg at h
+  obtain ⟨g, hg⟩ := CBLevel_strictAnti_of_ne f h
+  exact not_injective_of_ordinal g hg
+
+omit [TopologicalSpace Y] in
+/-- The perfect kernel equals a stable CB-level. -/
+lemma perfectKernelCB_eq_stable (f : X → Y) :
+    ∃ α : Ordinal, perfectKernelCB f = CBLevel f α ∧
+      CBLevel f α = CBLevel f (Order.succ α) := by
+  obtain ⟨α, hα⟩ := exists_CBLevel_stable f
+  refine ⟨α, le_antisymm (Set.iInter_subset _ α) ?_, hα⟩
+  refine Set.subset_iInter fun β => ?_
+  rcases le_total α β with h | h
+  · exact (CBLevel_eq_of_stable f hα β h).ge
+  · exact CBLevel_antitone f h
+
+omit [TopologicalSpace Y] in
+/-- The perfect kernel has no `f`-isolated points. -/
+lemma isolatedLocus_perfectKernelCB_empty (f : X → Y) :
+    isolatedLocus f (perfectKernelCB f) = ∅ := by
+  obtain ⟨α, hK, hα⟩ := perfectKernelCB_eq_stable f
+  rw [hK]
+  have hdiff : CBLevel f α \ isolatedLocus f (CBLevel f α) = CBLevel f α := by
+    rw [← CBLevel_succ' f α]; exact hα.symm
+  ext x
+  simp only [Set.mem_empty_iff_false, iff_false]
+  intro hx
+  have hxK : x ∈ CBLevel f α := hx.1
+  rw [← hdiff] at hxK
+  exact hxK.2 hx
+
+omit [TopologicalSpace Y] in
+/-- If `f` has no isolated points on `S`, then `f|_S` is nowhere locally constant. -/
+lemma nlc_of_isolatedLocus_empty (f : X → Y) {S : Set X}
+    (h : isolatedLocus f S = ∅) :
+    NowhereLocallyConstant (f ∘ (Subtype.val : S → X)) := by
+  intro U hU hUne
+  by_contra hcon
+  push_neg at hcon
+  obtain ⟨⟨x, hxS⟩, hxU⟩ := hUne
+  rw [isOpen_induced_iff] at hU
+  obtain ⟨V, hV, rfl⟩ := hU
+  have hxin : x ∈ isolatedLocus f S := by
+    refine ⟨hxS, V, hV, hxU, ?_⟩
+    intro y hyVS
+    have := hcon ⟨y, hyVS.2⟩ hyVS.1 ⟨x, hxS⟩ hxU
+    simpa using this
+  exact Set.notMem_empty x (h ▸ hxin)
+
+/-- **Non-scattered ⟹ a non-empty closed nowhere-locally-constant restriction.**
+The witness is the perfect kernel `perfectKernelCB f`. -/
+lemma exists_closed_nonempty_nlc (f : X → Y) (hns : ¬ ScatteredFun f) :
+    ∃ K : Set X, IsClosed K ∧ K.Nonempty ∧
+      NowhereLocallyConstant (f ∘ (Subtype.val : K → X)) := by
+  refine ⟨perfectKernelCB f, isClosed_iInter (fun α => CBLevel_isClosed f α), ?_, ?_⟩
+  · rw [Set.nonempty_iff_ne_empty]
+    exact fun h => hns (scattered_of_empty_perfectKernel f h)
+  · exact nlc_of_isolatedLocus_empty f (isolatedLocus_perfectKernelCB_empty f)
+
+end PerfectKernelNLC
+
+/-! ### Full Cantor-space embedding from a scheme in a complete carrier
+
+These mirror the `cantor_sigma_*` lemmas but use the *full* Cantor space `2^ℕ` instead of
+its eventually-zero (≅ ℚ) part.  The branch map `σ(z) = limₙ c(z|ₙ)` exists because the
+carrier `Z` is complete and the radii shrink geometrically.  All facts live in the complete
+`Z`, so disjointness/openness apply to the limit points; the embedding conclusions then come
+for free from compactness of `2^ℕ`. -/
+
+section CantorFullScheme
+
+/-- **Step 5 (assembly).** A continuous nowhere-locally-constant map from a *complete*
+metric space embeds `2^ℕ` (both `σ` and `g ∘ σ`). -/
+lemma nlc_cantor_embedding_concrete {Z Y : Type*}
+    [MetricSpace Z] [CompleteSpace Z] [Nonempty Z]
+    [TopologicalSpace Y] [T2Space Y]
+    (g : Z → Y) (hg : Continuous g) (hnlc : NowhereLocallyConstant g) :
+    ∃ (σ : CantorSpace → Z), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (g ∘ σ) := by
+  obtain ⟨x₀⟩ := ‹Nonempty Z›
+  obtain ⟨c, r, U, _, hr_pos, _hc_zero, hr_half, hball, hdisj, _hU_open, hU_disj, hU_img⟩ :=
+    cantor_scheme_exists g hg hnlc x₀
+  exact ⟨cantorSigmaFull c,
+    cantorSigmaFull_isEmbedding hr_pos hr_half hball hdisj,
+    g_cantorSigmaFull_isEmbedding (U := U) g hg hr_pos hr_half hball hU_disj hU_img⟩
+
+end CantorFullScheme
+
+/-- **Cantor-space strengthening.** For `X` Polish (complete), a non-scattered continuous
+`f : X → Y` (into a Hausdorff space) admits a topological embedding `σ : 2^ℕ → X` with
+`f ∘ σ` also an embedding — i.e. `id_{2^ℕ} ⊑ f`.  This upgrades `nonscattered_embeds_idCantorRat`
+from `ℚ` (the eventually-zero branches) to the full Cantor space, using completeness to
+take branch limits.
+
+ROADMAP / what's still needed (this is *not* a black-box corollary of
+`nonscattered_embeds_idCantorRat`):
+
+The existing ℚ-embedding is built by `nlc_countable_embedding_concrete`, which runs the
+Cantor scheme (`cantor_scheme_exists`) on the *subspace* `A` (an arbitrary non-empty set
+on which `f` is nowhere locally constant), under `A`'s own `metrizableSpaceMetric`.  Two
+facts block a direct extension to `2^ℕ`:
+  1. `A` need not be complete, so the branch limits `σ(z) = limₙ c(z|ₙ)` need not exist in
+     `A`; and even taken in `X`, they land in `closure A`, possibly outside `A`.
+  2. The scheme only exposes closed-ball **disjointness inside `A`**
+     (`Metric.closedBall` in `A`), which does *not* lift to disjointness of the ambient
+     `X`-balls — so injectivity of the extended map cannot be recovered from the existing
+     data.  (The underlying gap `ε' < dist x x' / 3` in `splitting_lemma_nlc` *is* metric
+     and would lift, but it is not surfaced by `cantor_scheme_exists`.)
+
+The clean fix is to run the scheme inside a **complete** carrier where the branch limits
+stay and disjointness is meaningful for the limit points:
+  • take `K := perfectKernelCB f` (closed in `X`, hence a complete Polish subspace) on
+    which `f` is nowhere locally constant, OR re-run `cantor_scheme_exists` using `X`'s
+    Polish (complete) metric with centres kept in the nlc-set;
+  • define `σ z := limₙ (c (PiNat.res z n))` (Cauchy since `r(z|ₙ) ≤ r[]/2ⁿ`, complete);
+  • `σ` continuous (uniform modulus `dist ≤ 2·r(z|ₙ)`, cf. `cantor_sigma_continuous`),
+    `σ` injective (scheme disjointness, now valid for limit points), and `f ∘ σ` injective
+    (image separation `g_sigma_in_U`, valid since `σ z` lies in the *open* parent ball);
+  • conclude both are embeddings *for free* from compactness of `2^ℕ`: an injective
+    continuous map from a compact space to a `T2` space is a closed embedding. -/
+theorem nonscattered_embeds_idCantor {X Y : Type*}
+    [TopologicalSpace X] [PolishSpace X]
+    [TopologicalSpace Y] [T2Space Y]
+    {f : X → Y} (hf : Continuous f) (hns : ¬ ScatteredFun f) :
+    ∃ (σ : CantorSpace → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (f ∘ σ) := by
+  -- run the scheme inside the complete carrier `K = perfectKernelCB f`
+  obtain ⟨K, hK_closed, hK_ne, hnlc⟩ := exists_closed_nonempty_nlc f hns
+  haveI : Nonempty K := hK_ne.to_subtype
+  haveI : PolishSpace K := hK_closed.polishSpace
+  letI := upgradeIsCompletelyMetrizable K
+  have hg : Continuous (f ∘ (Subtype.val : K → X)) := hf.comp continuous_subtype_val
+  obtain ⟨σ, hσ, hgσ⟩ := nlc_cantor_embedding_concrete (f ∘ Subtype.val) hg hnlc
+  exact ⟨Subtype.val ∘ σ,
+    hK_closed.isClosedEmbedding_subtypeVal.isEmbedding.comp hσ,
     hgσ⟩
 
 end NonScatteredTheorem
