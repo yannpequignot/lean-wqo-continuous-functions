@@ -315,14 +315,11 @@ lemma cocenter_continuity_cylinder {A : Type*} [TopologicalSpace A]
 -- The backward direction of Theorem 4.6 (centered_of_monotone_pgluing)
 -- is in Theorems.lean (uses pgluingOfRegularIsCentered)
 
-/-! The forward direction: if f is centered, then f ≡ pgl_i f_i for some
-monotone sequence. Uses regularization of the ray sequence. -/
--- lemma monotone_pgluing_of_centered
---     (F : ScatFun) (hF_cent : IsCentered F.func) :
---     ∃ (C D : ℕ → Set (ℕ → ℕ)) (g : ∀ i, ↑(C i) → ↑(D i)),
---       IsMonotoneSeq (fun i => (fun (x : ↑(C i)) => (g i x : ℕ → ℕ))) ∧
---       ContinuouslyEquiv F.func
---         (fun (x : PointedGluingSet C) => PointedGluingFun C D g x)
+-- The forward direction `monotone_pgluing_of_centered` (if `f` is centered then
+-- `f ≡ pgl_i g_i` for some monotone `(g_i)_i`) was relocated to
+-- `CenteredFunctions/LocallyCentered/Theorem.lean`: it needs `ScatFun.rayOn`,
+-- `ray_separation` and the keystone `centeredAsPgluing_backward`, all of which live
+-- downstream of this file.
 
 
 /-!
@@ -637,6 +634,13 @@ lemma succMaxFun_eq_pgl (lam : Ordinal.{0}) (hlam : lam < omega1) :
   funext z
   exact (scatFun_pgl_func_eq_val (fun _ => ScatFun.maxFun lam hlam)
     (fun _ a => by rw [ScatFun.maxFun_func]; rfl) z).symm
+
+open ScatFun in
+/-- The underlying function of the bundled `ScatFun.succMaxFun lam` is the raw
+`SuccMaxFun lam` (both are `pgl ℓ_lam`). -/
+@[simp] lemma succMaxFun_func (lam : Ordinal.{0}) (hlam : lam < omega1) :
+    (ScatFun.succMaxFun lam hlam).func = SuccMaxFun lam :=
+  (succMaxFun_eq_pgl lam hlam).symm
 
 open ScatFun in
 /-- `pgl(ℓ_lam)` is scattered. -/

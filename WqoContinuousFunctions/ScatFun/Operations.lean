@@ -460,6 +460,17 @@ lemma minFun_cbRank_le (α : Ordinal.{0}) (hα : α < omega1) :
   CBRank_le_of_CBLevel_empty _ _
     (minFun_cbLevel_empty α hα (Order.lt_succ (Order.succ α)))
 
+/-- The bundled **successor-maximum function** `pgl ℓ_α`: the pointed gluing of
+countably many copies of `ℓ_α`.  This is the canonical non-minimal centered
+function at level `α + 1` (its underlying function is the raw `SuccMaxFun α`; see
+`succMaxFun_func` in `CenteredFunctions/Helpers.lean`).  Bundled here alongside
+`maxFun`/`minFun` so it can be used as a first-class `ScatFun`. -/
+def succMaxFun (α : Ordinal.{0}) (hα : α < omega1) : ScatFun :=
+  pgl (fun _ => maxFun α hα)
+
+@[simp] lemma succMaxFun_eq (α : Ordinal.{0}) (hα : α < omega1) :
+    succMaxFun α hα = pgl (fun _ => maxFun α hα) := rfl
+
 end ScatFun
 
 end

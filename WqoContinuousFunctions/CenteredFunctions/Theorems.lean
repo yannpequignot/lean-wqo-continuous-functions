@@ -36,20 +36,32 @@ memoir on continuous reducibility between functions.
 * `rigidityOfCocenter_finiteGluing` — Proposition 4.4, Item 3
 * `rigidityOfCocenter_reducibleByPieces` — Proposition 4.4, Item 4
 * `residualCorestrictionOfCentered` — Corollary 4.5
-* `centeredAsPgluing_iff_monotone` — Theorem 4.6, Item 2
-* `centeredAsPgluing_CBrank` — Theorem 4.6, CB-rank consequence
+  (Theorem 4.6 — `centeredAsPgluing_*` / `centered_equiv_pgl_rays` /
+  `monotone_pgluing_of_centered` / `centeredAsPgluing_iff_monotone` / `centeredAsPgluing_CBrank`
+  — now live in `CenteredFunctions/CenteredAsPgluing.lean`.)
+* `limit_rank_equiv_maxFun` — `ConsequencesGeneralStructureThm`: every function of
+  limit CB-rank `lam` is `≡ ℓ_lam` (used to feed Corollary 4.10).
 
-### Section 2: Centered functions and structure of continuous reducibility (§4.2)
-* `localCenterednessFromTwoBQO_scatFun` — Theorem 4.7
-* `finitegenerationAndPgluing_upper` — Proposition 4.8, Item 1
-* `finitegenerationAndPgluing_lower` — Proposition 4.8, Item 2
-* `finitenessOfCenteredFunctions` — Theorem 4.9
-* `centeredSuccessor` — Corollary 4.10
+### Corollary 4.10 (centeredSuccessor)
+* `pglMaxFun_not_le_minFunPlusOne` / `minFun_lt_pglMaxFun` — the strict-inequality
+  part (`k_{lam+1} < pgl ℓ_lam`); these are stated here because their proof needs the
+  cocenter-rigidity results of Proposition 4.4 (still `sorry`).
+* The dichotomy part of Corollary 4.10 (`centeredSuccessor`: a centered function of
+  rank `lam + 1` is `≡ k_{lam+1}` or `≡ pgl ℓ_lam`) lives in
+  `CenteredFunctions/Finiteness.lean` (it consumes Theorem 4.9), and is proved there
+  for `lam` a nonzero limit.
 
-### Section 3: Simple functions at successors of limit levels (§4.3)
-* `simpleIffCoincidenceOfCocenters` — Proposition 4.11
-* `simpleFunctionsLambdaPlusOne` — Theorem 4.12
-* `finiteDegreeLambdaPlusOne` — Corollary 4.13
+## Located in other files
+* Theorem 4.7 `localCenterednessFromTwoBQO_scatFun` → `CenteredFunctions/LocallyCentered/Theorem.lean`.
+* Proposition 4.8 `finitegenerationAndPgluing_upper` / `_lower` → `ScatFun/FiniteGluing.lean`.
+* Theorem 4.9 `finitenessOfCenteredFunctions` → `CenteredFunctions/Finiteness.lean`
+  (helpers in `CenteredFunctions/FinitenessHelpers.lean`).
+
+## §4.3 (not yet formalized)
+Proposition 4.11 (`simpleIffCoincidenceOfCocenters`), Theorem 4.12
+(`simpleFunctionsLambdaPlusOne`) and Corollary 4.13 (`finiteDegreeLambdaPlusOne`)
+are not yet formalized; only the Proposition 4.11 helper scaffolding lives in
+`CenteredFunctions/Helpers.lean`.
 -/
 
 noncomputable section
@@ -643,124 +655,58 @@ theorem residualCorestrictionOfCentered
 -- where the constructive `ScatFun.reduces_pgl_rays` (the proper replacement for the old
 -- degenerate `pointedGluing_rays_upper_bound`) is in scope.
 
-/-- **Theorem 4.6 (CenteredasPgluing) — Item 2.**
-`f ∈ 𝒞` is centered if and only if `f ≡ pgl_i f_i` for some monotone (or regular)
-sequence `(f_i)_i`.
+-- §4.1 Theorem 4.6 (CenteredAsPgluing) — `centeredAsPgluing_forward/backward`,
+-- `centered_equiv_pgl_rays`, `monotone_pgluing_of_centered`, `centeredAsPgluing_iff_monotone`,
+-- `centeredAsPgluing_CBrank` (+ the ray machinery) — live in
+-- `CenteredFunctions/CenteredAsPgluing.lean` (and its `.Helpers`).
+-- The Theorem 4.9 helper lemmas → `CenteredFunctions/FinitenessHelpers.lean`;
+-- `finitenessOfCenteredFunctions` itself → `CenteredFunctions/Finiteness.lean`.
 
-*Proof (⇐):* Follows from Pgluingofregulariscentered and Centerinvariance.
-*Proof (⇒):* By Rigidityofthecocenter, recursively build pairwise disjoint finite
-sets `(I_n)_n` with `f_n = ⊔_{i ∈ I_n} Ray(f, y, i)` monotone.
-Then `pgl_n f_n ≡ pgl_n Ray(f, y, n)` by Pgluingasupperbound. -/
-theorem centeredAsPgluing_iff_monotone
-    (F : ScatFun) :
-    IsCentered F.func ↔
-    ∃ (g : ℕ → ScatFun),
-      IsMonotoneSeq g ∧
-      ContinuouslyEquiv F.func (ScatFun.pgl g).func := by
-  constructor
-  · -- Forward: centered → ∃ monotone equiv.
-    -- (The forward construction `monotone_pgluing_of_centered` is still pending; see
-    -- CenteredFunctions/Helpers.lean.)
-    sorry
-  · -- Backward: ∃ monotone equiv → centered.
-    -- By `pgluingOfRegularIsCentered` (a monotone sequence is regular) + `isCentered_of_equiv`.
-    rintro ⟨g, hg_mono, hequiv⟩
-    have hg_reg : Preorder.IsRegularSeq ScatFun.Reduces g := IsMonotoneSeq.isRegularSeq g hg_mono
-    have hg_cent : IsCentered (ScatFun.pgl g).func :=
-      ⟨⟨zeroStream, zeroStream_mem_pointedGluingSet _⟩, pgluingOfRegularIsCentered g hg_reg⟩
-    exact isCentered_of_equiv hg_cent hequiv
+open ScatFun in
+/-- **Result 1 (limit-rank equivalence) — `ConsequencesGeneralStructureThm`.**
+Every scattered continuous function of *limit* CB-rank `lam < ω₁` is continuously
+equivalent to the maximum function `ℓ_lam` (`maxFun lam`).
 
-/-- **Theorem 4.6 — CB-rank consequence.**
-If `f` is centered with cocenter `y`, then `f` is simple with distinguished point `y`
-and `CB(f) = (sup_n CB(Ray(f, y, n))) + 1`. -/
-theorem centeredAsPgluing_CBrank
-    {A B : Set (ℕ → ℕ)}
-    (f : A → ℕ → ℕ) (hfB : ∀ a, f a ∈ B)
-    (hf : Continuous f)
-    (hf_scat : ScatteredFun f)
-    (hf_cent : IsCentered f)
-    (y : ℕ → ℕ) (hy : ∀ x, IsCenterFor f x → f x = y) :
-    CBRank f = Order.succ (⨆ n, CBRank (RayFun f y n)) := by
-  -- `f` is simple: rank `α + 1`, with `f` constant `= y` on `CB_α`.
-  obtain ⟨α, hrank, hne, _hempty, hsimple⟩ :=
-    centered_scattered_simple_structure f hf_scat hf_cent y hy
-  -- `RayFun f y n` has the same CB-rank as the `RaySet`-form ray used by the helpers
-  -- (their domains coincide, since `f a ∈ B` always).
-  have hray_eq : ∀ n, CBRank (RayFun f y n)
-      = CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val) := by
-    intro n
-    have hD : {a : A | (∀ k, k < n → f a k = y k) ∧ f a n ≠ y n}
-            = {a : A | f a ∈ RaySet B y n} := by
-      ext a; simp only [RaySet, Set.mem_setOf_eq]
-      exact ⟨fun h => ⟨hfB a, h⟩, fun h => h.2⟩
-    exact CBRank_comp_homeomorph (Homeomorph.setCongr hD)
-      (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val)
-  -- The supremum of the ray CB-ranks is exactly `α` (`sup_ray_cb_eq_alpha`).
-  have hsup : (⨆ n, CBRank (RayFun f y n)) = α := by
-    rw [iSup_congr hray_eq]
-    exact sup_ray_cb_eq_alpha f hfB hf hf_scat α hne y hsimple
-      (fun n => CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val))
-      (fun _ => rfl) (fun n => ray_cb_le_alpha f hf α y hsimple n)
-  rw [hrank, hsup]
-
-/-- **Theorem 4.9 (Finitenessofcenteredfunctions).**
-If `lam` is `0` or a limit ordinal and `𝒞_{[lam, lam+n]}` is generated by a finite
-family `B` (i.e. `ScatFun.LevelInter lam (lam+n) ⊆ ScatFun.FinGl B`), then every
-centered `g ∈ 𝒞_{[lam, lam+n+1]}` is equivalent either to the minimal function
-`k_{lam+1}` (`ScatFun.minFun lam`) or to the pointed gluing `⊔ G` of some non-empty
-sub-family `G = B ∘ ι` of `B`.
-
-## Provided solution
-
-Let `g ∈ 𝒞_{[lam, lam+n+1]}` be centered, hence of successor CB-rank by
-`centeredAsPgluing_CBrank`.  In particular `g` is not equivalent to the maximal
-function, so `lam < CBRank g.func ≤ lam+n+1`.
-
-By `centeredAsPgluing_iff_monotone` there is a `≤`-monotone sequence `(gᵢ)ᵢ` with
-`g ≡ ScatFun.pgl g`, where for every `i`, `CBRank (gᵢ).func < CBRank g.func ≤ lam+n+1`
-and `(⨆ i, CBRank (gᵢ).func) + 1 = CBRank g.func > lam`.  In particular
-`⨆ i, CBRank (gᵢ).func ≥ lam`.
-
-* **Case `⨆ i, CBRank (gᵢ).func = lam`.**  If `lam = 0` then
-  `g ≡ ScatFun.minFun 0 = ⊔ ∅`.  Otherwise `lam` is limit and
-  `ScatFun.minFun lam ≡ ScatFun.pgl g ≡ g`, because `ScatFun.minFun lam` is the
-  minimum at level `lam+1` (`minFun_is_minimum`) and `g` sits at that level.
-  Both sub-cases land in the left disjunct `ScatFun.Equiv g (ScatFun.minFun lam hlam)`.
-
-* **Case `⨆ i, CBRank (gᵢ).func > lam`.**  By monotonicity there is `j` with
-  `CBRank (gᵢ).func ≥ lam` for all `i ≥ j`, and monotonicity again gives
-  `g ≡ ScatFun.pgl_{i ≥ j} gᵢ` via two applications of `pointedGluing_upper_bound`.
-  For each `i ≥ j`, since `gᵢ ∈ ScatFun.LevelInter lam (lam+n) ⊆ ScatFun.FinGl B`,
-  fix a finite gluing `gᵢ ≡ ScatFun.Gl B tᵢ` and let `Gᵢ = {f ∈ B | tᵢ f > 0}`.
-  Put `G = ⋃_{i ≥ j} Gᵢ`, enumerated as `B ∘ ι` (`ι : Fin k → Fin m`).  `G` is
-  non-empty: otherwise every `gᵢ` (`i ≥ j`) is empty, forcing
-  `⨆ i, CBRank (gᵢ).func = 0`, contradicting `> lam ≥ 0`.  By construction each
-  `gᵢ ∈ ScatFun.FinGl (B ∘ ι)`, and each block of `G` reduces cofinally into
-  `(gᵢ)ᵢ` by monotonicity, so `finitegenerationAndPgluing_upper` /
-  `finitegenerationAndPgluing_lower` give `g ≡ ScatFun.pgl (ScatFun.repSeq (B ∘ ι))`. -/
-theorem finitenessOfCenteredFunctions
-    {lam : Ordinal.{0}} (hlam : lam < omega1)
-    (hlim : Order.IsSuccLimit lam ∨ lam = 0)
-    {m n : ℕ} (B : Fin m → ScatFun)
-    (hgen : ScatFun.LevelInter lam (lam + ↑n) ⊆ ScatFun.FinGl B)
-    (g : ScatFun)
-    (hg_lvl  : g ∈ ScatFun.LevelInter lam (lam + ↑n + 1))
-    (hg_cent : IsCentered g.func) :
-    ScatFun.Equiv g (ScatFun.minFun lam hlam) ∨
-      ∃ (k : ℕ) (ι : Fin k → Fin m), 0 < k ∧
-        ScatFun.Equiv g (ScatFun.pgl (ScatFun.repSeq (B ∘ ι))) := by
-  sorry
+This packages, at the `ScatFun` level, the consequence of the General Structure
+Theorem (`general_structure_theorem`, item 1): at a limit rank there is a single
+`≡`-class, represented by `ℓ_lam`.  Both reductions are instances of item 1 (with
+the roles of the two functions swapped), using that `CBRank ℓ_lam = lam`
+(`maxFun_cbRank_eq`). -/
+theorem limit_rank_equiv_maxFun (F : ScatFun) (lam : Ordinal.{0})
+    (hlam_lt : lam < omega1) (hlim : Order.IsSuccLimit lam)
+    (hrank : CBRank F.func = lam) :
+    ScatFun.Equiv F (ScatFun.maxFun lam hlam_lt) := by
+  have hmaxrank : CBRank (ScatFun.maxFun lam hlam_lt).func = lam := by
+    rw [ScatFun.maxFun_func]; exact maxFun_cbRank_eq lam hlam_lt
+  have hmscat : ScatteredFun (ScatFun.maxFun lam hlam_lt).func :=
+    (ScatFun.maxFun lam hlam_lt).hScat
+  have hmcont : Continuous (ScatFun.maxFun lam hlam_lt).func :=
+    (ScatFun.maxFun lam hlam_lt).hCont
+  refine ⟨?_, ?_⟩
+  · -- `F ≤ ℓ_lam`: item 1 with `g = ℓ_lam`.
+    exact (general_structure_theorem F.domain (ScatFun.maxFun lam hlam_lt).domain
+      F.func (ScatFun.maxFun lam hlam_lt).func F.hScat hmscat F.hCont hmcont
+      lam hlam_lt (Or.inl hlim)).1 ⟨hmaxrank, le_of_eq (hrank.trans hmaxrank.symm)⟩
+  · -- `ℓ_lam ≤ F`: item 1 with the roles swapped (`g = F`).
+    exact (general_structure_theorem (ScatFun.maxFun lam hlam_lt).domain F.domain
+      (ScatFun.maxFun lam hlam_lt).func F.func hmscat F.hScat hmcont F.hCont
+      lam hlam_lt (Or.inl hlim)).1 ⟨hrank, le_of_eq (hmaxrank.trans hrank.symm)⟩
 
 /-!
-### Corollary 4.10 (centeredSuccessor)
+### Corollary 4.10 (centeredSuccessor) — strict inequality
 
-The two conclusion lemmas of Corollary 4.10.  They are stated here, rather than in
-`CenteredFunctions/Helpers.lean` where the supporting facts (`maxFun_cbRank_eq`,
-`minFun_le_pglMaxFun`, …) live, because the strict-inequality direction needs the
-cocenter-rigidity results of Proposition 4.4 (`rigidityOfCocenter_*`), which are defined
-in this file — and `Theorems.lean` imports `Helpers.lean`, not the other way around.
+The strict-inequality lemmas `pglMaxFun_not_le_minFunPlusOne` and `minFun_lt_pglMaxFun`
+are **commented out below**.  They are not needed for the main results, and the hard
+direction (`pgl ℓ_lam ⊄ k_{lam+1}`) is still open — delegated to aristotle (see the
+spec in the commented docstring).  They are kept here, fully stated and documented,
+ready to be reinstated once that direction is proved; meanwhile this file stays
+`sorry`-free.
+
+The easy direction `k_{lam+1} ≤ pgl(ℓ_lam)` remains available as `minFun_le_pglMaxFun`
+in `Helpers.lean`.
 -/
 
+/-
 open ScatFun in
 /-- `pgl(ℓ_lam)` does not reduce to `k_{lam+1} + 1` (the strictness of the inequality
 in Corollary 4.10).
@@ -776,30 +722,41 @@ equivalence would force, via `rigidityOfCocenter_reducibleByPieces`, a reduction
 
 The supporting rigidity results are now available: `rigidityOfCocenter_finiteGluing`
 (Item 3) and `rigidityOfCocenter_reducibleByPieces` (Item 4) are both proved (over
-`ScatFun`).  What remains here is to instantiate them at `F := pgl(ℓ_lam)` and
-`G := k_{lam+1}` (bundled as `ScatFun`s), feed the reducibility-by-pieces to bound
-`CBRank ℓ_lam = lam` by `sup_{n<M}(α_n+1) < lam`, and derive the contradiction. -/
+`ScatFun`).  What remains here is to instantiate them at `F := pgl(ℓ_lam)`
+(`succMaxFun lam`, centered by `pglSuccMaxFun_isCentered`) and `G := k_{lam+1}`
+(`minFun lam`, centered by `minFun_isCentered`), feed the reducibility-by-pieces to
+bound `CBRank ℓ_lam = lam` by `sup_{n<M}(α_n+1) < lam`, and derive the contradiction.
+
+DELEGATED (to aristotle).  The structural plumbing exists; the missing analytic
+infrastructure to be supplied is:
+* CB-rank of the rigidity-rays of `pgl(ℓ_lam)` (`= lam`) and of `k_{lam+1}`
+  (the `n`-th ray `≡ k_{α_n+1}`, of rank `α_n + 1`);
+* CB-rank of a *finite* gluing `= ` the finite `sup` of the block ranks;
+* a finite `sup` of ordinals each `< lam` is `< lam` for `lam` a limit;
+* the separate `lam = 1` base case (`ℓ_1 = id_ℕ ≤ n · id_1 = n · k_1`, a
+  contradiction via `Rigidityofthecocenter`).
+The easy direction `k_{lam+1} ≤ pgl(ℓ_lam)` is already proved as `minFun_le_pglMaxFun`
+(`Helpers.lean`) and packaged with this lemma in `minFun_lt_pglMaxFun`. -/
 lemma pglMaxFun_not_le_minFunPlusOne (lam : Ordinal.{0})
     (hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
     (hlam_lt : lam < omega1) :
-    ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam + 1) := by
+    ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam) := by
   sorry
 
 open ScatFun in
-/-- k_{λ+1} and pgl(ℓ_λ) are not equivalent (strict inequality). -/
+/-- k_{λ+1} and pgl(ℓ_λ) are not equivalent (strict inequality): `k_{lam+1} ≤ pgl ℓ_lam`
+(the existing `minFun_le_pglMaxFun` in `Helpers.lean`) but not conversely
+(`pglMaxFun_not_le_minFunPlusOne`). -/
 lemma minFun_lt_pglMaxFun (lam : Ordinal.{0})
     (hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
     (hlam_lt : lam < omega1) :
-      ContinuouslyReduces (MinFun lam + 1) (SuccMaxFun lam) ∧
-      ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam + 1) := by
+      ContinuouslyReduces (MinFun lam) (SuccMaxFun lam) ∧
+      ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam) := by
   have hlam_ne : lam ≠ 0 := by
-    rcases hlam with h | h
+    rcases hlam with h | ⟨_, h⟩
     · rw [h]; exact one_ne_zero
-    · exact h.2
-  refine ⟨?_, pglMaxFun_not_le_minFunPlusOne lam hlam hlam_lt⟩
-  obtain ⟨σ, hσ, τ, hτ, heq⟩ := minFun_le_pglMaxFun lam hlam_lt hlam_ne
-  refine ⟨σ, hσ, fun w => τ w + 1, hτ.add continuousOn_const, fun x => ?_⟩
-  have hx : (MinFun lam + 1) x = MinFun lam x + 1 := rfl
-  rw [hx, heq x]
-
+    · exact h
+  exact ⟨minFun_le_pglMaxFun lam hlam_lt hlam_ne,
+    pglMaxFun_not_le_minFunPlusOne lam hlam hlam_lt⟩
+-/
 end

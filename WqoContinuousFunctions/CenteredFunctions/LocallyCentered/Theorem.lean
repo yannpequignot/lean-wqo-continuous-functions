@@ -19,33 +19,24 @@ machinery in `SuccessorCase/Helpers.lean`.
 
 ### §4.2
 * `localCenterednessFromTwoBQO_scatFun` — Theorem 4.7
-* `finitenessOfCenteredFunctions` — Theorem 4.9
-* `centeredSuccessor` — Corollary 4.10
+
+(Theorem 4.9 `finitenessOfCenteredFunctions` now lives in `CenteredFunctions/Finiteness.lean`;
+Theorem 4.6 `centeredAsPgluing_*` in `CenteredFunctions/CenteredAsPgluing.lean`.)
 
 (Proposition 4.8 `finitegenerationAndPgluing_upper` / `_lower` now lives in
 `ScatFun/FiniteGluing.lean`, stated with the `FinGl` / `pgl` operations.)
 
-### §4.3
-* `simpleIffCoincidenceOfCocenters` — Proposition 4.11
-* `simpleFunctionsLambdaPlusOne` — Theorem 4.12
-* `finiteDegreeLambdaPlusOne` — Corollary 4.13
+(§4.3 — Proposition 4.11 `simpleIffCoincidenceOfCocenters`, Theorem 4.12
+`simpleFunctionsLambdaPlusOne`, Corollary 4.13 `finiteDegreeLambdaPlusOne` — is not
+yet formalized; only the Proposition 4.11 helper scaffolding lives in
+`CenteredFunctions/Helpers.lean`.)
 -/
 
 noncomputable section
 
-/-- **Theorem 4.6 (CenteredAsPgluing) — Item 1 (forward), `ScatFun` form.**
-Every `ScatFun` `G` continuously reduces to the pointed gluing of its rays at any base
-point `y` (in particular, at the cocenter when `G` is centered):
-`G ≤ pgl_i Ray(G, y, i)`.
-
-This lives here, rather than in `CenteredFunctions/Theorems.lean` (§4.1), because it now
-consumes the constructive `ScatFun.reduces_pgl_rays` (the replacement for the old
-degenerate `pointedGluing_rays_upper_bound`), which is defined in
-`CenteredFunctions/LocallyCentered/Helpers.lean`. -/
-theorem centeredAsPgluing_forward (G : ScatFun) (y : Baire) :
-    ContinuouslyReduces G.func (ScatFun.pgl (fun i => G.rayOn y Set.univ i)).func :=
-  ScatFun.reduces_pgl_rays G y
-
+-- **Theorem 4.6 (CenteredAsPgluing)** (forward/backward/equiv/monotone/iff) →
+-- `CenteredFunctions/CenteredAsPgluing.lean`.
+-- **Theorem 4.9 (`finitenessOfCenteredFunctions`)** → `CenteredFunctions/Finiteness.lean`.
 /-!
 ## Section 2: Centered Functions and Structure of Continuous Reducibility (§4.2)
 -/

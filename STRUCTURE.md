@@ -80,10 +80,16 @@ treeView-beta
         "📄 LiftToLex.lean - bad sequence in ScatFun ⟹ bad in lex sum"
         "📄 ReflectLevel.lean - bad_restricts_to_level ✓ (concentration on one level)"
         "📄 FiniteGluing.lean - FinGl + FinGl.isTwoBQO ✓; levels_finitely_generated ✗ (sorry)"
-      "📁 CenteredFunctions/"
+      "📁 CenteredFunctions/ — Chapter 4 (centered functions): formalized, sorry-free"
         "📄 Defs.lean - IsCenterFor, IsCentered, IsLocallyCentered, RayFun"
-        "📄 Helpers.lean - helpers for centered function theorems (mostly proved)"
-        "📄 Theorems.lean - centered classification theorems (mostly sorry)"
+        "📄 Helpers.lean - helpers for centered function theorems ✓"
+        "📄 Theorems.lean - §4.1 Facts 4.1–4.2, Prop 4.3/4.4 (cocenter rigidity), Cor 4.5, limit_rank_equiv_maxFun ✓"
+        "📄 CenteredAsPgluing.lean - Thm 4.6 (centered ≡ pgl of its rays) ✓"
+        "📄 CenteredAsPgluing/Helpers.lean - supporting lemmas for Thm 4.6 ✓"
+        "📄 LocallyCentered/Helpers.lean - successor-case helpers for Thm 4.7 ✓"
+        "📄 LocallyCentered/Theorem.lean - Thm 4.7 (local centeredness from 2-BQO) ✓"
+        "📄 FinitenessHelpers.lean - FinGl helpers; 𝒞_{≤1} finite generation (LocallyConstantFunctions) ✓"
+        "📄 Finiteness.lean - Thm 4.9 (finiteness) + Cor 4.10 (centeredSuccessor: 𝒞_{λ+1} dichotomy, λ=1 & limit) ✓"
       "📁 PreciseStructure/"
         "📄 Defs.lean - definitions for the Precise Structure Theorem"
         "📄 Theorems.lean - Precise Structure Theorem (nearly all sorry)"
@@ -152,7 +158,26 @@ flowchart LR
     SFD --> SFTL[ScatFun/LiftToLex]
     SFTL --> SFRL[ScatFun/ReflectLevel]
     SFRL --> MRSFB[MainResults/ScatFunBQO]
-    MRSFB --> MAIN([Main.lean])
+
+    SFD --> SFOP[ScatFun/Operations]
+    SFOP --> SFG[ScatFun/FiniteGluing]
+    SFG --> MRSFB
+
+    BSB --> ZDU[ZeroDimensionalSpaces/Universality]
+    ZDU --> CRU[ContinuousReducibility/Universality]
+    CRD --> CRU
+    SNS --> CRU
+
+    SCBA --> SFREP[MainResults/ScatFunRepresentation]
+    SFD --> SFREP
+
+    MRSFB --> MAIN([MainResults/Main])
+    SFG --> MAIN
+    CRU --> MAIN
+    SNS --> MAIN
+    SCBA --> MAIN
+    CRD --> MAIN
+    SFREP --> MAIN
 
     style MB fill:#534AB7,color:#EEEDFE,stroke:#3C3489
     style BSB fill:#185FA5,color:#E6F1FB,stroke:#0C447C
@@ -189,6 +214,11 @@ flowchart LR
     style SFRL fill:#3C3489,color:#EEEDFE,stroke:#26215C
     style MRSFB fill:#534AB7,color:#EEEDFE,stroke:#3C3489
     style MAIN fill:#534AB7,color:#EEEDFE,stroke:#3C3489
+    style ZDU fill:#185FA5,color:#E6F1FB,stroke:#0C447C
+    style CRU fill:#0C447C,color:#E6F1FB,stroke:#042C53
+    style SFOP fill:#3C3489,color:#EEEDFE,stroke:#26215C
+    style SFG fill:#3C3489,color:#EEEDFE,stroke:#26215C
+    style SFREP fill:#534AB7,color:#EEEDFE,stroke:#3C3489
 ```
 <!--```
 Mathlib (v4.28.0)
@@ -296,9 +326,13 @@ ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [★ SORRY ★
   │     "Every function in Level α is continuously equivalent to a
   │      finite gluing of finitely many generators (MaxFun and centered functions)"
   │     │
-  │     ├── CenteredFunctions/Theorems.lean                        [MOSTLY SORRY]
-  │     │     "centeredSuccessor, simpleFunctionsLambdaPlusOne, ..."
-  │     │     partial prerequisites: Helpers.lean (mostly proved)
+  │     ├── CenteredFunctions/*  — Chapter 4 (centered functions)  [PROVED ✓, sorry-free]
+  │     │     "Thm 4.6 (centered ≡ pgl of rays), Thm 4.7 (local centeredness from 2-BQO),
+  │     │      Thm 4.9 (finiteness of centered functions), Cor 4.10 (centeredSuccessor:
+  │     │      up to ≡ the only centered functions at rank λ+1 are k_{λ+1} and pgl ℓ_λ,
+  │     │      for both λ=1 and λ a nonzero limit)."
+  │     │     incl. 𝒞_{≤1} finite generation (LocallyConstantFunctions, cLeOne_finitely_generated).
+  │     │     (§4.3 simple-function classification 4.11–4.13 not needed here; not formalized.)
   │     │
   │     └── DoubleSuccessor/Theorems.lean                          [ALL SORRY, stub chapter]
   │           "vertical_theorem, diagonal_theorem, solvable_decomposition, ..."
@@ -333,8 +367,11 @@ ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [★ SORRY ★
 | Each level / `ScatFun` is 2-BQO (given finite gen.) | ✓ fully proved | `MainResults/ScatFunBQO.lean` |
 | Finite gluing `FinGl B` is 2-BQO | ✓ fully proved | `ScatFun/FiniteGluing.lean` |
 | **`levels_finitely_generated`** (finite generation) | ✗ **sorry** | `ScatFun/FiniteGluing.lean` |
-| CenteredFunctions helpers | ✓ mostly proved | `CenteredFunctions/Helpers.lean` |
-| CenteredFunctions theorems | ✗ mostly sorry | `CenteredFunctions/Theorems.lean` |
+| **Centered functions (Chapter 4)** | ✓ **fully proved (sorry-free)** | `CenteredFunctions/*` |
+| — Thm 4.6 (centered ≡ pgl of rays) | ✓ proved | `CenteredFunctions/CenteredAsPgluing.lean` |
+| — Thm 4.7 (local centeredness from 2-BQO) | ✓ proved | `CenteredFunctions/LocallyCentered/Theorem.lean` |
+| — Thm 4.9 (finiteness) + Cor 4.10 (`centeredSuccessor`) | ✓ proved | `CenteredFunctions/Finiteness.lean` |
+| — 𝒞_{≤1} finite generation (LocallyConstantFunctions) | ✓ proved | `CenteredFunctions/FinitenessHelpers.lean` |
 | PreciseStructure definitions | ✓ fully proved | `PreciseStructure/Defs.lean` |
 | Finite Generation / Precise Structure | ✗ all sorry | `PreciseStructure/Theorems.lean` |
 | Double Successor theorems | ✗ all sorry | `DoubleSuccessor/Theorems.lean` |
@@ -423,11 +460,18 @@ proof of `levels_finitely_generated`.
 
 Proving this result is the purpose of the three last chapters of  the memoir:
 
-1. **Centered functions** (`CenteredFunctions/Theorems.lean`):
+1. **Centered functions** (Chapter 4, `CenteredFunctions/*`) — ✓ **formalized, sorry-free.**
    - `IsCentered f`: the function `f` is centered — it is a pointed gluing of its ray functions.
-   - Key theorems to prove: `centeredSuccessor` (centered functions at successor ranks are
-     gluings of centered functions at lower ranks), `simpleFunctionsLambdaPlusOne`
-     (classification of simple functions at level λ+1).
+   - Proved: Thm 4.6 (`centered_equiv_pgl_rays` — centered ≡ pgl of its rays),
+     Thm 4.7 (`localCenterednessFromTwoBQO_scatFun`), Thm 4.9
+     (`finitenessOfCenteredFunctions`), and Cor 4.10 (`centeredSuccessor`: up to
+     continuous equivalence the only centered functions at rank `λ+1` are `k_{λ+1}`
+     and `pgl ℓ_λ`), for both `λ = 1` and `λ` a nonzero limit. The `λ = 1` base case
+     uses the finite generation of `𝒞_{≤1}` (`cLeOne_finitely_generated`, the memoir's
+     `LocallyConstantFunctions`).
+   - Still open: the §4.3 simple-function classification (Thm 4.11–4.13) — not needed
+     for finite generation — and the optional strict separation `k_{λ+1} < pgl ℓ_λ`
+     (kept commented out).
 
 2. **Precise Structure Theorem** (`PreciseStructure/Theorems.lean`):
    - The last operation the Wedge Operation

@@ -1,4 +1,3 @@
-import Mathlib
 import WqoContinuousFunctions.ContinuousReducibility.Defs
 import WqoContinuousFunctions.ContinuousReducibility.Scattered.NonScattered
 import ZeroDimensionalSpaces.Universality
