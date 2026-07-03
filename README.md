@@ -40,11 +40,15 @@ flowchart LR
     style B fill:transparent,stroke-width:0px,stroke-dasharray:0
 ```
 
+>Intuitively, `f` reduces to `g` if `g` can compute (or realize) `f` exactly, once you're allowed to continuously recode `f`'s inputs before feeding them to `g` (preprocessing `σ`), and   continuously recode `g`'s outputs back afterward (postprocessing `τ`).
+
 <!--<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">-->
 
 The main result states that this quasi-order is a WQO on a large class of functions
 
-**Theorem (Main Theorem 3)** Continuous reducibility is a well-quasi-order on the class of scattered continuous functions from a zero-dimensional separable metrizable space to a metrizable space.
+**Theorem (Main Result)** Continuous reducibility is a better-quasi-order on all continuous functions from a zero-dimensional separable metrizable space, as long as either the source space is analytic or the target space is countable.
+
+>Continuous functions between these spaces come in bewildering variety, but our main theorem shows they're not chaotic: under continuous reducibility, you can never find infinitely many pairwise-incomparable functions, nor an infinite chain of strictly simpler and simpler ones. So despite the apparent complexity of the class, reducibility sorts it into a well-founded hierarchy — any large enough collection of functions must contain two that are comparable, and any attempt to keep reducing to something strictly simpler must terminate.
 
 Because WQOs lack closure properties under infintary operations, this is achieved by proving a stronger property, that of better-quasi-ordering (BQO). 
 
