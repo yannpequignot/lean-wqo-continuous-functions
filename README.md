@@ -46,7 +46,7 @@ flowchart LR
 
 The main result states that this quasi-order is a WQO on a large class of functions
 
-**Theorem (Main Result)** Continuous reducibility is a better-quasi-order on all continuous functions from a zero-dimensional separable metrizable space, as long as either the source space is analytic or the target space is countable.
+**Theorem (Main Result)** Continuous reducibility is a well-quasi-order on all continuous functions from a zero-dimensional separable metrizable space, as long as either the source space is analytic or the target space is countable.
 
 >Continuous functions between these spaces come in bewildering variety, but our main theorem shows they're not chaotic: under continuous reducibility, you can never find infinitely many pairwise-incomparable functions, nor an infinite chain of strictly simpler and simpler ones. So despite the apparent complexity of the class, reducibility sorts it into a well-founded hierarchy — any large enough collection of functions must contain two that are comparable, and any attempt to keep reducing to something strictly simpler must terminate.
 
