@@ -20,10 +20,7 @@ reducibility in descriptive set theory.
 
 We study the following quasi-order on functions.
 
-> **Definition (continuous reducibility).** A function $f : X \to Y$ **continuously reduces**
-> to $g : X' \to Y'$, written $f \le g$, if there are a continuous $\sigma : X \to X'$ and a
-> map $\tau : Y' \to Y$ that is continuous on $\operatorname{im}(g\circ\sigma)$ such that
-> $f = \tau \circ g \circ \sigma$.
+>**Definition** A function `f : X → Y'` **continuously reduces** to `g : X' → Y'`, written `f ≤ g`, if there is a continuous `σ : X → X'` and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)` such that `f(x) = τ(g(σ(x)))` for all `x` in `X`.
 
 ```mermaid
 flowchart LR
@@ -37,6 +34,18 @@ flowchart LR
     style A fill:transparent,stroke-width:0px,stroke-dasharray:0
     style B fill:transparent,stroke-width:0px,stroke-dasharray:0
 ```
+
+**A note on the formalization.** The definition above is the memoir's, formalized *verbatim*
+as `ContinuouslyReduces_range_based` (with `τ` a bundled continuous map
+`im(g ∘ σ) → im f`). The development, however, mostly works with the slightly different
+`ContinuouslyReduces`, which asks instead for a **total** map `τ : Y' → Y` that is continuous
+*on* `im(g ∘ σ)`. This is far more convenient in Lean: the type of `τ` is then fixed and does
+not depend on the data `σ, f, g`, so composing reductions or pre-composing with a homeomorphism
+never forces a transport across changing subtypes. The two notions **coincide whenever the
+codomain is nonempty** (`continuouslyReduces_iff_range_based`) — in particular on `ScatFun`,
+where the codomain is Baire space — and differ only for the empty function, which the
+range-based version (matching the paper) handles vacuously. Both definitions, and the bridge
+between them, live in [`ContinuousReducibility/Defs.lean`](WqoContinuousFunctions/ContinuousReducibility/Defs.lean).
 
 > **Main Theorem 1.** Continuous reducibility is a well-quasi-order on the class of
 > continuous functions between separable metrizable spaces with Polish zero-dimensional domains.
@@ -156,9 +165,17 @@ lake build WqoContinuousFunctions  # the main development (default target)
 ## 💻 Core definitions in Lean
 
 ```lean
-/-- `f` continuously reduces to `g` if there is a continuous `σ : X → X'`
-and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
-such that `f x = τ (g (σ x))` for all `x`. -/
+/-- The memoir's definition (verbatim): `τ` is a bundled continuous map
+`im(g ∘ σ) → im f`.  See the note above on why the development prefers the total-`τ`
+variant below; the two agree on `ScatFun` via `continuouslyReduces_iff_range_based`. -/
+def ContinuouslyReduces_range_based (f : X → Y) (g : X' → Y') : Prop :=
+  ∃ σ : C(X, X'),
+  ∃ τ : C(Set.range (g ∘ σ), Set.range f),
+    ∀ x : X, τ ⟨g (σ x), Set.mem_range_self x⟩ = ⟨f x, Set.mem_range_self x⟩
+
+/-- The working definition used throughout the development: `f` continuously reduces to `g`
+if there is a continuous `σ : X → X'` and a **total** function `τ : Y' → Y` that is continuous
+on `im(g ∘ σ)` such that `f x = τ (g (σ x))` for all `x`. -/
 def ContinuouslyReduces {X Y X' Y' : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
     [TopologicalSpace X'] [TopologicalSpace Y']
