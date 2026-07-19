@@ -204,7 +204,7 @@ theorem pointedGluing_upper_bound
               exact fun i hi => Continuous.continuousOn (by solve_by_elim)
             have h_cont : ContinuousOn (fun x : GluingSet (fun i => if i ∈ I j then C i else ∅) => prependZerosOne (x.val 0) (unprepend x.val)) (⋃ i ∈ I j, {x : GluingSet (fun i => if i ∈ I j then C i else ∅) | x.val 0 = i}) := by
               intro x hx
-              simp +zetaDelta at *
+              simp +zetaDelta only [Subtype.forall, ne_eq, coe_setOf, mem_setOf_eq, mem_iUnion, exists_prop, exists_eq_right'] at *
               exact ContinuousAt.continuousWithinAt (by exact ContinuousAt.congr (h_cont _ hx |> ContinuousOn.continuousAt <| IsOpen.mem_nhds (by solve_by_elim) <| by simp) <| Filter.EventuallyEq.symm <| Filter.eventuallyEq_of_mem (IsOpen.mem_nhds (by solve_by_elim) <| by simp) fun y hy => by aesop)
             convert h_cont using 1
             rw [show (⋃ i ∈ I j, { x : GluingSet (fun i => if i ∈ I j then C i else ∅) | (x : ℕ → ℕ) 0 = i }) = Set.univ from Set.eq_univ_of_forall fun x => Set.mem_iUnion₂.mpr ⟨_, embed_block j x, rfl⟩] ; simp +decide [continuousOn_univ]

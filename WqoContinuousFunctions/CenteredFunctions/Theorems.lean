@@ -44,8 +44,9 @@ memoir on continuous reducibility between functions.
 
 ### Corollary 4.10 (centeredSuccessor)
 * `pglMaxFun_not_le_minFunPlusOne` / `minFun_lt_pglMaxFun` — the strict-inequality
-  part (`k_{lam+1} < pgl ℓ_lam`); these are stated here because their proof needs the
-  cocenter-rigidity results of Proposition 4.4 (still `sorry`).
+  part (`k_{lam+1} < pgl ℓ_lam`); **commented out below** (see the block comment near the
+  end of this file). The hard direction (`pgl ℓ_lam ⊄ k_{lam+1}`) needs the cocenter-rigidity
+  results of Proposition 4.4 and is delegated to aristotle; this file stays complete.
 * The dichotomy part of Corollary 4.10 (`centeredSuccessor`: a centered function of
   rank `lam + 1` is `≡ k_{lam+1}` or `≡ pgl ℓ_lam`) lives in
   `CenteredFunctions/Finiteness.lean` (it consumes Theorem 4.9), and is proved there
@@ -600,10 +601,10 @@ theorem rigidityOfCocenter_reducibleByPieces
     cases lt_or_gt_of_ne hmn <;> simp +decide [*, Finset.disjoint_left]
     · intro a ha₁ ha₂ ha₃
       refine absurd ha₃ (not_le_of_gt ?_)
-      refine Nat.le_induction ?_ ?_ n ‹_› <;> intros <;> simp +decide [*]
+      refine' Nat.le_induction _ _ n ‹_› <;> intros <;> simp +decide [*]
       exact le_trans (by linarith) (hM₁ _ _)
     · refine fun a ha₁ ha₂ ha₃ => lt_of_lt_of_le ?_ ha₁
-      refine Nat.le_induction ?_ ?_ m ‹_› <;> intros <;> simp +decide [*]
+      refine' Nat.le_induction _ _ m ‹_› <;> intros <;> simp +decide [*]
       exact le_trans (by linarith) (hM₁ _ _)
   · intro n
     obtain ⟨σ, hσ, τ, hτ, h⟩ := hM₂ (Nat.recOn n 0 fun n IH => M IH n + 1) n
@@ -687,10 +688,399 @@ theorem limit_rank_equiv_maxFun (F : ScatFun) (lam : Ordinal.{0})
     exact (general_structure_theorem F.domain (ScatFun.maxFun lam hlam_lt).domain
       F.func (ScatFun.maxFun lam hlam_lt).func F.hScat hmscat F.hCont hmcont
       lam hlam_lt (Or.inl hlim)).1 ⟨hmaxrank, le_of_eq (hrank.trans hmaxrank.symm)⟩
-  · -- `ℓ_lam ≤ F`: item 1 with the roles swapped (`g = F`).
-    exact (general_structure_theorem (ScatFun.maxFun lam hlam_lt).domain F.domain
-      (ScatFun.maxFun lam hlam_lt).func F.func hmscat F.hScat hmcont F.hCont
-      lam hlam_lt (Or.inl hlim)).1 ⟨hrank, le_of_eq (hmaxrank.trans hrank.symm)⟩
+  · -- `ℓ_lam ≤ F`: `ℓ_lam` is a lower bound at limit rank (`MaxFun_le_limit_rank`),
+    -- avoiding the verbose `general_structure_theorem` round-trip.
+    exact MaxFun_le_limit_rank lam hlam_lt hlim F.domain F.func F.hCont F.hScat hrank
+
+
+namespace ConseqMinFunAux
+
+lemma ordinal_limit_add_nat (o : Ordinal.{0}) :
+    ∃ (η : Ordinal.{0}) (k : ℕ), o = η + k ∧ (η = 0 ∨ Order.IsSuccLimit η) := by
+  induction o using Ordinal.limitRecOn with
+  | zero => exact ⟨0, 0, by simp, Or.inl rfl⟩
+  | succ o ih =>
+      obtain ⟨η, k, rfl, h⟩ := ih
+      exact ⟨η, k + 1, by push_cast; rw [← add_assoc, Ordinal.add_one_eq_succ], h⟩
+  | limit o hlim ih => exact ⟨o, 0, by simp, Or.inr hlim⟩
+
+
+lemma cbRank_rayFun_pgl (s : ℕ → ScatFun) (n : ℕ) :
+    CBRank (RayFun (ScatFun.pgl s).func zeroStream n) = CBRank (s n).func := by
+  refine le_antisymm ?_ ?_;
+  · -- By definition of `RayFun`, we know that `RayFun (ScatFun.pgl s).func zeroStream n` is continuously reducible to `(s n).func`.
+    have h_ray_reduces : ContinuouslyReduces (RayFun (ScatFun.pgl s).func zeroStream n) (s n).func := by
+      refine ⟨ ?_, ?_ ⟩;
+      exact fun x => ⟨ stripZerosOne n x.val.val, by
+        have := x.2.1; have := x.2.2; simp_all +decide [ ScatFun.pgl, PointedGluingFun ] ;
+        split_ifs at this <;> simp_all +decide [ ScatFun.pglBlock ];
+        have h_firstNonzero : firstNonzero x.val.val = n := by
+          exact le_antisymm ( le_of_not_gt fun h => this <| by
+            exact if_pos h ) ( le_of_not_gt fun h => by
+            simp_all +decide [ prependZerosOne, zeroStream ];
+            grind +splitImp )
+        generalize_proofs at *; (
+        grind) ⟩
+      generalize_proofs at *; (
+      refine ⟨ ?_, ?_ ⟩
+      all_goals generalize_proofs at *;
+      · exact Continuous.subtype_mk ( continuous_stripZerosOne n |> Continuous.comp <| continuous_subtype_val.comp continuous_subtype_val ) _;
+      · refine ⟨ fun x => prependZerosOne n x, ?_, ?_ ⟩ <;> simp +decide [ RayFun ];
+        · exact Continuous.continuousOn ( continuous_prependZerosOne n );
+        · intro a ha hp hq
+          have h_block : ∃ w : (s n).domain, a = prependZerosOne n w.val := by
+            obtain ⟨ i, hi ⟩ := ha
+            generalize_proofs at *; (
+            simp_all +decide [ ScatFun.pgl_func_zeroStream ]);
+            obtain ⟨ i, hi ⟩ := Set.mem_iUnion.mp ‹_›
+            generalize_proofs at *; (
+            obtain ⟨ w, hw, rfl ⟩ := hi
+            generalize_proofs at *; (
+            have h_block : i = n := by
+              have h_block : (ScatFun.pgl s).func ⟨prependZerosOne i w, by
+                assumption⟩ = prependZerosOne i ((s i).func ⟨w, hw⟩) := by
+                exact ScatFun.pgl_func_block s i ⟨ w, hw ⟩
+              generalize_proofs at *; (
+              by_cases hi : i < n <;> simp_all +decide [ prependZerosOne ];
+              · specialize hp i hi ; simp_all +decide [ zeroStream ];
+              · cases lt_or_eq_of_le hi <;> simp_all +decide [ zeroStream ])
+            generalize_proofs at *; (
+            exact ⟨ ⟨ w, by aesop ⟩, by aesop ⟩)))
+          generalize_proofs at *; (
+          obtain ⟨ w, rfl ⟩ := h_block; simp +decide [ ScatFun.pgl_func_block ] ;
+          grind +suggestions))
+    generalize_proofs at *; (
+    apply_rules [ ContinuouslyReduces.rank_monotone ];
+    · have h_ray_scattered : ScatteredFun (ScatFun.pgl s).func := by
+        exact ScatFun.pgl _ |>.hScat
+      generalize_proofs at *;
+      exact scattered_restrict (ScatFun.pgl s).func h_ray_scattered
+        {a | (∀ k < n, (ScatFun.pgl s).func a k = zeroStream k) ∧
+          (ScatFun.pgl s).func a n ≠ zeroStream n};
+    · exact ( s n ).hScat);
+  · -- By definition of `RayFun`, we know that `(s n).func` is continuously reducible to `RayFun (ScatFun.pgl s).func zeroStream n`.
+    have h_reducible : ContinuouslyReduces (s n).func (RayFun (ScatFun.pgl s).func zeroStream n) := by
+      refine ⟨ ?_, ?_, ?_, ?_, ?_ ⟩;
+      refine fun x => ⟨ ⟨ prependZerosOne n x.val, prependZerosOne_mem_pointedGluingSet _ n x.val x.prop ⟩, ?_, ?_ ⟩ <;> simp +decide [ ScatFun.pgl_func_block ];
+      any_goals intro x; exact stripZerosOne n x;
+      all_goals norm_num [ prependZerosOne, zeroStream ];
+      any_goals intros; linarith;
+      · refine Continuous.subtype_mk ?_ ?_;
+        refine' Continuous.subtype_mk _ _;
+        exact continuous_prependZerosOne n |> Continuous.comp <| continuous_subtype_val;
+      · exact Continuous.continuousOn ( continuous_stripZerosOne n );
+      · grind +suggestions;
+    apply_rules [ ContinuouslyReduces.rank_monotone ];
+    · exact ( s n ).hScat;
+    · have h_scattered : ScatteredFun (ScatFun.pgl s).func := by
+        exact ScatFun.pgl _ |>.hScat;
+      exact scattered_restrict (ScatFun.pgl s).func h_scattered
+        {a | (∀ k < n, (ScatFun.pgl s).func a k = zeroStream k) ∧
+          (ScatFun.pgl s).func a n ≠ zeroStream n}
+
+
+theorem centeredAsPgluing_CBrank
+    {A B : Set (ℕ → ℕ)}
+    (f : A → ℕ → ℕ) (hfB : ∀ a, f a ∈ B)
+    (hf : Continuous f)
+    (hf_scat : ScatteredFun f)
+    (hf_cent : IsCentered f)
+    (y : ℕ → ℕ) (hy : ∀ x, IsCenterFor f x → f x = y) :
+    CBRank f = Order.succ (⨆ n, CBRank (RayFun f y n)) := by
+  -- `f` is simple: rank `α + 1`, with `f` constant `= y` on `CB_α`.
+  obtain ⟨α, hrank, hne, _hempty, hsimple⟩ :=
+    centered_scattered_simple_structure f hf_scat hf_cent y hy
+  -- `RayFun f y n` has the same CB-rank as the `RaySet`-form ray used by the helpers
+  -- (their domains coincide, since `f a ∈ B` always).
+  have hray_eq : ∀ n, CBRank (RayFun f y n)
+      = CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val) := by
+    intro n
+    have hD : {a : A | (∀ k, k < n → f a k = y k) ∧ f a n ≠ y n}
+            = {a : A | f a ∈ RaySet B y n} := by
+      ext a; simp only [RaySet, Set.mem_setOf_eq]
+      exact ⟨fun h => ⟨hfB a, h⟩, fun h => h.2⟩
+    exact CBRank_comp_homeomorph (Homeomorph.setCongr hD)
+      (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val)
+  -- The supremum of the ray CB-ranks is exactly `α` (`sup_ray_cb_eq_alpha`).
+  have hsup : (⨆ n, CBRank (RayFun f y n)) = α := by
+    rw [iSup_congr hray_eq]
+    exact sup_ray_cb_eq_alpha f hfB hf hf_scat α hne y hsimple
+      (fun n => CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val))
+      (fun _ => rfl) (fun n => ray_cb_le_alpha f hf α y hsimple n)
+  rw [hrank, hsup]
+
+lemma cbRank_pgl_regular (s : ℕ → ScatFun)
+    (hs : Preorder.IsRegularSeq ScatFun.Reduces s) :
+    CBRank (ScatFun.pgl s).func = Order.succ (⨆ i, CBRank (s i).func) := by
+  convert centeredAsPgluing_CBrank _ _ _ _ _ _ _;
+  convert cbRank_rayFun_pgl s _ |> Eq.symm;
+  exact Set.univ;
+  · exact fun _ => Set.mem_univ _;
+  · exact ( ScatFun.pgl s ).hCont;
+  · exact ( ScatFun.pgl s ).hScat;
+  · exact ⟨ _, pgluingOfRegularIsCentered s hs ⟩;
+  · intro x hx;
+    have := scatteredHaveCocenter ( ScatFun.pgl s ).func ( ScatFun.pgl s ).hScat x ⟨ zeroStream, zeroStream_mem_pointedGluingSet _ ⟩ hx ( pgluingOfRegularIsCentered s hs );
+    exact this.trans ( ScatFun.pgl_func_zeroStream s _ )
+
+lemma minFun_cbRank_via_pgl (α : Ordinal.{0}) (hα : α < omega1)
+    (F : ℕ → ScatFun) (hreg : Preorder.IsRegularSeq ScatFun.Reduces F)
+    (hblk : ∀ (i : ℕ) (a : ↥(F i).domain), (F i).func a = (a : ℕ → ℕ))
+    (hdom : MinDom α = (ScatFun.pgl F).domain) :
+    CBRank (ScatFun.minFun α hα).func = Order.succ (⨆ i, CBRank (F i).func) := by
+  convert cbRank_pgl_regular F hreg using 1;
+  -- By definition of minFun, we have that (ScatFun.minFun α hα).func = Subtype.val.
+  have h_minFun_val : (ScatFun.minFun α hα).func = Subtype.val := rfl
+  -- By definition of pgl, we have that (ScatFun.pgl F).func = Subtype.val.
+  have h_pgl_val : (ScatFun.pgl F).func = Subtype.val := by
+    convert scatFun_pgl_func_eq_val F hblk using 1;
+    exact ⟨ fun h z => h ▸ rfl, fun h => funext h ⟩
+  rw [h_minFun_val, h_pgl_val];
+  convert CBRank_comp_homeomorph ( Homeomorph.setCongr hdom ) Subtype.val using 1
+
+
+lemma iSup_succ_cofinalSeq (lam : Ordinal.{0}) (hlam : lam < omega1)
+    (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0) :
+    (⨆ n, Order.succ (cofinalSeq lam n)) = lam := by
+  refine le_antisymm ?_ ?_;
+  · exact ciSup_le' fun n => Order.succ_le_of_lt ( cofinalSeq_lt lam hlim hne n );
+  · refine le_of_forall_lt fun β hβ => ?_;
+    obtain ⟨ n, hn ⟩ := cofinalSeq_eventually_ge lam hlam hlim hne β hβ;
+    exact lt_of_le_of_lt hn ( lt_of_lt_of_le ( Order.lt_succ _ ) ( le_ciSup ( Ordinal.bddAbove_of_small _ ) _ ) )
+
+/-! ### A monotone cofinal sequence
+
+Used by `ScatFun/PreciseStructure/IntertwineMaxFunLimit.lean` (limit-case intertwining): the running
+maximum of `cofinalSeq lam` is, unlike `cofinalSeq` itself, monotone, so any infinite index
+subset of it is still cofinal in `lam`. -/
+
+/-- A **monotone** cofinal sequence in a countable limit ordinal `lam`: the running maximum of
+`cofinalSeq lam`. -/
+noncomputable def monoCofinal (lam : Ordinal.{0}) (k : ℕ) : Ordinal.{0} :=
+  (Finset.range (k + 1)).sup (cofinalSeq lam)
+
+lemma monoCofinal_mono (lam : Ordinal.{0}) : Monotone (monoCofinal lam) := by
+  exact fun a b hab => Finset.sup_mono <| Finset.range_mono <| by simpa;
+
+lemma monoCofinal_lt (lam : Ordinal.{0}) (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0) (k : ℕ) :
+    monoCofinal lam k < lam := by
+  have h_sup_lt : ∀ i ∈ Finset.range (k + 1), cofinalSeq lam i < lam := by
+    exact fun i hi => cofinalSeq_lt lam hlim hne i;
+  convert Finset.sup_lt_iff _ |>.2 h_sup_lt using 1;
+  exact Ne.bot_lt' (Ne.symm hne)
+
+lemma monoCofinal_iSup_succ (lam : Ordinal.{0}) (hlam_lt : lam < omega1)
+    (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0) :
+    (⨆ k, Order.succ (monoCofinal lam k)) = lam := by
+  refine le_antisymm ?_ ?_;
+  · exact Ordinal.iSup_le fun k => Order.succ_le_of_lt ( monoCofinal_lt lam hlim hne k );
+  · -- By definition of `monoCofinal`, we know that `cofinalSeq lam k ≤ monoCofinal lam k`.
+    have h_cofinal_le_monoCofinal : ∀ k, cofinalSeq lam k ≤ monoCofinal lam k := by
+      intro k; exact Finset.le_sup ( f := cofinalSeq lam ) ( Finset.mem_range.mpr ( Nat.lt_succ_self k ) ) ;
+    -- Since `lam` is a limit ordinal, we have `lam = ⨆ k, Order.succ (cofinalSeq lam k)`.
+    have h_lam_eq_sup : lam = ⨆ k, Order.succ (cofinalSeq lam k) := by
+      exact Eq.symm (iSup_succ_cofinalSeq lam hlam_lt hlim hne);
+    exact h_lam_eq_sup.le.trans ( ciSup_mono ( Ordinal.bddAbove_of_small _ ) fun k => Order.succ_le_succ ( h_cofinal_le_monoCofinal k ) )
+
+lemma iSup_succ_monoCofinal_comp (lam : Ordinal.{0}) (hlam_lt : lam < omega1)
+    (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0) (e : ℕ → ℕ) (he : StrictMono e) :
+    (⨆ j, Order.succ (monoCofinal lam (e j))) = lam := by
+  refine le_antisymm ?_ ?_;
+  · refine' ciSup_le fun j => _;
+    exact hlim.succ_lt ( monoCofinal_lt lam hlim hne ( e j ) ) |> le_of_lt;
+  · convert Ordinal.iSup_le _;
+    convert monoCofinal_iSup_succ lam hlam_lt hlim hne |> Eq.symm;
+    intro i;
+    refine le_trans ?_ ( le_ciSup ?_ i );
+    · exact Order.succ_le_succ ( monoCofinal_mono lam ( he.id_le i ) );
+    · exact Ordinal.bddAbove_range fun j => Order.succ (monoCofinal lam (e j))
+
+/-! ### A two-valued supremum lemma -/
+
+/-- If `t` is monotone with `⨆ t = lam` and `w ≤ t` pointwise with `w = t` on an infinite set,
+then `⨆ w = lam`. -/
+lemma iSup_two_valued_infinite {t : ℕ → Ordinal.{0}} (hmono : Monotone t)
+    {lam : Ordinal.{0}} (hsup : (⨆ k, t k) = lam)
+    {w : ℕ → Ordinal.{0}} (hle : ∀ k, w k ≤ t k)
+    {S : Set ℕ} (hS : S.Infinite) (hwS : ∀ k ∈ S, w k = t k) :
+    (⨆ k, w k) = lam := by
+  refine le_antisymm ?_ ?_;
+  · exact hsup ▸ ciSup_mono ( Ordinal.bddAbove_range t ) hle;
+  · rw [ ← hsup ];
+    refine Ordinal.iSup_le fun k => ?_;
+    obtain ⟨ m, hmS, hkm ⟩ := hS.exists_gt k;
+    exact le_trans ( hmono hkm.le ) ( hwS m hmS ▸ Ordinal.le_iSup _ _ )
+
+lemma minFun_cbRank_eq (α : Ordinal.{0}) (hα : α < omega1) :
+    CBRank (ScatFun.minFun α hα).func = Order.succ α := by
+  induction' α using Ordinal.limitRecOn with α ih;
+  · have h_domain : (ScatFun.minFun 0 hα).domain = PointedGluingSet (fun _ => ∅) := by
+      convert MinDom_zero;
+    have := minFun_cbRank_via_pgl 0 hα ( fun _ => ScatFun.empty ) ( scatFun_const_isRegularSeq ScatFun.empty ) ( by
+      exact fun i a => False.elim <| a.2.elim ) ( by
+      exact h_domain ) ; simp_all +decide [ ScatFun.empty ] ;
+    unfold CBRank; simp +decide [ CBLevel ] ;
+    rw [ show { α : Ordinal.{0} | _ } = Set.univ from ?_ ] ; simp +decide;
+    grind;
+  · convert minFun_cbRank_via_pgl ( Order.succ α ) hα ( fun _ => ScatFun.minFun α ( lt_trans ( Order.lt_succ α ) hα ) ) _ _ _ using 1;
+    · rw [ ciSup_const, ih ( lt_trans ( Order.lt_succ α ) hα ) ];
+    · exact scatFun_const_isRegularSeq _;
+    · aesop;
+    · exact MinDom_succ α;
+  · rename_i α hα ih;
+    by_cases hne : α = 0;
+    · aesop;
+    · convert minFun_cbRank_via_pgl α hα ( fun n => ScatFun.minFun ( cofinalSeq α n ) ( lt_trans ( cofinalSeq_lt α ‹_› hne n ) hα ) ) ( minFun_cofinalSeq_isRegularSeq α hα ‹_› hne ) _ _ using 1;
+      · rw [ iSup_congr fun n => ih _ ( cofinalSeq_lt α ‹_› hne n ) ( lt_trans ( cofinalSeq_lt α ‹_› hne n ) hα ) ];
+        rw [ iSup_succ_cofinalSeq α hα ‹_› hne ];
+      · aesop;
+      · convert MinDom_limit α ‹_› hne using 1
+
+
+lemma minFun_limit_equiv_pgl (lam : Ordinal.{0}) (hlam : lam < omega1)
+    (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0) :
+    ScatFun.Equiv (ScatFun.minFun lam hlam)
+      (ScatFun.pgl (fun n => ScatFun.minFun (cofinalSeq lam n)
+          (lt_trans (cofinalSeq_lt lam hlim hne n) hlam))) := by
+  -- Apply MinDom_limit to rewrite the domain.
+  have hdom : (ScatFun.minFun lam hlam).domain = (ScatFun.pgl (fun n => ScatFun.minFun (cofinalSeq lam n) (lt_trans (cofinalSeq_lt lam hlim hne n) hlam))).domain := by
+    exact MinDom_limit lam hlim hne;
+  refine ⟨ ?_, ?_ ⟩;
+  · use fun x => ⟨ x, by
+      exact hdom ▸ x.2 ⟩
+    generalize_proofs at *;
+    refine ⟨ ?_, ?_ ⟩;
+    · fun_prop;
+    · refine ⟨ fun x => x, ?_, ?_ ⟩ <;> norm_num;
+      · exact continuousOn_id;
+      · intro a ha; exact (by
+        convert scatFun_pgl_func_eq_val _ _ _ |>.symm;
+        · rfl;
+        · aesop);
+  · refine ⟨ ?_, ?_ ⟩;
+    exact fun x => ⟨ x, hdom.symm ▸ x.2 ⟩;
+    refine ⟨ ?_, ?_ ⟩;
+    · fun_prop;
+    · refine ⟨ fun x => x, ?_, ?_ ⟩ <;> norm_num;
+      · exact continuousOn_id;
+      · intro a ha; exact (by
+        convert scatFun_pgl_func_eq_val _ _ _;
+        exact fun i a => rfl)
+
+
+lemma pgl_reduces_pgl (s t : ℕ → ScatFun)
+    (h : ∀ (i j₀ : ℕ), ∃ j, j₀ ≤ j ∧ ScatFun.Reduces (s i) (t j)) :
+    ScatFun.Reduces (ScatFun.pgl s) (ScatFun.pgl t) := by
+  apply ScatFun.pgl_reduces_of_local;
+  intro i V hVopen hxV
+  obtain ⟨m, hm⟩ := nbhd_basis' (ScatFun.pgl t).domain ⟨zeroStream, zeroStream_mem_pointedGluingSet _⟩ V hVopen hxV
+  obtain ⟨j, hjm, hj⟩ := h i m
+  obtain ⟨σ', hσ', τ', hτ', h_eq⟩ := (ScatFun.reduces_iff (s i) (t j)).1 hj
+  use fun z => ⟨prependZerosOne j (σ' z).val, prependZerosOne_mem_pointedGluingSet _ j _ (σ' z).prop⟩, fun w => τ' (stripZerosOne j w);
+  refine ⟨ ?_, ?_, ?_, ?_, ?_ ⟩;
+  · exact Continuous.subtype_mk ( continuous_prependZerosOne j |> Continuous.comp <| continuous_subtype_val.comp hσ' ) _;
+  · intro z
+    simp only [h_eq, ScatFun.pgl_domain, ScatFun.pgl_func_block];
+    rw [ stripZerosOne_prependZerosOne ];
+  · refine hτ'.comp ?_ ?_;
+    · exact Continuous.continuousOn ( continuous_stripZerosOne j );
+    · intro x hx; obtain ⟨ z, rfl ⟩ := hx; simp +decide [ ScatFun.pgl_func_block ] ;
+      exact ⟨ z, z.2, by rw [ stripZerosOne_prependZerosOne ] ⟩;
+  · intro z
+    apply hm
+    simp only [ScatFun.pgl_domain, nbhd', Finset.mem_range, mem_setOf_eq];
+    exact fun k hk => prependZerosOne_head_eq_zero j _ k ( lt_of_lt_of_le hk hjm );
+  · rw [ ScatFun.pgl_func_zeroStream ];
+    rw [ mem_closure_iff ] ; norm_num;
+    refine ⟨ { w : Baire | w j ≠ 1 }, ?_, ?_, ?_ ⟩ <;> norm_num [ Set.Nonempty ];
+    · exact isOpen_ne.preimage ( continuous_apply j );
+    · exact zero_ne_one;
+    · intro x hx y hy H; have := congr_fun H j; simp +decide [ ScatFun.pgl_func_block, prependZerosOne_at_i ] at this; aesop;
+
+
+lemma reduces_minFun_cofinal (lam : Ordinal.{0}) (hlam : lam < omega1)
+    (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0)
+    (F : ScatFun) (hF : CBRank F.func < lam) (j₀ : ℕ) :
+    ∃ j, j₀ ≤ j ∧ ScatFun.Reduces F
+      (ScatFun.minFun (cofinalSeq lam j)
+        (lt_trans (cofinalSeq_lt lam hlim hne j) hlam)) := by
+  have h_exists : ∃ j, j₀ ≤ j ∧ F.Reduces (ScatFun.minFun (cofinalSeq lam j) (lt_trans (cofinalSeq_lt lam hlim hne j) hlam)) := by
+    have h_decomp := ordinal_limit_add_nat (CBRank F.func)
+    obtain ⟨η, k, hηk, hη⟩ := h_decomp
+    have hk : (η + 2 * k : Ordinal.{0}) < lam := by
+      have h_b_lt_lam : ∀ (n : ℕ), η + n < lam := by
+        intro n
+        have hη_lt_lam : η < lam := by
+          exact lt_of_le_of_lt le_self_add ( hηk ▸ hF )
+        induction n with
+        | zero => simpa using hη_lt_lam
+        | succ n ih =>
+            rw [Nat.cast_succ, ← add_assoc, Ordinal.add_one_eq_succ]
+            exact hlim.succ_lt ih
+      generalize_proofs at *;
+      exact_mod_cast h_b_lt_lam ( 2 * k )
+    generalize_proofs at *;
+    -- Set `T := Order.succ ((Finset.range (j₀ + 1)).sup (fun i => cofinalSeq lam i) ⊔ (η + 2 * k))`.
+    set T := Order.succ ((Finset.range (j₀ + 1)).sup (fun i => cofinalSeq lam i) ⊔ (η + 2 * k)) with hT_def
+    generalize_proofs at *;
+    -- Apply `cofinalSeq_eventually_ge` to get `j` with `T ≤ cofinalSeq lam j`.
+    obtain ⟨j, hj⟩ : ∃ j, T ≤ cofinalSeq lam j := by
+      apply cofinalSeq_eventually_ge lam hlam hlim hne T (by
+      refine hlim.succ_lt ?_;
+      induction' j₀ with j₀ ih <;> simp_all +decide [ Finset.range_add_one ];
+      · exact cofinalSeq_lt lam hlim hne 0;
+      · exact cofinalSeq_lt lam hlim hne _)
+    generalize_proofs at *;
+    refine ⟨ j, ?_, ?_ ⟩
+    generalize_proofs at *;
+    · contrapose! hj;
+      exact lt_of_le_of_lt ( Finset.le_sup ( f := fun i => cofinalSeq lam i ) ( Finset.mem_range.mpr ( by linarith ) ) |> le_trans <| le_max_left _ _ ) ( Order.lt_succ _ );
+    · have := general_structure_theorem F.domain (ScatFun.minFun (cofinalSeq lam j) (lt_trans (cofinalSeq_lt lam hlim hne j) hlam)).domain F.func (ScatFun.minFun (cofinalSeq lam j) (lt_trans (cofinalSeq_lt lam hlim hne j) hlam)).func F.hScat (ScatFun.minFun (cofinalSeq lam j) (lt_trans (cofinalSeq_lt lam hlim hne j) hlam)).hScat F.hCont (ScatFun.minFun (cofinalSeq lam j) (lt_trans (cofinalSeq_lt lam hlim hne j) hlam)).hCont η (by
+      exact lt_of_le_of_lt le_self_add ( hηk ▸ hF.trans_le hlam.le )) (by
+      exact hη.symm)
+      generalize_proofs at *;
+      convert this.2 k ⟨ hηk, _ ⟩ using 1
+      generalize_proofs at *;
+      rw [ minFun_cbRank_eq ];
+      exact Order.succ_le_succ ( le_trans ( le_max_right _ _ ) ( le_trans ( le_of_lt ( Order.lt_succ _ ) ) hj ) );
+  exact h_exists
+
+
+end ConseqMinFunAux
+
+/-- **Result 2 (pgl below a limit) — `ConsequencesGeneralStructureThm`, item 1 (≤ half).**
+For a *limit* ordinal `lam` and any sequence `(F n)` of scattered continuous functions in
+`𝒞_{<lam}` (i.e. `CBRank (F n).func < lam`), the pointed gluing `pgl_n (F n)` reduces to the
+minimum function `k_{lam+1}` (`minFun lam`).
+
+This is the `≤` half of `ConsequencesGeneralStructureThm`, item 1.  Theorem 4.12
+(`simpleFunctionsLambdaPlusOne`) consumes it to bound both `g` (Case A) and `g|_{C₁}`
+(Case B) by `k_{lam+1}`, the rays involved all lying in `𝒞_{<lam}`.  (The `≡` refinement of
+item 1, under regularity of `(CB(F n))` with supremum `lam`, follows by combining this with
+`minFun_is_minimum`; it is not separately scaffolded as Theorem 4.12 only needs the `≤`
+direction.  Item 2 — `pgl ℓ_lam ≤ f` when `CB f ≥ lam+2` — is likewise not used by 4.12.)
+
+## Provided solution
+
+Fix an increasing cofinal sequence `(α_n)` in `lam`.  Since `2·CB(F n) < lam`, there is an
+increasing `(k_n)` with `2·CB(F n) ≤ α_{k_n}` for all `n`, so by the General Structure
+Theorem (`general_structure_theorem`) `F n ≤ minFun (α_{k_n})`, and in turn
+`pgl_n (F n) ≤ pgl_n minFun(α_{k_n}) ≤ minFun lam` by `Pgluingasupperbound`
+(`pointedGluing_upper_bound`) together with the cofinal collapse
+`pgl_n minFun(α_n) ≡ minFun lam` (`minFun_limit_equiv_pgl`). -/
+theorem consequencesGeneralStructure_pgl_le_minFun
+    (lam : Ordinal.{0}) (hlam_lt : lam < omega1)
+    (hlim : Order.IsSuccLimit lam) (hne : lam ≠ 0)
+    (F : ℕ → ScatFun) (hF : ∀ n, CBRank (F n).func < lam) :
+    ScatFun.Reduces (ScatFun.pgl F) (ScatFun.minFun lam hlam_lt) := by
+  have step1 : ScatFun.Reduces (ScatFun.pgl F)
+      (ScatFun.pgl (fun n => ScatFun.minFun (cofinalSeq lam n)
+        (lt_trans (cofinalSeq_lt lam hlim hne n) hlam_lt))) := by
+    apply ConseqMinFunAux.pgl_reduces_pgl
+    intro i j₀
+    exact ConseqMinFunAux.reduces_minFun_cofinal lam hlam_lt hlim hne (F i) (hF i) j₀
+  exact ContinuouslyReduces.trans step1
+    (ConseqMinFunAux.minFun_limit_equiv_pgl lam hlam_lt hlim hne).2
 
 /-!
 ### Corollary 4.10 (centeredSuccessor) — strict inequality
@@ -700,7 +1090,7 @@ are **commented out below**.  They are not needed for the main results, and the 
 direction (`pgl ℓ_lam ⊄ k_{lam+1}`) is still open — delegated to aristotle (see the
 spec in the commented docstring).  They are kept here, fully stated and documented,
 ready to be reinstated once that direction is proved; meanwhile this file stays
-`sorry`-free.
+complete.
 
 The easy direction `k_{lam+1} ≤ pgl(ℓ_lam)` remains available as `minFun_le_pglMaxFun`
 in `Helpers.lean`.
@@ -727,7 +1117,7 @@ The supporting rigidity results are now available: `rigidityOfCocenter_finiteGlu
 (`minFun lam`, centered by `minFun_isCentered`), feed the reducibility-by-pieces to
 bound `CBRank ℓ_lam = lam` by `sup_{n<M}(α_n+1) < lam`, and derive the contradiction.
 
-DELEGATED (to aristotle).  The structural plumbing exists; the missing analytic
+The structural plumbing exists; the missing analytic
 infrastructure to be supplied is:
 * CB-rank of the rigidity-rays of `pgl(ℓ_lam)` (`= lam`) and of `k_{lam+1}`
   (the `n`-th ray `≡ k_{α_n+1}`, of rank `α_n + 1`);

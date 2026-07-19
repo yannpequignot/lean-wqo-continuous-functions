@@ -104,7 +104,7 @@ lemma gluingSet_CBLevel_empty
         generalize_proofs at *
         refine ⟨?_, ?_, ?_⟩
         · convert hU₂.1.preimage _ using 1
-          refine Continuous.subtype_mk ?_ ?_
+          refine' Continuous.subtype_mk _ _
           exact continuous_unprepend.comp (continuous_subtype_val.comp continuous_subtype_val)
         · exact hU₂.2.1
         · intro y hy
@@ -226,7 +226,7 @@ lemma maxfun_is_scatter_leq_α (α : Ordinal.{0}) (hα : α < omega1) : Scattere
     by_cases hα_zero : α = 0
     · -- Base case: MaxDom 0 = ∅, so MaxFun 0 has empty domain and both parts are trivial.
       subst hα_zero
-      haveI h_empty : IsEmpty (MaxDom 0) := by
+      have h_empty : IsEmpty (MaxDom 0) := by
         rw [MaxDom_zero]; exact Set.isEmpty_coe_sort.mpr rfl
       exact ⟨fun S hS => isEmptyElim hS.choose,
              fun β _ => Set.eq_empty_of_isEmpty _⟩
@@ -284,17 +284,17 @@ lemma minfun_is_scatter_leq_succ_α (α : Ordinal.{0}) (hα : α < omega1) : Sca
   induction' α using Ordinal.limitRecOn with α ih
   · constructor
     · unfold MinDom
-      simp +decide [PointedGluingSet]
+      simp +decide only [PointedGluingSet, singleton_union]
       intro S hS; use Set.univ; aesop
     · intro β hβ
       have h_singleton : CBLevel (MinFun 0) (Order.succ 0) = ∅ := by
         unfold CBLevel
-        simp +decide [Ordinal.limitRecOn]
+        simp +decide only [Ordinal.limitRecOn, Ordinal.bot_eq_zero, eq_rec_constant, mem_Iio, SuccOrder.limitRecOn_succ, isMin_iff_eq_bot, bot_eq_zero', SuccOrder.limitRecOn_isMin]
         unfold isolatedLocus
-        simp +decide [Set.ext_iff]
+        simp +decide only [mem_univ, inter_univ, Subtype.forall, true_and, Set.ext_iff, mem_diff, mem_setOf_eq, not_exists, not_and, not_forall, mem_empty_iff_false, iff_false, Decidable.not_not]
         intro a ha
         use Set.univ
-        simp [MinFun]
+        simp only [isOpen_univ, mem_univ, MinFun, forall_const]
         unfold MinDom at *; simp_all +decide [PointedGluingSet]
       have h_singleton : ∀ β, Order.succ 0 < β → CBLevel (MinFun 0) β = ∅ := by
         intros β hβ
@@ -384,7 +384,7 @@ lemma pointedGluingSet_block_reduces (A : Set (ℕ → ℕ)) (n : ℕ) :
   swap
   exact fun x => ⟨prependZerosOne n x, Or.inr (Set.mem_iUnion.mpr ⟨n, x, x.2, rfl⟩)⟩
   refine ⟨?_, ?_⟩
-  · refine Continuous.subtype_mk ?_ ?_
+  · refine' Continuous.subtype_mk _ _
     exact continuous_prependZerosOne n |> Continuous.comp <| continuous_subtype_val
   · refine ⟨fun x => stripZerosOne n x, ?_, ?_⟩
     · exact Continuous.continuousOn (continuous_pi_iff.mpr fun _ => continuous_apply _)

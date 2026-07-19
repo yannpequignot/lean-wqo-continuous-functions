@@ -153,7 +153,7 @@ In a WQO every sequence is eventually regular.
 In fact, this is an equivalent definition of WQO,
 since a bad sequence is precisely a sequence with no tail that is regular.
 -/
-theorem WQO.eventuallyRegular {Q : Type*} (le : Q → Q → Prop) [IsPreorder Q le]
+theorem WellQuasiOrdered.eventuallyRegular {Q : Type*} (le : Q → Q → Prop) [IsPreorder Q le]
     (hwqo : WellQuasiOrdered le) (f : ℕ → Q) :
     ∃ n : ℕ, IsRegularSeq le (fun i => f (i + n)) := by
   by_contra hcon
@@ -185,38 +185,15 @@ lemma WellQuasiOrdered.exists_forall_le_of_antitone {β : Type*} {r : β → β 
 /-!
 ## Higman's order on finite sequences
 
-Given a quasi-order `(Q, ≤Q)`, Higman's order on `List Q` relates
-`l₁ ≤ l₂` iff `l₁` embeds into `l₂` as a pointwise-`≤Q`-dominated
-subsequence. This is exactly `List.SublistForall₂ (· ≤ ·)`.
+Given a quasi-order `(Q, ≤Q)`, Higman's order on `List Q` relates `l₁ ≤ l₂` iff `l₁` embeds into
+`l₂` as a pointwise-`≤Q`-dominated subsequence. Mathlib already provides this as
+`List.SublistForall₂ (· ≤ ·)`, with `Std.Refl`/`IsTrans` instances and Higman's lemma itself
+(`Set.PartiallyWellOrderedOn.partiallyWellOrderedOn_sublistForall₂`); we only need to bundle the
+former into an `IsPreorder` instance (Mathlib doesn't do so automatically), used below by
+`WellQuasiOrdered.prod` in `TwoBQO.embedForAll_wqo`.
 -/
 
-/-- **Higman's order** on finite sequences (lists) over `Q`:
-`l₁` Higman-embeds into `l₂` iff `l₁` is pointwise `≤`-dominated by
-some subsequence of `l₂`. -/
-def HigmanOrder {Q : Type*} (le : Q → Q → Prop) : List Q → List Q → Prop :=
-  List.SublistForall₂ le
-
-instance HigmanOrder.isPreorder {α : Type*} (r : α → α → Prop) [IsPreorder α r] :
-    IsPreorder (List α) (HigmanOrder r) where
+instance List.SublistForall₂.instIsPreorder {α : Type*} (r : α → α → Prop) [IsPreorder α r] :
+    IsPreorder (List α) (List.SublistForall₂ r) where
   refl := (List.SublistForall₂.is_refl (Rₐ := r)).refl
   trans := (List.SublistForall₂.is_trans (Rₐ := r)).trans
-
-theorem wellQuasiOrdered_iff_partiallyWellOrderedOn_univ {α : Type*} (r : α → α → Prop) :
-    WellQuasiOrdered r ↔ Set.PartiallyWellOrderedOn (Set.univ : Set α) r := by
-  unfold WellQuasiOrdered Set.PartiallyWellOrderedOn
-  constructor
-  · intro h g
-    obtain ⟨m, n, hmn, hr⟩ := h (fun k => (g k).val)
-    exact ⟨m, n, hmn, hr⟩
-  · intro h g
-    obtain ⟨m, n, hmn, hr⟩ := h (fun k => ⟨g k, Set.mem_univ (g k)⟩)
-    exact ⟨m, n, hmn, hr⟩
-
-theorem higman_theorem {Q : Type*} (le : Q → Q → Prop) [IsPreorder Q le]
-    (h : WellQuasiOrdered le) :
-    WellQuasiOrdered (HigmanOrder le) := by
-  rw [wellQuasiOrdered_iff_partiallyWellOrderedOn_univ] at h ⊢
-  have := h.partiallyWellOrderedOn_sublistForall₂ le
-  -- this : {l | ∀ x ∈ l, x ∈ Set.univ}.PartiallyWellOrderedOn (List.SublistForall₂ le)
-  -- and {l | ∀ x ∈ l, x ∈ Set.univ} = Set.univ
-  simpa [HigmanOrder, Set.eq_univ_iff_forall] using this

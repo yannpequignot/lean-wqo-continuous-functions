@@ -189,7 +189,7 @@ lemma sigma_in_closedBall_res {X : Type*} [MetricSpace X]
     rw [hl₁]
   · have h_center_eq : c (PiNat.res x.val n) = c (cantorRatPrefix x) := by
       apply center_of_extended_res hc_zero x n (le_of_not_ge h)
-    simp +decide [h_center_eq]
+    simp +decide only [h_center_eq, Metric.mem_closedBall, dist_self, ge_iff_le]
     exact le_of_lt (hr_pos _)
 
 set_option maxHeartbeats 8000000 in

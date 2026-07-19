@@ -25,7 +25,7 @@ lemma gluingSet_flatten_const (S : Set (ℕ → ℕ)) :
     obtain ⟨y, hy, hy'⟩ := hi
     obtain ⟨j, hj⟩ := Set.mem_iUnion.mp hy
     obtain ⟨z, hz, rfl⟩ := hj
-    simp +decide [← hy', prepend]
+    simp +decide only [← hy', prepend, ↓reduceIte, Nat.add_eq_zero_iff, and_false, Nat.add_one_sub_one, add_tsub_cancel_right]
     exact Set.mem_iUnion.mpr ⟨Nat.pair i j, Set.mem_image_of_mem _ hz⟩⟩
   all_goals generalize_proofs at *
   refine ⟨?_, ?_⟩
@@ -109,49 +109,6 @@ lemma baire_subtype_coord_locally_const {S : Set (ℕ → ℕ)} (k : ℕ) (z : S
   refine ⟨{ w : S | w.val k = z.val k }, ?_, ?_, ?_⟩ <;> norm_num
   exact IsOpen.preimage (continuous_subtype_val) (baire_coord_eq_clopen k (z.val k) |>.2)
 
-/--
-A function that is piecewise defined on a clopen set is continuous
-    if both branches are continuous.
--/
-lemma continuous_piecewise_clopen {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y]
-    {s : Set X} (hs : IsClopen s)
-    {f g : X → Y} (hf : Continuous f) (hg : Continuous g)
-    [∀ a, Decidable (a ∈ s)] :
-    Continuous (s.piecewise f g) := by
-  apply_rules [Continuous.if, continuous_const]
-  simp +decide [hs.frontier_eq]
-
-/--
-On a clopen neighborhood, a function that agrees with a continuous
-    function is ContinuousAt.
--/
-lemma continuousAt_of_locally_eq_on_clopen {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y]
-    {f g : X → Y} {x : X} {s : Set X}
-    (hs : IsClopen s) (hx : x ∈ s)
-    (hg : Continuous g)
-    (heq : ∀ y ∈ s, f y = g y) :
-    ContinuousAt f x := by
-  exact ContinuousAt.congr (hg.continuousAt) (Filter.eventually_of_mem (hs.isOpen.mem_nhds hx) (fun y hy => Eq.symm (heq y hy)))
-
-/--
-For a function z ↦ F(z.val 1, z) where z.val 1 is locally constant
-    and F(n, ·) is continuous for each n, the whole function is continuous.
--/
-lemma continuous_of_locally_constant_index
-    {S : Set (ℕ → ℕ)} (F : ℕ → S → ℕ)
-    (hF : ∀ n, Continuous (F n))
-    (_hF_eq : ∀ (z : S), F (z.val 1) z =
-      (fun z => F (z.val 1) z) z) :
-    Continuous (fun z : S => F (z.val 1) z) := by
-  rw [continuous_iff_continuousAt]
-  intro x
-  -- Since z.val 1 is locally constant, there exists an open neighborhood U around x where z.val 1 is constant.
-  obtain ⟨U, hU_open, hxU, hU_const⟩ : ∃ U : Set S, IsOpen U ∧ x ∈ U ∧ ∀ z ∈ U, z.val 1 = x.val 1 := by
-    have := baire_subtype_coord_locally_const 1 x
-    exact Exists.imp (by tauto) (mem_nhds_iff.mp this)
-  exact ContinuousAt.congr (hF (x.val 1) |> Continuous.continuousAt) (Filter.eventuallyEq_of_mem (hU_open.mem_nhds hxU) fun y hy => by aesop)
 
 /-!
 ## Self-similarity: GluingSet(fun _ => MaxDom α) ≤ MaxFun α
@@ -287,7 +244,7 @@ lemma gluingSet_copies_reduces_to_MaxFun (α : Ordinal.{0}) (hα : α < omega1) 
     subst h0
     have hempty : GluingSet (fun _ => MaxDom 0) = ∅ := by
       ext x; simp [GluingSet, MaxDom_zero]
-    haveI : IsEmpty (GluingSet (fun _ => MaxDom 0)) := by
+    have : IsEmpty (GluingSet (fun _ => MaxDom 0)) := by
       rw [hempty]; exact Set.isEmpty_coe_sort.mpr rfl
     exact ⟨isEmptyElim, continuous_of_discreteTopology,
       fun _ => 0, continuousOn_const, isEmptyElim⟩

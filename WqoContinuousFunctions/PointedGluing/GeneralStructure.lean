@@ -38,11 +38,6 @@ private lemma gRestrDom_sub (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (k :
     gRestrDom B g k ⊆ B :=
   fun _ ⟨h, _⟩ => h
 
-private lemma gRestrFun_continuous (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
-    (hgc : Continuous g) (k : ℕ) :
-    Continuous (gRestrFun B g k) :=
-  hgc.comp (Continuous.subtype_mk continuous_subtype_val _)
-
 private lemma gRestrFun_scattered (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
     (hg : ScatteredFun g) (k : ℕ) :
     ScatteredFun (gRestrFun B g k) := by
@@ -52,13 +47,6 @@ private lemma gRestrFun_scattered (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ
      id, continuousOn_id, fun x => rfl⟩
   exact this.scattered hg
 
-private lemma gRestrFun_first_coord (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (k : ℕ)
-    (x : gRestrDom B g k) : (gRestrFun B g k x) 0 = k := by
-  simp [gRestrFun]; exact x.prop.choose_spec
-
-/--
-If CBLevel of each restriction is empty, then CBLevel of g is empty.
--/
 private lemma gRestrFun_CBLevel_union_empty (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
     (hgc : Continuous g) (β : Ordinal.{0})
     (h : ∀ k : ℕ, CBLevel (gRestrFun B g k) β = ∅) :
@@ -78,26 +66,6 @@ private lemma gRestrFun_CBLevel_union_empty (B : Set (ℕ → ℕ)) (g : B → �
     obtain ⟨e, he⟩ := h_homeo
     have := CBLevel_homeomorph e (gRestrFun B g k) β; aesop
 
-/--
-For each γ < η = CBRank g, some k has CBRank(gRestrFun k) > γ.
--/
-private lemma gRestrFun_CBRank_cofinal (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
-    (hgc : Continuous g) (hg : ScatteredFun g)
-    (η : Ordinal.{0}) (hrank : CBRank g = η)
-    (γ : Ordinal.{0}) (hγ : γ < η) :
-    ∃ k : ℕ, γ < CBRank (gRestrFun B g k) := by
-  contrapose! hγ
-  -- By assumption, CBLevel(gRestrFun B g k) γ = ∅ for all k.
-  have h_empty : ∀ k : ℕ, CBLevel (gRestrFun B g k) γ = ∅ := by
-    intro k
-    apply Set.eq_empty_of_forall_notMem
-    intro x hx
-    have := CBLevel_eq_empty_at_rank (gRestrFun B g k) (gRestrFun_scattered B g hg k)
-    exact this.subset (CBLevel_antitone _ (hγ k) hx)
-  exact hrank ▸ CBRank_le_of_CBLevel_empty g γ (gRestrFun_CBLevel_union_empty B g hgc γ h_empty)
-
-
-
 private lemma cblevel_empty_of_le
     {A : Set (ℕ → ℕ)} (f : A → ℕ → ℕ) (hf_scat : ScatteredFun f)
     (β : Ordinal.{0}) (hle : CBRank f ≤ β) :
@@ -108,7 +76,7 @@ private lemma cblevel_empty_of_le
 /-- Base case: MaxFun(η) ≤ MinFun(η) for η = 0. -/
 private lemma MaxFun_le_MinFun_zero :
     ContinuouslyReduces (MaxFun 0) (MinFun 0) := by
-  haveI : IsEmpty (MaxDom 0) := by rw [MaxDom_zero]; exact Set.isEmpty_coe_sort.mpr rfl
+  have : IsEmpty (MaxDom 0) := by rw [MaxDom_zero]; exact Set.isEmpty_coe_sort.mpr rfl
   exact continuouslyReduces_of_empty (MaxFun 0) (MinFun 0)
 
 /-- For any sequence of ordinals below a limit, there's an injective
@@ -132,7 +100,7 @@ private lemma exists_injection_above_targets (η : Ordinal.{0}) (hη : η < omeg
       exact h_infinite <| Set.Finite.subset (h_finite.image fun m => enumBelow η m) fun x hx => by cases' this ⟨x, hx.2⟩ with m hm; aesop
     use fun n => Nat.recOn n (Nat.find <| Set.Infinite.nonempty <| h_infinite 0) fun n ih => Nat.find <| Set.Infinite.exists_gt (h_infinite (n + 1)) ih
     refine ⟨?_, ?_⟩
-    · refine strictMono_nat_of_lt_succ ?_ |> StrictMono.injective
+    · refine' strictMono_nat_of_lt_succ _ |> StrictMono.injective
       exact fun n => Nat.find_spec (h_infinite _ |> Set.Infinite.exists_gt <| _) |>.2
     · intro n; induction n <;> simp_all +decide
       · exact Nat.find_spec (h_infinite 0 |> Set.Infinite.nonempty)
@@ -249,7 +217,12 @@ Then, by \cref{CBbasics0}~\cref{CBbasicsfromJSL2},  $\CB_{\beta}(g)\cap g^{-1}(N
 and so $\CB_{\beta}(g)\subseteq g^{-1}([T])$.
 But as $[T]$ is finite, we have $\CB_{\beta+1}(g)=\empty$ and so $\CB(g)\leq \beta+1$, a contradiction.
  -/
-private lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
+/-- **`ℓ_η` is a lower bound at limit rank.**  For a limit ordinal `η < ω₁`, the maximum
+function `MaxFun η` continuously reduces to *any* scattered continuous `g` of CB-rank exactly `η`.
+This is the "`ℓ_η` is minimum among rank-`η` functions" half of the General Structure Theorem at a
+limit rank; exposed (previously `private`) so downstream code can use it directly instead of
+re-deriving it through `general_structure_theorem` with `f := MaxFun η`. -/
+lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
     (hlam : Order.IsSuccLimit η)
     (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (hgc : Continuous g) (hg : ScatteredFun g)
     (hrank : CBRank g = η) :
@@ -349,5 +322,17 @@ theorem general_structure_theorem
     have hmax_min' : ContinuouslyReduces (MaxFun (η + ↑n)) (MinFun (η + ↑(2 * n))) := by
       rwa [h_cast]
     exact (hf_max.trans hmax_min').trans hmin_g
+
+/-- **`ℓ_λ ≤ k_{λ+1}`.**  The maximum function of `𝒞_{≤λ}` reduces to the minimum function of
+`𝒞_{≥λ+1}` when `λ` is a limit or `0`.  This is the `n = 0` instance of the core inequality
+`MaxFun_le_MinFun`. -/
+lemma maxFun_reduces_minFun_of_limit (η : Ordinal.{0}) (hη : η < omega1)
+    (hlam : Order.IsSuccLimit η ∨ η = 0) :
+    ContinuouslyReduces (MaxFun η) (MinFun η) := by
+  have he1 : η + ((0 : ℕ) : Ordinal.{0}) = η := by simp
+  have he2 : η + 2 * ((0 : ℕ) : Ordinal.{0}) = η := by simp
+  have h := MaxFun_le_MinFun η hη hlam 0
+  rw [he1, he2] at h
+  exact h
 
 end

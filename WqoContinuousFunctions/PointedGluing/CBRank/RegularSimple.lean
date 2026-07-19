@@ -5,6 +5,20 @@ open Set Function TopologicalSpace Classical
 
 set_option autoImplicit false
 
+/-!
+# Proposition 3.8 — CB-rank of a pointed gluing of a regular sequence (`CBrank_regular_simple`)
+
+Formalizes memoir Proposition 3.8 (`CBrankofPgluingofregularsequence2simple`,
+`3_general_struct_memo.tex`).  **Fully proved**, but currently **not on the formal
+critical path** — nothing imports it.  In the memoir Prop 3.8 is invoked in the General
+Structure and Centered chapters, but the formalization reaches those conclusions by a different
+route: the CB-rank of `pgl` of a regular sequence is computed via `cbRank_pgl_regular` →
+`centeredAsPgluing_CBrank` (the centered-function path) rather than through this proposition.
+It is kept as a faithful, independently-proved record of the memoir result, and may yet become
+load-bearing for the double-successor chapter.  Its supporting lemmas live in
+`CBRank/SimpleHelpers.lean`, which *is* used widely.
+-/
+
 noncomputable section
 /-- **Proposition (CBrankofPgluingofregularsequence2simple).**
 If `f ∈ 𝒞` is scattered of CB-rank `α + 1` and simple with distinguished point `y`,

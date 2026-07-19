@@ -22,7 +22,6 @@ set_option autoImplicit false
 
 noncomputable section
 
-
 /-
 **Lemma (prop:sufficientcondforcont).**
 Let `A` and `B` be metrizable spaces and `f : A → B`.
@@ -30,7 +29,6 @@ If `U` is an open subset of `A` such that:
 1. `f` is continuous on `U` and on `A \ U`, and
 2. for all sequences `(x_n)` in `U` converging to `x ∈ A \ U`, `f(x_n) → f(x)`,
 then `f` is continuous.
-
 
 The proof uses sequential continuity in metrizable spaces. If `x ∈ U`, continuity
 follows from `f|_U`. If `x ∉ U`, partition the sequence into `I ∩ U` and `J ∩ Uᶜ`
@@ -53,7 +51,7 @@ theorem sufficient_cond_continuity
     obtain ⟨V, hV⟩ : ∃ V : Set B, IsOpen V ∧ f x ∈ V ∧ ∀ U' ∈ nhds x, ∃ y ∈ U', f y ∉ V := by
       rw [ContinuousAt] at h_discon
       rw [Filter.tendsto_iff_forall_eventually_mem] at h_discon
-      simp +zetaDelta at *
+      simp +zetaDelta only [mem_compl_iff, not_forall, Filter.not_eventually] at *
       rcases h_discon with ⟨V, hV₁, hV₂⟩
       rcases mem_nhds_iff.mp hV₁ with ⟨W, hW₁, hW₂⟩
       exact ⟨W, hW₂.1, hW₂.2, fun U' hU' => by rcases hV₂.and_eventually hU' with h; obtain ⟨y, hy₁, hy₂⟩ := h.exists; exact ⟨y, hy₂, fun hy₃ => hy₁ <| hW₁ hy₃⟩⟩
@@ -79,7 +77,6 @@ theorem sufficient_cond_continuity
         exact hseq _ _ hn_k.2 hx (hx_n.1.comp hn_k.1.tendsto_atTop)
       exact absurd (h_subseq.eventually (hV.1.mem_nhds hV.2.1)) fun h => by obtain ⟨k, hk⟩ := h.exists; exact hx_n.2 (n_k k) hk
 
-
 lemma strip_mem_of_pointedGluingSet (A : ℕ → Set (ℕ → ℕ))
     (x : PointedGluingSet A) (hx : x.val ≠ zeroStream) :
     stripZerosOne (firstNonzero x.val) x.val ∈ A (firstNonzero x.val) := by
@@ -97,7 +94,6 @@ lemma strip_mem_of_pointedGluingSet (A : ℕ → Set (ℕ → ℕ))
     split_ifs <;> simp_all +decide [Nat.find_eq_iff]
     rename_i h; specialize h j; aesop
 
-
 /--
 On a non-zero element, `PointedGluingFun` equals the block formula.
 -/
@@ -109,14 +105,12 @@ lemma pointedGluingFun_eq_on_block (A B : ℕ → Set (ℕ → ℕ)) (f : ∀ i,
   unfold PointedGluingFun
   grind
 
-
 /--
 `stripZerosOne i` is continuous as a map `(ℕ → ℕ) → (ℕ → ℕ)`.
 -/
 lemma continuous_stripZerosOne (i : ℕ) : Continuous (stripZerosOne i) := by
   unfold stripZerosOne
   fun_prop
-
 
 /--
 The block set for index `i` (sequences starting with `i` zeros then a nonzero) is
@@ -130,7 +124,6 @@ lemma isOpen_block (i : ℕ) :
   · grind
   · grind
 
-
 /--
 `firstNonzero x = i` when `x` starts with `i` zeros and `x i ≠ 0`.
 -/
@@ -140,14 +133,12 @@ lemma firstNonzero_eq_of_block (x : ℕ → ℕ) (i : ℕ)
   unfold firstNonzero
   split_ifs <;> simp_all +decide [Nat.find_eq_iff]
 
-
 /--
 For `y` in block `i` of the pointed gluing set, `y.val ≠ zeroStream`.
 -/
 lemma ne_zeroStream_of_block (y : ℕ → ℕ) (i : ℕ)
     (hy : (∀ k, k < i → y k = 0) ∧ y i ≠ 0) : y ≠ zeroStream := by
   exact fun h => hy.2 <| h ▸ rfl
-
 
 /--
 Strip membership for a specific block index.
@@ -159,7 +150,6 @@ lemma strip_mem_of_block (A : ℕ → Set (ℕ → ℕ)) (y : PointedGluingSet A
   · exact Eq.symm (firstNonzero_eq_of_block _ _ hy)
   · exact Eq.symm (firstNonzero_eq_of_block _ _ hy)
   · exact fun h => hy.2 <| h ▸ rfl
-
 
 /--
 The restricted function on block `i` is continuous.
@@ -177,7 +167,6 @@ lemma continuous_block_restrict
     by_cases h : j = i <;> simp_all +decide
     · exact continuous_const
     · exact continuous_apply _ |> Continuous.comp <| continuous_subtype_val.comp <| hf _ |> Continuous.comp <| Continuous.subtype_mk (continuous_stripZerosOne _ |> Continuous.comp <| continuous_subtype_val.comp continuous_subtype_val) _
-
 
 /--
 ContinuousAt of PointedGluingFun at a non-zero point.
@@ -202,7 +191,6 @@ lemma continuousAt_pointedGluingFun_nonzero
       grind
   exact h_cont_restrict.continuousAt (hV.mem_nhds ⟨hi.1, hi.2⟩)
 
-
 /--
 **Fact (BasicsOnPointedGluing) — Part 1.**
 The pointed gluing operation preserves continuity: if each `f_i` is continuous, then
@@ -226,11 +214,11 @@ theorem pointedGluingFun_preserves_continuity
     unfold PointedGluingFun
     refine tendsto_pi_nhds.mpr ?_
     intro n
-    simp [zeroStream]
+    simp only [dite_eq_ite, ↓reduceDIte, zeroStream, nhds_discrete, Filter.pure_zero, Filter.tendsto_zero]
     rw [nhds_subtype_eq_comap]
     refine ⟨{ y : ℕ → ℕ | ∀ k < n + 1, y k = 0 }, ?_, ?_⟩ <;> norm_num [zeroStream]
     · rw [nhds_pi]
-      simp +decide [Filter.mem_pi, zeroStream]
+      simp +decide only [zeroStream, nhds_discrete, Filter.pure_zero, Filter.mem_pi, Filter.mem_zero]
       exact ⟨Finset.range (n + 1), Finset.finite_toSet _, fun _ => {0}, fun _ => by norm_num,
         fun y hy k hk => by simpa using hy k (Finset.mem_range.mpr (Nat.lt_succ_of_le hk))⟩
     · intro a ha h; split_ifs <;> simp_all +decide [zeroStream]
@@ -238,7 +226,6 @@ theorem pointedGluingFun_preserves_continuity
       split_ifs <;> simp_all +decide [prependZerosOne]
       exact False.elim <| ‹¬a = zeroStream› <| funext fun k => by aesop
   · exact continuousAt_pointedGluingFun_nonzero A B f hf x hx
-
 
 /--
 **Fact (BasicsOnPointedGluing) — Part 2.**
@@ -313,7 +300,6 @@ theorem pointedGluingFun_preserves_injectivity
       · exact False.elim <| ‹stripZerosOne i (prependZerosOne i z) ∉ A i› <| by simpa [stripZerosOne_prependZerosOne] using hz.2
       · exact False.elim <| ‹stripZerosOne i (prependZerosOne i z) ∉ A i› <| by simpa [stripZerosOne_prependZerosOne] using hz.2
 
-
 /--
 **Fact (BasicsOnPointedGluing) — Part 3.**
 Pointed gluing commutes with identity: `id_{pgl_i X_i} = pgl_i id_{X_i}`.
@@ -336,7 +322,6 @@ theorem pointedGluingFun_comm_id (A : ℕ → Set (ℕ → ℕ)) :
     · simp_all +decide [Nat.find_eq_iff]
     · rename_i h; specialize h i; aesop
 
-
 /--
 **Fact (BasicsOnPointedGluing) — Part 4.**
 The point `0^ω` is a continuity point of the pointed gluing of any sequence of
@@ -350,11 +335,11 @@ theorem zeroStream_continuity_point
   unfold PointedGluingFun
   refine tendsto_pi_nhds.mpr ?_
   intro x
-  simp [zeroStream]
+  simp only [dite_eq_ite, ↓reduceDIte, zeroStream, nhds_discrete, Filter.pure_zero, Filter.tendsto_zero]
   rw [nhds_subtype_eq_comap]
   refine ⟨{ y : ℕ → ℕ | ∀ k < x + 1, y k = 0 }, ?_, ?_⟩ <;> norm_num [zeroStream]
   · rw [nhds_pi]
-    simp +decide [Filter.mem_pi, zeroStream]
+    simp +decide only [zeroStream, nhds_discrete, Filter.pure_zero, Filter.mem_pi, Filter.mem_zero]
     exact ⟨Finset.range (x + 1), Finset.finite_toSet _, fun _ => { 0 }, fun _ => by norm_num, fun y hy k hk => by simpa using hy k (Finset.mem_range.mpr (Nat.lt_succ_of_le hk))⟩
   · intro a ha h; split_ifs <;> simp_all +decide [zeroStream]
     unfold firstNonzero
@@ -367,7 +352,7 @@ lemma CBLevel_zero_ne_succ_of_scattered_nonempty {X Y : Type*}
     CBLevel f 0 ≠ CBLevel f (Order.succ 0) := by
   intro h
   rw [CBLevel_zero, CBLevel_succ'] at h
-  simp +decide [Set.ext_iff] at h
+  simp +decide only [Set.ext_iff, mem_univ, mem_diff, true_iff] at h
   contrapose! h
   exact Exists.elim (scattered_isolatedLocus_nonempty f hf (CBLevel f 0) (by simp +decide [CBLevel_zero])) fun x hx => ⟨x, fun _ => hx⟩
 
@@ -394,27 +379,6 @@ lemma CBRank_pos_of_scattered_nonempty {X Y : Type*}
   have := CBLevel_zero_ne_succ_of_scattered_nonempty f hf hne
   exact fun h => this <| h ▸ csInf_mem (CBRank_stabilization_set_nonempty f hf hne)
 
-theorem emptyFun (A B : Set (ℕ → ℕ)) (f : A → B)
-    (hf : ScatteredFun (fun x : A => (f x : ℕ → ℕ)))
-    (h : CBRank (fun x : A => (f x : ℕ → ℕ)) = 0) : A = ∅ := by
-  contrapose! h
-  apply ne_of_gt
-  apply CBRank_pos_of_scattered_nonempty
-  · exact hf
-  · exact h.to_subtype
-
-/-
-**Proposition (CBrankofPgluingofregularsequence1).**
-Let `f = pgl_{n ∈ ℕ} f_n` for a sequence of scattered functions in 𝒞.
-If `(CB(f_n))_n` is regular with supremum `α`, then `CB_α(f) = {0^ω}`.
-In particular, `f` is simple with distinguished point `0^ω` and `CB(f) = α + 1`.
-
-
-The proof uses: since `f_n ≡ f|_{N_{(0)^n(1)}}`, we have `CB(f_n) = CB(f|_{N_{(0)^n(1)}})`.
-If `β < α`, then by regularity, `CB_β(f) ∩ N_{(0)^n(1)}` is nonempty for infinitely
-many `n`, which implies `0^ω ∈ CB_{β+1}(f)`. Therefore `0^ω ∈ CB_α(f)`.
-Since `CB_α(f|_{N_{(0)^n(1)}}) = ∅` for all `n`, we get `CB_α(f) = {0^ω}`.
--/
 theorem CBrank_pointedGluing_regular
     (A B : ℕ → Set (ℕ → ℕ))
     (f : ∀ i, A i → B i)
@@ -434,7 +398,6 @@ theorem CBrank_pointedGluing_regular
 /-
 Given a sequence `(f_i)_i` in 𝒞, we have `⊔_i f_i ≤ pgl_i f_i`.
 
-
 The proof uses Gluingaslowerbound with `f = pgl_i f_i` and
 `B_i = N_{(0)^i(1)}`. -/
 /-- Map from GluingSet to PointedGluingSet: (i)⌢a ↦ (0^i)(1)a -/
@@ -445,12 +408,10 @@ noncomputable def gluingToPointed (A : ℕ → Set (ℕ → ℕ)) (x : GluingSet
   ⟨prependZerosOne i a,
     Or.inr (Set.mem_iUnion.mpr ⟨i, a, h.choose_spec.2, rfl⟩)⟩
 
-
 /-- Map from (ℕ → ℕ) to (ℕ → ℕ): (0^i)(1)b ↦ (i)⌢b, and 0^ω ↦ 0^ω -/
 noncomputable def pointedToGluing (y : ℕ → ℕ) : ℕ → ℕ :=
   if y = zeroStream then zeroStream
   else prepend (firstNonzero y) (stripZerosOne (firstNonzero y) y)
-
 
 theorem prependZerosOne_ne_zeroStream (i : ℕ) (x : ℕ → ℕ) :
     prependZerosOne i x ≠ zeroStream := by
@@ -459,7 +420,6 @@ theorem prependZerosOne_ne_zeroStream (i : ℕ) (x : ℕ → ℕ) :
     exact ⟨i, by simp [prependZerosOne, zeroStream]⟩
   exact fun h => h_neq.choose_spec <| congr_fun h _
 
-
 theorem firstNonzero_prependZerosOne (i : ℕ) (x : ℕ → ℕ) :
     firstNonzero (prependZerosOne i x) = i := by
   unfold firstNonzero
@@ -467,12 +427,10 @@ theorem firstNonzero_prependZerosOne (i : ℕ) (x : ℕ → ℕ) :
   · unfold prependZerosOne; aesop
   · rename_i h; specialize h i; simp_all +decide [prependZerosOne]
 
-
 theorem continuous_prependZerosOne (i : ℕ) : Continuous (prependZerosOne i) := by
   refine continuous_pi fun n => ?_
   unfold prependZerosOne
   split_ifs <;> continuity
-
 
 theorem gluing_le_pointedGluing
     (A B : ℕ → Set (ℕ → ℕ))
@@ -543,7 +501,7 @@ theorem gluing_le_pointedGluing
       intro y hy
       obtain ⟨U, hU_open, hyU, hU_const⟩ := h_locally_const y hy
       have h_cont_on_U : ContinuousOn (fun z => prepend (firstNonzero y) (stripZerosOne (firstNonzero y) z)) U := by
-        refine Continuous.continuousOn ?_
+        refine' Continuous.continuousOn _
         exact continuous_prepend _ |> Continuous.comp <| continuous_pi fun _ => continuous_apply _
       generalize_proofs at *
       exact ContinuousAt.continuousWithinAt (by exact ContinuousAt.congr (h_cont_on_U.continuousAt (hU_open.mem_nhds hyU)) (Filter.eventuallyEq_of_mem (hU_open.mem_nhds hyU) fun z hz => by aesop))
@@ -551,7 +509,6 @@ theorem gluing_le_pointedGluing
     unfold pointedToGluing; aesop
   · unfold GluingFunVal pointedToGluing PointedGluingFun gluingToPointed
     grind +suggestions
-
 
 /-- At the first nonzero position of `z`, the value is indeed nonzero.
     This tiny fact was proved twice inline in the original; we lift it here. -/
@@ -563,12 +520,6 @@ lemma firstNonzero_val_ne {z : ℕ → ℕ} (hz : z ≠ zeroStream) :
     exact hz (funext fun i => by simp [zeroStream, hall i])
   simp only [firstNonzero, dif_pos hex]
   exact Nat.find_spec hex
-
-/-- If z ≠ zeroStream, then z (firstNonzero z) ≠ 0,
-    i.e. firstNonzero z is actually a nonzero position. -/
-lemma firstNonzero_ne {z : ℕ → ℕ} (hz : z ≠ zeroStream) :
-    z (firstNonzero z) ≠ 0 :=
-  firstNonzero_val_ne hz
 
 /-- All positions strictly before firstNonzero z are zero. -/
 lemma firstNonzero_zero {z : ℕ → ℕ} (hz : z ≠ zeroStream) :
@@ -615,7 +566,7 @@ lemma sigma_cont_on_pieces
     · exact continuous_subtype_val
     · exact hσ_n i |> Continuous.comp <| Continuous.subtype_mk (continuous_stripZerosOne i |> Continuous.comp <| continuous_subtype_val.comp <| continuous_subtype_val) _
   · intro z
-    simp [RaySet] at z
+    simp only [RaySet, ne_eq, sep_and, preimage_inter, preimage_setOf_eq, Subtype.coe_prop, true_and] at z
     rename_i h
     have := h.2.2
     have h_firstNonzero : firstNonzero h.val.val = i := by
@@ -721,8 +672,6 @@ lemma tau_global_continuousOn
       · exact absurd h hy_UI
     rw [this]; exact hcwat_fx
 
-
-
 /--
 The pointed gluing of scattered functions is scattered.
 Given nonempty S, if S contains a non-zero element in block i, use ScatteredFun
@@ -774,10 +723,9 @@ discrete space `ℕ`, so `prependZerosOne` is continuous in both arguments at on
 -/
 lemma continuous_prependZerosOne_uncurry :
     Continuous (fun p : ℕ × Baire => prependZerosOne p.1 p.2) := by
-  refine' continuous_iff_continuousAt.mpr _;
+  refine continuous_iff_continuousAt.mpr ?_;
   intro p;
-  refine' ContinuousAt.congr _ _;
-  exact fun q => prependZerosOne p.1 q.2;
+  refine ContinuousAt.congr (f := fun q => prependZerosOne p.1 q.2) ?_ ?_;
   · exact Continuous.continuousAt ( continuous_prependZerosOne p.1 |> Continuous.comp <| continuous_snd );
   · filter_upwards [ IsOpen.mem_nhds ( isOpen_discrete { p.1 } |> IsOpen.preimage continuous_fst ) ( Set.mem_singleton p.1 ) ] with q hq ; aesop
 
@@ -788,7 +736,7 @@ lemma continuous_prependZerosOne_uncurry :
 lemma firstNonzero_continuousOn {S : Set Baire} (hS : ∀ y ∈ S, y ≠ zeroStream) :
     ContinuousOn firstNonzero S := by
   intro y hy;
-  refine' Filter.Tendsto.mono_left _ nhdsWithin_le_nhds;
+  refine Filter.Tendsto.mono_left ?_ nhdsWithin_le_nhds;
   intro ε hε;
   -- Since `y ≠ zeroStream`, there exists a neighborhood around `y` where `firstNonzero` is constant.
   obtain ⟨N, hN⟩ : ∃ N, ∀ x, (∀ i ≤ N, x i = y i) → firstNonzero x = firstNonzero y := by
@@ -804,5 +752,5 @@ lemma firstNonzero_continuousOn {S : Set Baire} (hS : ∀ y ∈ S, y ≠ zeroStr
     · exact hS y hy ( funext ‹_› );
     · grind;
   rw [ nhds_pi ];
-  refine' Filter.mem_pi.mpr _;
-  refine' ⟨ Finset.range ( N + 1 ), Finset.finite_toSet _, fun i => if i ≤ N then { y i } else Set.univ, _, _ ⟩ <;> simp_all +decide [ Set.subset_def ]
+  refine Filter.mem_pi.mpr ?_;
+  refine ⟨ Finset.range ( N + 1 ), Finset.finite_toSet _, fun i => if i ≤ N then { y i } else Set.univ, ?_, ?_ ⟩ <;> simp_all +decide [ Set.subset_def ]

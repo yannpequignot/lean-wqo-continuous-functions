@@ -359,11 +359,11 @@ lemma BaNbhd_extend_disjoint {n : ℕ} (s : Fin n → ℕ) (j k : ℕ) (hjk : j 
   intro h hj hk
   have hj' : h n = j := by
     have := hj ⟨n, Nat.lt_succ_self n⟩
-    simp [Fin.snoc, Fin.last] at this
+    simp only [Fin.snoc, lt_self_iff_false, ↓reduceDIte, Fin.last, cast_eq] at this
     exact this
   have hk' : h n = k := by
     have := hk ⟨n, Nat.lt_succ_self n⟩
-    simp [Fin.snoc, Fin.last] at this
+    simp only [Fin.snoc, lt_self_iff_false, ↓reduceDIte, Fin.last, cast_eq] at this
     exact this
   exact hjk (by omega)
 
@@ -410,8 +410,8 @@ lemma exists_clopen_seq_basis {X : Type*} [TopologicalSpace X] [SeparableSpace X
   obtain ⟨ s, hs₁, hs₂, hs₃ ⟩ := h_countable;
   have := hs₂.exists_eq_range;
   rcases s.eq_empty_or_nonempty with ( rfl | hs₄ ) <;> simp_all +decide;
-  · refine' ⟨ fun _ => ∅, _, _ ⟩ <;> simp +decide;
-    refine' TopologicalSpace.isTopologicalBasis_of_isOpen_of_nhds _ _ <;> simp +decide [ Set.eq_empty_of_isEmpty ];
+  · refine ⟨ fun ?_ => ∅, ?_, ?_ ⟩ <;> simp +decide;
+    refine TopologicalSpace.isTopologicalBasis_of_isOpen_of_nhds ?_ ?_ <;> simp +decide [ Set.eq_empty_of_isEmpty ];
   · obtain ⟨ f, rfl ⟩ := this; exact ⟨ f, fun n => hBclopen _ ( hs₁ ( Set.mem_range_self n ) ), hs₃ ⟩ ;
 
 open Classical Topology in
@@ -422,18 +422,18 @@ lemma clopen_seq_embedding {X : Type*} [TopologicalSpace X] [T2Space X]
     (hbasis : IsTopologicalBasis (Set.range c)) :
     IsEmbedding (fun x => (fun n => if x ∈ c n then (1 : Fin 2) else 0) : X → CantorSpace) := by
   refine' { .. };
-  · refine' le_antisymm _ _;
-    · refine' ( continuous_iff_le_induced.mp _ );
-      refine' continuous_pi fun n => _;
-      refine' continuous_if _ _ _;
+  · refine le_antisymm ?_ ?_;
+    · refine ( continuous_iff_le_induced.mp ?_ );
+      refine continuous_pi fun n => ?_;
+      refine continuous_if ?_ ?_ ?_;
       · simp +decide [ frontier_eq_closure_inter_closure, hc n |>.1, hc n |>.2 ];
       · exact continuousOn_const;
       · exact continuousOn_const;
-    · refine' le_of_nhds_le_nhds fun x => _;
-      simp +decide [ nhds_induced, Filter.le_def ];
+    · refine le_of_nhds_le_nhds fun x => ?_;
+      simp +decide only [Fin.isValue, nhds_induced, Filter.le_def, Filter.mem_comap];
       intro U hU;
       rcases hbasis.mem_nhds_iff.1 hU with ⟨ t, ⟨ n, rfl ⟩, htx, htU ⟩;
-      refine' ⟨ { f : ℕ → Fin 2 | f n = 1 }, _, _ ⟩ <;> simp_all +decide [ Set.subset_def ];
+      refine ⟨ { f : ℕ → Fin 2 | f n = 1 }, ?_, ?_ ⟩ <;> simp_all +decide [ Set.subset_def ];
       exact IsOpen.mem_nhds ( isOpen_discrete { 1 } |> IsOpen.preimage ( continuous_apply n ) ) ( by aesop );
   · intro x y hxy
     by_contra hxy_neq

@@ -55,7 +55,7 @@ spurious base point.
 
 `ScatFun.gl` inherits scatteredness/continuity from the plain-gluing
 preservation lemmas (Fact 2.16: `gluingFun_scattered`,
-`gluingFunVal_preserves_continuity`), which are currently stated with `sorry`.
+`gluingFunVal_preserves_continuity`).
 -/
 
 namespace ScatFun
@@ -109,11 +109,18 @@ theorem Gl_mono (h : ∀ i, t i ≤ s i) : Reduces (Gl B t) (Gl B s) := by
       any_goals exact fun _ => 0;
       any_goals exact ℕ;
       any_goals try infer_instance;
-      simp +decide [ copiesList ];
+      simp +decide only [copiesList];
       split_ifs <;> simp_all +decide;
       grind +suggestions;
     · convert empty_reduces _ using 1;
       grind +locals
+
+/-- **Binary finite gluing** (memoir `\glbin`, e.g. `k_{λ+1} \gl ℓ_λ`): one copy each of `f`
+and `g`. `abbrev` so that it stays reducible, letting `f ⊕ g` unfold transparently to
+`Gl ![f, g] ![1, 1]` wherever the latter is expected (e.g. in existing proofs). -/
+abbrev glBin (f g : ScatFun) : ScatFun := Gl ![f, g] ![1, 1]
+
+@[inherit_doc] scoped infixl:65 " ⊕ " => ScatFun.glBin
 
 /-- The class of `ScatFun`s **continuously equivalent to a finite gluing** from
 `B`.  The membership predicate is phrased as a two-sided reduction so that it is
@@ -203,7 +210,7 @@ lemma exists_deep_reindex (hn : 0 < n) (m : ℕ) :
     have hj : ∀ k, (∃ jk : Fin n, copiesSeq B t k = B jk) ∨ (copiesList B t).length ≤ k := by
       intro k; exact Classical.or_iff_not_imp_right.2 fun hk => copiesSeq_eq_B B t k (Nat.lt_of_not_ge hk);
     exact ⟨ fun k => Classical.choose ( hj k |> Or.rec ( fun ⟨ jk, hj ⟩ => ⟨ jk, Or.inl hj ⟩ ) fun hk => ⟨ ⟨ 0, hn ⟩, Or.inr hk ⟩ ), fun k => Classical.choose_spec ( hj k |> Or.rec ( fun ⟨ jk, hj ⟩ => ⟨ jk, Or.inl hj ⟩ ) fun hk => ⟨ ⟨ 0, hn ⟩, Or.inr hk ⟩ ) ⟩;
-  refine' ⟨ fun k => ( m + k ) * n + ( j k : ℕ ), _, _, _ ⟩;
+  refine ⟨ fun k => ( m + k ) * n + ( j k : ℕ ), ?_, ?_, ?_ ⟩;
   · exact fun a b h => by nlinarith [ Fin.is_lt ( j a ), Fin.is_lt ( j b ) ] ;
   · exact fun k => by nlinarith [ Fin.is_lt ( j k ) ] ;
   · intro k; specialize hj k; unfold repSeq; simp +decide [ hn, Nat.mod_eq_of_lt ] ;
@@ -233,7 +240,7 @@ lemma pgl_repSeq_local (hn : 0 < n) (F : ℕ → ScatFun) (i : ℕ)
   obtain ⟨e, he_inj, he_ge, he_disj⟩ := exists_deep_reindex B mult hn m
   obtain ⟨σC, τC, hσC_cont, hσC_eq, hτC_cont, hσC_deep, hσC_one⟩ := gl_reduces_pgl_direct (copiesSeq B mult) (repSeq B) e he_inj he_disj;
   obtain ⟨σ1, hσ1_cont, τ1, hτ1_cont, hσ1_eq⟩ := hR;
-  refine' ⟨ fun z => σC ( σ1 z ), τ1 ∘ τC, _, _, _, _, _ ⟩;
+  refine ⟨ fun z => σC ( σ1 z ), τ1 ∘ τC, ?_, ?_, ?_, ?_, ?_ ⟩;
   · exact hσC_cont.comp hσ1_cont;
   · grind;
   · apply_rules [ ContinuousOn.comp, hτ1_cont, hτC_cont ];
@@ -290,7 +297,7 @@ lemma finitegenerationAndPgluing_upper_zero (hn : n = 0) (f : ℕ → ScatFun)
     generalize_proofs at *;
     exact Set.eq_empty_of_forall_notMem (fun x hx => h_empty ⟨x, hx⟩)
   generalize_proofs at *;
-  refine' ⟨ fun x => ⟨ zeroStream, _ ⟩, _, _, _ ⟩ <;> norm_num [ pgl, h_empty ];
+  refine ⟨ fun x => ⟨ zeroStream, ?_ ⟩, ?_, ?_, ?_ ⟩ <;> norm_num [ pgl, h_empty ];
   exact Or.inl rfl
   exact continuous_const
   exact fun _ => zeroStream
@@ -380,21 +387,14 @@ theorem finitegenerationAndPgluing_lower (f : ℕ → ScatFun)
       id, continuous_of_const fun z => z.2.elim,
       fun z => (Set.notMem_empty z.1 z.2).elim, continuousOn_id,
       fun z => (Set.notMem_empty z.1 z.2).elim, ?_⟩
-    haveI : IsEmpty (↑(empty.domain)) := Set.isEmpty_coe_sort.mpr rfl
+    have : IsEmpty (↑(empty.domain)) := Set.isEmpty_coe_sort.mpr rfl
     rw [Set.range_eq_empty, closure_empty]
     exact Set.notMem_empty _
 
-/-- **Finite generation of CB-rank levels.**  For every `α < ω₁` there is a finite
-family `B : Fin n → ScatFun` such that every scattered continuous function of CB-rank
-`α` lies in `FinGl B`.
-
-This is the key structural result of the memoir (the `𝒞_α` are finitely generated).
-Stated here with `sorry`; the proof is the content of the general-structure / centered /
-precise-structure / double successor chapters. -/
-theorem levels_finitely_generated (α : Ordinal.{0}) (hα : α < omega1) :
-    ∃ (n : ℕ) (B : Fin n → ScatFun),
-      ∀ F : ScatFun, CBRank F.func = α → F ∈ FinGl B := by
-  sorry
+/- **Finite generation of CB-rank levels** has moved to `ScatFun.levels_finitely_generated`
+in `ScatFun/Generators/Defs.lean`, now stated with the explicit witness `Generators α` (the
+memoir's `𝒢_α`) instead of an existential family `B`.  (It can't live here: `Generators/Defs.lean`
+needs `FinGl`, so it imports this file, not the other way around.) -/
 
 end ScatFun
 

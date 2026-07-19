@@ -180,7 +180,7 @@ lemma CBLevel_block_backward
           · exact continuous_const
           · split_ifs <;> [exact continuous_const; exact continuous_apply _ |> Continuous.comp <| continuous_subtype_val]
         · convert hU₃.1 using 1
-          simp +decide
+          simp +decide only [mem_setOf_eq]
           congr! 1
           exact Subtype.ext <| by have := hx.1; have := hx.2; exact (by
           ext k; by_cases hk : k < n <;> simp_all +decide [prependZerosOne, stripZerosOne]

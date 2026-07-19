@@ -78,35 +78,6 @@ def isolatedLocus {X Y : Type*} [TopologicalSpace X]
     (f : X → Y) (A : Set X) : Set X :=
   {x ∈ A | ∃ U : Set X, IsOpen U ∧ x ∈ U ∧ ∀ y ∈ U ∩ A, f y = f x}
 
-lemma isolatedLocus_comp_homeomorph {X Y Z : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z]
-    (f : X → Z) (e : Y ≃ₜ X) (A : Set X) :
-    isolatedLocus (f ∘ e) (e ⁻¹' A) = e ⁻¹' (isolatedLocus f A) := by
-  ext y
-  simp only [isolatedLocus, mem_setOf_eq, mem_preimage, mem_inter_iff]
-  constructor
-  · rintro ⟨hyA, U, hU_open, hyU, hconst⟩
-    refine ⟨hyA, e.symm ⁻¹' U, ?_, ?_, ?_⟩
-    · exact e.symm.isOpen_preimage.mpr hU_open
-    · simp [hyU]
-    · intro z hz
-      have hz' : e.symm z ∈ U ∩ e ⁻¹' A := by
-        constructor
-        · exact hz.1
-        · simp only [mem_preimage]
-          rw [show e (e.symm z) = z from e.apply_symm_apply z]
-          exact hz.2
-      have := hconst (e.symm z) hz'
-      simpa [Function.comp, e.apply_symm_apply] using this
-  · rintro ⟨hyA, V, hV_open, hyV, hconst⟩
-    refine ⟨hyA, e ⁻¹' V, ?_, ?_, ?_⟩
-    · exact e.isOpen_preimage.mpr hV_open
-    · simpa using hyV
-    · intro z hz
-      have : (f ∘ e) z = f (e y) := hconst (e z) ⟨hz.1, hz.2⟩
-      simpa [Function.comp] using this
-
-/-- The isolated locus is relatively open in `A`. -/
 theorem isolatedLocus_isOpen_in {X Y : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (A : Set X) :
@@ -148,7 +119,6 @@ lemma CBLevel_homeomorph {X Y : Type u} {Z : Type*} [TopologicalSpace X] [Topolo
     · exact ⟨e ⁻¹' U, hU.preimage e.continuous, hx, fun y hy hy' => hU' _ hy hy'⟩
   · simp +decide [Set.preimage_iInter]
 
-
 /-- CB₀(f) = univ. -/
 theorem CBLevel_zero {X Y : Type*} [TopologicalSpace X]
     (f : X → Y) : CBLevel f 0 = univ := by
@@ -165,8 +135,6 @@ theorem CBLevel_antitone {X Y : Type*} [TopologicalSpace X]
   · cases hαβ.eq_or_lt <;> simp_all +decide [CBLevel]
   · cases hαβ.eq_or_lt <;> simp_all +decide [CBLevel]
 
-
-
 /-!
 ## CB-Rank
 -/
@@ -174,7 +142,6 @@ theorem CBLevel_antitone {X Y : Type*} [TopologicalSpace X]
 /-- The CB-rank of a  SCATTERED function can be defined by the supremum of ordinals `α` such that `CB_α(f)` is
 nonempty. Returns `0` for functions where only `CB_0(f) = univ` is nonempty (when the
 domain is empty). -/
-
 
 -- noncomputable def CBRank_scat {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
 --     (f : X → Y) (_fs: ScatteredFun f) : Ordinal :=
@@ -184,7 +151,6 @@ domain is empty). -/
 noncomputable def CBRank {X : Type u} {Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) : Ordinal.{u} :=
   sInf {α : Ordinal.{u} | (CBLevel f α) = (CBLevel f (Order.succ α))}
-
 
 lemma CBRank_comp_homeomorph {X Y : Type u} {Z : Type*}
     [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z]
@@ -204,27 +170,6 @@ For an open subset `S` of `X`, the CB levels of `f` restricted to `S` equal
 the intersection of `S` with the CB levels of `f` on the ambient space.
 -/
 
-/--
-For an open subset `S ⊆ X`, the isolated locus of `f|_S` on `S ∩ A` corresponds
-to `S ∩ isolatedLocus f A`.
--/
-lemma isolatedLocus_open_restrict {X Y : Type*} [TopologicalSpace X]
-    (f : X → Y) (S : Set X) (hS : IsOpen S) (A : Set X)
-    (_hSA : S ∩ CBLevel f 0 = S) -- trivially true, just for structure
-    (x : S) (hxA : x.val ∈ A) :
-    (x ∈ isolatedLocus (f ∘ Subtype.val : S → Y) (Subtype.val ⁻¹' A)) ↔
-    (x.val ∈ isolatedLocus f A) := by
-  constructor <;> intro h <;> rcases h with ⟨U, hU₁, hU₂, hU₃⟩ <;> simp_all +decide [isolatedLocus]
-  · rcases hU₂ with ⟨U, hU₁, rfl⟩
-    exact ⟨U ∩ S, hU₁.inter hS, ⟨hU₃.1, x.2⟩, fun y hy hyA => hU₃.2 y hy.2 hy.1 hyA⟩
-  · exact ⟨Subtype.val ⁻¹' hU₁, hU₂.preimage continuous_subtype_val, hU₃.1, fun a ha ha' ha'' => hU₃.2 a ha' ha''⟩
-
-
-
-
-/--
-If `f` is scattered, then `f` restricted to any subset is also scattered.
--/
 lemma scattered_restrict {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (hf : ScatteredFun f) (S : Set X) :
     ScatteredFun (f ∘ Subtype.val : S → Y) := by
@@ -234,8 +179,6 @@ lemma scattered_restrict {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
   refine ⟨Subtype.val ⁻¹' U, ?_, ?_, ?_⟩ <;> simp_all +decide [Set.Nonempty]
   · exact hU_open.preimage continuous_subtype_val
   · exact fun x hx hx' hx'' y hy hy' hy'' => hU_nonempty.2 x hx' hx hx'' y hy' hy hy''
-
-
 
 end CBDerivative
 
@@ -260,8 +203,6 @@ lemma CBLevel_limit {X Y : Type*} [TopologicalSpace X]
     CBLevel f lam = ⋂ (γ : Ordinal) (_ : γ < lam), CBLevel f γ := by
   unfold CBLevel; aesop
 
-
-
 /--
 For an open subset `S ⊆ X`, `CBLevel (f ∘ Subtype.val : S → Y) β` equals
 `Subtype.val ⁻¹' (CBLevel f β)` — i.e., a point `x : S` is in the CB level of the
@@ -276,7 +217,7 @@ lemma CBLevel_open_restrict {X Y : Type*} [TopologicalSpace X]
     induction' β using Ordinal.limitRecOn with β ih
     · simp +decide [CBLevel]
     · simp +decide [CBLevel_succ', ih]
-      simp +decide [← ih, isolatedLocus]
+      simp +decide only [← ih, isolatedLocus, mem_inter_iff, and_imp, preimage_setOf_eq, mem_preimage, Subtype.forall]
       congr! 3
       constructor <;> rintro ⟨h₁, U, hU₁, hU₂, hU₃⟩
       · exact ⟨h₁, Subtype.val ⁻¹' U, hU₁.preimage continuous_subtype_val, hU₂, fun a ha ha' ha'' => hU₃ a ha' ha''⟩
@@ -284,8 +225,6 @@ lemma CBLevel_open_restrict {X Y : Type*} [TopologicalSpace X]
         refine ⟨h₁, V ∩ S, hV₁.inter hS, ?_, ?_⟩ <;> aesop
     · simp_all +decide [Set.ext_iff, CBLevel_limit]
   exact Set.ext_iff.mp (h_ind β) x |>.symm
-
-
 
 /--
 For a clopen disjoint union, the CB rank is at most the supremum.
@@ -303,10 +242,6 @@ lemma CBLevel_open_union_empty {X Y : Type*} [TopologicalSpace X] [TopologicalSp
   obtain ⟨n, hn⟩ := hS_cover x
   specialize hS_empty n
   simp_all +decide [CBLevel_open_restrict, Set.ext_iff]
-
-
-
-
 
 /-- If the perfect kernel is empty, then `f` is scattered. This is the backward direction
 of Proposition 2.7. -/
@@ -376,8 +311,6 @@ lemma CBLevel_strictAnti_of_ne {X : Type u} {Y : Type*}
       apply CBLevel_antitone
       exact Order.succ_le_iff.mpr hαβ
     exact hg α |>.2 (h_eq ▸ h_subset (hg β |>.1))
-
-
 
 /--
 If `f` is scattered and `CBLevel f α` is nonempty, then `CBLevel f (succ α)` is
@@ -463,7 +396,7 @@ lemma local_cb_derivative {X Y : Type*}
   induction' α using Ordinal.limitRecOn with α ih
   · simp +decide [CBLevel]
   · rw [CBLevel_succ', CBLevel_succ']
-    simp +decide [Set.ext_iff, isolatedLocus] at ih ⊢
+    simp +decide only [Set.ext_iff, mem_image, Subtype.exists, exists_and_right, exists_eq_right, mem_inter_iff, isolatedLocus, comp_apply, and_imp, Subtype.forall, sdiff_sep_self, not_exists, not_and, not_forall, mem_setOf_eq] at ih ⊢
     intro x
     constructor
     · rintro ⟨hx, hx', hx''⟩
@@ -486,24 +419,6 @@ lemma local_cb_derivative {X Y : Type*}
       simp_all +decide [CBLevel, Set.ext_iff]
       exact fun i hi => ih i hi x |>.2 ⟨hx.1 i hi, hx.2⟩ |>.2
 
-/-- The exit ordinal of x (min α s.t. x ∉ CBLevel f α) cannot be a limit ordinal. -/
-lemma exit_ordinal_not_limit {X Y : Type*}
-    [TopologicalSpace X]
-    {f : X → Y}
-    (x : X) (γ : Ordinal)
-    (hx_out : x ∉ CBLevel f γ)
-    (hγ_limit : Order.IsSuccLimit γ) :
-    ∃ δ : Ordinal, δ < γ ∧ x ∉ CBLevel f δ := by
-  by_contra h
-  push_neg at h
-  apply hx_out
-  simp [CBLevel, Ordinal.limitRecOn_limit _ _ _ _ hγ_limit]
-  intro δ hδ
-  exact h δ hδ
-
-/--
-The minimal exit ordinal of any point from the CB hierarchy is a successor.
--/
 lemma exit_ordinal_is_successor {X Y : Type*}
     [TopologicalSpace X]
     {f : X → Y}
@@ -517,26 +432,6 @@ lemma exit_ordinal_is_successor {X Y : Type*}
   · simp_all +decide [CBLevel]
     grind
 
-/--
-If x ∈ isolatedLocus f (CBLevel f β), then there exists open U with x ∈ U
-    such that CBLevel f (succ β) ∩ U = ∅.
--/
-lemma isolatedLocus_clears_succ_level {X Y : Type*}
-    [TopologicalSpace X]
-    {f : X → Y}
-    (β : Ordinal)
-    (x : X)
-    (hx : x ∈ isolatedLocus f (CBLevel f β)) :
-    ∃ U : Set X, IsOpen U ∧ x ∈ U ∧ CBLevel f (Order.succ β) ∩ U = ∅ := by
-  rcases hx with ⟨hx₁, ⟨U, hU₁, hx₂, hx₃⟩⟩
-  refine ⟨U, hU₁, hx₂, Set.eq_empty_iff_forall_notMem.2 fun y hy => ?_⟩
-  simp_all +decide [CBLevel_succ']
-  exact hy.1.2 ⟨hy.1.1, U, hU₁, hy.2, fun z hz => by aesop⟩
-
-/--
-If CBLevel f (succ β) ∩ U = ∅ for open U, then CBRank(f|_U) ≤ succ β,
-    provided succ β < omega1.
--/
 lemma cbrank_restriction_le_of_empty_level {X Y : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
     {f : X → Y}
@@ -641,7 +536,6 @@ lemma ContinuouslyReduces.scattered_local {X X' Y Y' : Type*}
     -- 5. Construct the final proof object
     exact ⟨hx, V, hV_isOpen, h_x_in_V, h_f_const⟩
 
-
 /-- If `f ≤ g` and `g` is scattered, then `f` is scattered.
 uses the lemma ContinuouslyReduces.scattered_local
 -/
@@ -686,7 +580,6 @@ theorem ContinuouslyReduces.scattered {X X' Y Y' : Type*}
       rw [h_const_VS z hz, h_const_VS z' hz']
     exact ⟨V, hVopen, h_VS_nonempty, hf_const_adapted⟩
 
-
 lemma CoRestrict_scattered (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
     (hg : ScatteredFun g) (C : Set (ℕ → ℕ)) :
     ScatteredFun (CoRestrict' B g C) := by
@@ -695,7 +588,6 @@ lemma CoRestrict_scattered (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
      Continuous.subtype_mk continuous_subtype_val _,
      id, continuousOn_id, fun x => rfl⟩
   exact this.scattered hg
-
 
 /--
 If `(σ,τ)` reduces `f` to `g`, then for all `α`, `σ(CB_α(f)) ⊆ CB_α(g)`.
@@ -739,7 +631,6 @@ lemma CBLevel_eq_empty_at_rank {X : Type u} {Y : Type*}
       exact fun α => fun h => hS ⟨α, h⟩
     exact False.elim (not_injective_of_ordinal h_inj.choose h_inj.choose_spec)
 
-
 /--
 CBRank of a restriction to an open set is bounded by CBRank of the full function,
     when both are scattered.
@@ -756,19 +647,6 @@ lemma CBRank_open_restrict_le {X Y : Type*} [TopologicalSpace X] [TopologicalSpa
       simp_all +decide [CBLevel]
     · exact hS
     · exact hS
-
-/--
-If `f` is scattered with CB rank `r`, and `S` is open, then
-    `CBLevel (f|_S) r = ∅`.
--/
-lemma CBLevel_open_restrict_empty_at_rank {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-
-    (f : X → Y) (hf : ScatteredFun f) (S : Set X) (hS : IsOpen S) :
-    CBLevel (f ∘ Subtype.val : S → Y) (CBRank f) = ∅ := by
-  apply Set.eq_empty_iff_forall_notMem.mpr
-  intro x hx; have := CBLevel_eq_empty_at_rank f hf; simp_all +decide [CBLevel_open_restrict]
-
-
 
 theorem ContinuouslyReduces.rank_monotone {X X' : Type u} {Y Y' : Type*}
     [TopologicalSpace X] [TopologicalSpace X']
@@ -913,54 +791,6 @@ theorem CBRank_lt_omega1
     exact absurd (Cardinal.lt_ord.mpr h1) (lt_irrefl omega1)
   exact hIio_uncount hIio_count
 
-/-- A second-countable T₀ space is `Small.{0}`.
-
-Each point `x` is determined by the (countable) collection of basic open sets containing it:
-the map `x ↦ {B ∈ countableBasis X | x ∈ B}` is injective by T₀-separation, and its codomain is
-`Small.{0}` (a set of subsets of a countable type). This is the cardinality bound `|X| ≤ 𝔠`;
-Mathlib does not provide it. Kept as a plain theorem (not an instance) since the `Ordinal.{u}`
-indexing of `CBLevel`/`CBRank` means the development no longer needs `Small.{0}` synthesized
-automatically; it remains available for the future embedding bridge to Baire space. -/
-theorem small_of_secondCountableTopology_t0
-    {X : Type*} [TopologicalSpace X] [SecondCountableTopology X] [T0Space X] :
-    Small.{0} X := by
-  haveI : Countable (TopologicalSpace.countableBasis X) :=
-    (TopologicalSpace.countable_countableBasis X).to_subtype
-  have hbasis := TopologicalSpace.isBasis_countableBasis X
-  -- `g x` records which basic open sets contain `x`; its codomain is `Small.{0}`.
-  refine small_of_injective
-    (f := fun x => {B : TopologicalSpace.countableBasis X | x ∈ (B : Set X)}) ?_
-  intro x y hxy
-  -- `hxy` says `x` and `y` lie in exactly the same basic open sets.
-  have hmem : ∀ B ∈ TopologicalSpace.countableBasis X, (x ∈ B ↔ y ∈ B) := fun B hB => by
-    simpa using Set.ext_iff.mp hxy ⟨B, hB⟩
-  -- Hence `x ~ᵢ y` (any open set is a union of basic opens), so `x = y` by T₀.
-  refine Inseparable.eq ?_
-  rw [inseparable_iff_forall_isOpen]
-  intro s hs
-  constructor
-  · intro hx
-    obtain ⟨B, hB, hxB, hBs⟩ := hbasis.mem_nhds_iff.mp (hs.mem_nhds hx)
-    exact hBs ((hmem B hB).mp hxB)
-  · intro hy
-    obtain ⟨B, hB, hyB, hBs⟩ := hbasis.mem_nhds_iff.mp (hs.mem_nhds hy)
-    exact hBs ((hmem B hB).mpr hyB)
-
-/-- **Theorem (Countable rank).** A scattered continuous function
-has countable Cantor–Bendixson rank.
-
-Since `CBLevel`/`CBRank` are now indexed by `Ordinal.{u}` (the domain's universe), the *value*
-`CBRank f` lives in `Ordinal.{u}`; comparing it to `omega1 : Ordinal.{0}` forces `u = 0`, so this
-concrete version is stated for `X : Type 0` (where the smallness needed by the qualitative theory
-is just `small_self`). The only mathematical input is `SecondCountableTopology X`, derived here
-from `SeparableSpace X` + `MetrizableSpace X`.
-
-The hypotheses `TotallyDisconnectedSpace X` and `MetrizableSpace Y` are not used by the rank
-argument; they match the standard setting of the memoir (and `Scattered_countable_range`).
-
-The fully general statement for an arbitrary separable-metrizable `X : Type*` is obtained
-separately by transporting `f` to a subset of Baire space via a homeomorphism (the embedding
-bridge), keeping all rank computation in `Type 0`. -/
 theorem Scattered_countable_rank
     {X : Type} {Y : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
@@ -972,8 +802,8 @@ theorem Scattered_countable_rank
     CBRank f < omega1 := by
   -- A separable metrizable space is second countable: endow `X` with a compatible pseudometric
   -- (whose uniformity is countably generated) and apply `secondCountable_of_separable`.
-  letI := TopologicalSpace.pseudoMetrizableSpacePseudoMetric X
-  haveI : SecondCountableTopology X := UniformSpace.secondCountable_of_separable X
+  let := TopologicalSpace.pseudoMetrizableSpacePseudoMetric X
+  have : SecondCountableTopology X := UniformSpace.secondCountable_of_separable X
   exact CBRank_lt_omega1 hf
 
 /-- **Theorem (Countable range).** A scattered continuous function
@@ -1049,8 +879,8 @@ theorem Scattered_countable_range
     (hf : ScatteredFun f) :
     (Set.range f).Countable := by
   -- Derive second countable topology on X from separable + metrizable.
-  letI := TopologicalSpace.pseudoMetrizableSpacePseudoMetric X
-  haveI hsc : SecondCountableTopology X := UniformSpace.secondCountable_of_separable X
+  let := TopologicalSpace.pseudoMetrizableSpacePseudoMetric X
+  have hsc : SecondCountableTopology X := UniformSpace.secondCountable_of_separable X
   -- CBLevel at rank is empty.
   have hrank_empty : CBLevel f (CBRank f) = ∅ := CBLevel_eq_empty_at_rank f hf
   -- Iio (CBRank f) is countable.
@@ -1069,8 +899,8 @@ theorem Scattered_countable_range
   intro β _
   -- T = CBLevel f β \ CBLevel f (succ β) is a separable subspace.
   set T : Set X := CBLevel f β \ CBLevel f (Order.succ β) with hT_def
-  haveI : SecondCountableTopology T := Subtype.secondCountableTopology T
-  haveI : SeparableSpace T := SecondCountableTopology.to_separableSpace
+  have : SecondCountableTopology T := Subtype.secondCountableTopology T
+  have : SeparableSpace T := SecondCountableTopology.to_separableSpace
   -- The fibers of (f ∘ Subtype.val : T → Y) are pairwise disjoint open sets in T.
   -- Since T is separable, f '' T is countable.
   apply Set.PairwiseDisjoint.countable_of_isOpen
@@ -1104,7 +934,5 @@ theorem Scattered_countable_range
     intro y hy
     obtain ⟨x, hxT, rfl⟩ := hy
     exact ⟨⟨x, hxT⟩, by simp⟩
-
-
 
 end ReductionAndCB

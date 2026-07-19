@@ -71,38 +71,6 @@ of the Baire space. The backward direction is trivial since each piece of a clop
 partition is itself clopen.
 -/
 
-
-/--
-**Proposition 2.14 (0dimanddisjointunion).**
-Backward direction: if `f` is a disjoint union of functions in `F`,
-then `f` is locally in class `F`.
--/
-theorem disjoint_union_implies_locally
-    {X Y : Type*} [TopologicalSpace X]
-    (f : X → Y) (F : (S : Set X) → (S → Y) → Prop)
-    {I : Type*} (P : I → Set X) (fi : ∀ i, P i → Y)
-    (hdu : IsDisjointUnion f P fi)
-    (hF : ∀ i, F (P i) (fi i)) :
-    IsLocallyInClass f F := by
-  -- For any $x \in X$, there exists $i \in I$ such that $x \in P_i$.
-  have h_exists_i : ∀ x : X, ∃ i : I, x ∈ P i := by
-    exact fun x => by simpa using Set.ext_iff.mp hdu.2.2.1 x
-  intro x
-  obtain ⟨i, hi⟩ := h_exists_i x
-  use P i
-  exact ⟨hdu.1 i, hi, by convert hF i using 1; ext a; exact hdu.2.2.2 i a ▸ rfl⟩
-
-/-
-**Proposition 2.14 (0dimanddisjointunion).**
-Forward direction for Baire space subspaces:
-if `f : A → Baire` with `A ⊆ Baire` is locally in class `F`,
-then `f` is a disjoint union of functions in `F`.
-
-Note: The proof in the original paper uses the tree structure of Baire space
-and minimal prefixes. It implicitly requires `F` to be closed under restriction
-to clopen subsets (captured by `hF_restrict`). This is satisfied by all standard
-classes (simple, scattered with rank ≤ α, etc.).
--/
 theorem locally_implies_disjoint_union_baire
     {A : Set Baire}
     (f : A → Baire)
@@ -234,7 +202,6 @@ theorem cb_rank_of_clopen_union {X Y : Type*} [TopologicalSpace X] [TopologicalS
     -- now \CB_\beta(f)\supseteq\CB_\beta(f)\cap A_i=\CB_\beta(f\restr{A_i})\neq\emptyset.
     -- Since $\CB_{\CB(f)}(f)=\emptyset$, it follows that $\beta<\CB(f)$, hence $\alpha≤ \CB(f)$.
 
-
 section DecompositionLemma
 
 /-!
@@ -254,20 +221,6 @@ The proof requires several ingredients:
    we find a clopen neighborhood on which the function is simple.
 -/
 
-/-- **Helper.** A constant function on a nonempty subtype is simple. -/
-lemma simpleFun_const {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    {U : Set X} (hU : U.Nonempty) (y : Y) :
-    SimpleFun (fun (_ : U) => y) := by
-  refine ⟨0, ⟨⟨hU.some, hU.some_mem⟩, by simp [CBLevel_zero]⟩, ?_, y, fun x _ => rfl⟩
-  rw [CBLevel_succ', CBLevel_zero]
-  ext ⟨z, hz⟩
-  simp only [mem_diff, mem_univ, true_and, mem_empty_iff_false, iff_false, not_not]
-  exact ⟨trivial, univ, isOpen_univ, trivial, fun _ _ => rfl⟩
-
-/--
-For a scattered function `f : A → Y`, the stabilizing set is nonempty
-(the CB levels must stabilize since `A` is `Small.{0}`).
--/
 lemma cb_stabilizing_set_nonempty {X Y : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (_hf : ScatteredFun f) :
@@ -293,25 +246,6 @@ lemma cbLevel_at_cbRank_empty {X Y : Type*}
     exact absurd h_eq (ne_of_gt (CBLevel_succ_ssubset_of_scattered f hf _ h_empty))
   · exact Set.not_nonempty_iff_eq_empty.mp h_empty
 
-/--
-The restriction of a scattered function to an open set is scattered.
--/
-lemma scattered_restriction_open {X Y : Type*}
-    [TopologicalSpace X] [TopologicalSpace Y]
-    {f : X → Y} (hf : ScatteredFun f)
-    (U : Set X) (hU : IsOpen U) :
-    ScatteredFun (f ∘ (Subtype.val : U → X)) := by
-  intro S hS
-  obtain ⟨x, hx⟩ := hS
-  obtain ⟨V, hV₁, hV₂, hV₃⟩ := hf (Subtype.val '' S) ⟨_, Set.mem_image_of_mem _ hx⟩
-  refine ⟨Subtype.val ⁻¹' V, ?_, ?_, ?_⟩ <;> simp_all +decide [Set.Nonempty]
-  · exact hU.inter hV₁
-  · grind +extAll
-
-/--
-From x ∈ isolatedLocus f (CBLevel f β), get open U with f constant on
-    U ∩ CBLevel f β and CBLevel f (succ β) ∩ U = ∅.
--/
 lemma isolatedLocus_gives_simple_neighborhood {X Y : Type*}
     [TopologicalSpace X]
     {f : X → Y}

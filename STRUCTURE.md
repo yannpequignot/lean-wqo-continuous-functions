@@ -1,9 +1,23 @@
 # Repository Structure and Proof Tree for Main Theorem 3
 
-**Project:** three Lean 4 libraries in one package (Mathlib v4.28.0) — the Mathlib-only
-foundations `ZeroDimensionalSpaces` and `BQO`, and the main development `WqoContinuousFunctions`  
+**Project:** four Lean 4 libraries in one package (Mathlib v4.28.0) — the Mathlib-only
+foundations `ZeroDimensionalSpaces`, `BQO`, and `GeneralTopology`, and the main development
+`WqoContinuousFunctions`  
 **Goal:** Formalize the memoir on continuous reducibility of continuous functions,
 with Main Theorem 3 as the primary target.
+
+**Main achievements** (all in `MainResults/`, all fully proved and `sorry`-free):
+
+* `MainTheorem1` / `MainTheorem2` / `MainTheorem3` — continuous reducibility is a WQO on the
+  three classes of the introduction (`MainResults/Main.lean`); Main Theorem 3 rests on
+  `ScatFun.levels_finitely_generated`, which is fully proved (its §6.4 solvable-functions
+  input lives in `DoubleSuccessor/Solvable.lean`).
+* `first_reduction_theorem` (Thm 2.12) — the trichotomy: a continuous `f : X → Y` (zero-dim
+  sep. metrizable `X`, metrizable `Y`, `PolishSpace X ∨ Countable Y`) is scattered,
+  `≡ id_CantorRat`, or `≡ id_CantorSpace` (`MainResults/Main.lean`, fully proved).
+* `ZeroDimContFun.Reduces.isTwoBQO` — the **whole admissible class** (bundled as
+  `ZeroDimContFun`, ordered by the image-based `ContinuouslyReduces_range_based`) is 2-BQO,
+  obtained from the trichotomy + the `ScatFun` 2-BQO (`MainResults/Main.lean`, fully proved).
 
 ---
 
@@ -12,7 +26,7 @@ with Main Theorem 3 as the primary target.
 ```mermaid
 treeView-beta
   "📁 wqo_functions/"
-    "📄 lakefile.toml - three libraries in one package (Mathlib required once)"
+    "📄 lakefile.toml - four libraries in one package (Mathlib required once)"
     "📁 ZeroDimensionalSpaces/ — standalone Mathlib-only library"
       "📄 Basics.lean - Baire/Cantor topology, clopen basis, ZeroDimensionalSpace, embeds-in-Baire"
       "📄 GenRedProp.lean - disjointification of open families in Baire subspaces"
@@ -27,11 +41,16 @@ treeView-beta
       "📄 Ramsey.lean - RT² and RT³ for ℕ (finite colorings)"
       "📄 TwoBQO.lean - 2-BQO definition, closure under products and lex sums"
       "📄 OrdinalBQO.lean - ≤• on ordinals is 2-BQO; ordinal arithmetic helpers"
+    "📁 GeneralTopology/ — standalone Mathlib-only library (general point-set topology)"
+      "📄 ClopenPartitions.lean - set algebra for countable clopen partitions"
+      "📄 DiscreteSubspaces.lean - pairwise-disjoint infinite discrete subspaces"
+      "📄 DisjointOpenNeighbourhoods.lean - disjoint open nbhds of a discrete subspace"
     "📁 WqoContinuousFunctions/ — main development"
       "📄 Main.lean - top-level entry point (re-exports)"
-      "📁 MainResults/"
-        "📄 Main.lean - Main Theorems 1–3: stated and fully wired (rest on remaining lemmas)"
+      "📁 MainResults/ — ★ the main achievements of the project"
+        "📄 Main.lean - Main Theorems 1–3 + first_reduction_theorem (Thm 2.12) + ZeroDimContFun.Reduces.isTwoBQO (the whole admissible class is 2-BQO)"
         "📄 ScatFunBQO.lean - ScatFun is 2-BQO ⟹ Main Theorem 3 (see §3)"
+        "📄 ScatFunRepresentation.lean - main3_to_ScatFun: a scattered continuous function is ≡ some ScatFun"
       "📁 ContinuousReducibility/"
         "📄 Defs.lean - ContinuouslyReduces, ScatteredFun, CBRank (core defs)"
         "📄 Universality.lean - reducibility universality (CantorRat top for Thm 2, via ZeroDimensionalSpaces)"
@@ -79,8 +98,12 @@ treeView-beta
         "📄 Defs.lean - ScatFun type, Level/LevelLE/LevelLT subtypes"
         "📄 LiftToLex.lean - bad sequence in ScatFun ⟹ bad in lex sum"
         "📄 ReflectLevel.lean - bad_restricts_to_level ✓ (concentration on one level)"
-        "📄 FiniteGluing.lean - FinGl + FinGl.isTwoBQO ✓; levels_finitely_generated ✗ (sorry)"
-      "📁 CenteredFunctions/ — Chapter 4 (centered functions): formalized, sorry-free"
+        "📄 FiniteGluing.lean - FinGl + FinGl.isTwoBQO ✓ (levels_finitely_generated moved to LevelsFinitelyGenerated/Induction.lean)"
+        "📁 Generators/ — the finite generator families 𝒢_α (Chapter 5) ✓"
+        "📁 Wedge/ — the Wedge operation + upper/lower bounds (Chapter 5) ✓"
+        "📁 PreciseStructure/ — Ch5 ScatFun-level bridges: Diagonal{ForLambdaPlusOne,ClassReduces}, Intertwine{OmegaCentered,MaxFunLimit}, Strictness, ConsequencesGeneralStructureItem2 ✓"
+        "📁 LevelsFinitelyGenerated/ — Two, LambdaPlusOne, LevelLTTwoBQO, Sandwich_lemma, Induction (Ch5); DoubleSuccessor (Ch6). levels_finitely_generated fully proved ✓"
+      "📁 CenteredFunctions/ — Chapter 4 (centered functions) ONLY: fully proved, sorry-free"
         "📄 Defs.lean - IsCenterFor, IsCentered, IsLocallyCentered, RayFun"
         "📄 Helpers.lean - helpers for centered function theorems ✓"
         "📄 Theorems.lean - §4.1 Facts 4.1–4.2, Prop 4.3/4.4 (cocenter rigidity), Cor 4.5, limit_rank_equiv_maxFun ✓"
@@ -90,13 +113,19 @@ treeView-beta
         "📄 LocallyCentered/Theorem.lean - Thm 4.7 (local centeredness from 2-BQO) ✓"
         "📄 FinitenessHelpers.lean - FinGl helpers; 𝒞_{≤1} finite generation (LocallyConstantFunctions) ✓"
         "📄 Finiteness.lean - Thm 4.9 (finiteness) + Cor 4.10 (centeredSuccessor: 𝒞_{λ+1} dichotomy, λ=1 & limit) ✓"
-      "📁 PreciseStructure/"
-        "📄 Defs.lean - definitions for the Precise Structure Theorem"
-        "📄 Theorems.lean - Precise Structure Theorem (nearly all sorry)"
-      "📁 DoubleSuccessor/"
-        "📄 Defs.lean - double-successor case definitions"
-        "📄 Theorems.lean - double-successor theorems (all sorry)"
+        "📄 SimpleSuccessor/*, SimpleSuccessorOfLimit.lean - §4.3 successor-of-limit classification ✓"
+      "📁 DoubleSuccessor/ — Chapter 6 (double successor), fully proved ✓: Fine, PseudoCentered, Diagonal/*, Solvable"
+        "📄 Solvable.lean - §6.4 solvable functions — fully proved ✓"
 ```
+
+> **Now fully formalized (`sorry`-free).** The memoir's last two chapters — the *Precise
+> Structure Theorem* (the Wedge operation; finite generation at successors of limits) and the
+> *Double Successor* case — supply `ScatFun.levels_finitely_generated`; see §5. Chapter 5 lives in
+> `ScatFun/LevelsFinitelyGenerated/*` (`Two`, `LambdaPlusOne`, `LevelLTTwoBQO`, `Sandwich_lemma`,
+> `Induction`), `ScatFun/Generators/*`, `ScatFun/Wedge/*`, and the ScatFun-level bridges in
+> `ScatFun/PreciseStructure/*`; Chapter 6 lives in the top-level `DoubleSuccessor/*` (`Fine`,
+> `PseudoCentered`, `Diagonal`, `Solvable`) and `ScatFun/LevelsFinitelyGenerated/DoubleSuccessor.lean`.
+> `levels_finitely_generated` is fully proved in `Induction.lean`.
 
 
 > **Note.** The `.claude/worktrees/` directory contains leftover git worktrees from
@@ -280,9 +309,9 @@ BQO/Ramsey ──▶ BQO/TwoBQO ──▶ BQO/OrdinalBQO             │
 > `ScatFun` — scattered continuous functions from subsets of Baire space to Baire space.
 
 ```
-ScatFun.Reduces.isWQO                                         [PROVED, modulo sorries below]
+ScatFun.Reduces.isWQO                                         [PROVED ✓]
   ↓ via TwoBQO.wellQuasiOrdered
-ScatFun.Reduces.isTwoBQO                                      [PROVED, modulo sorries below]
+ScatFun.Reduces.isTwoBQO                                      [PROVED ✓]
   ↓ via TwoBQO.iff_noBad
 ¬ ∃ bad pair-sequence in (ScatFun, ScatFun.Reduces)
 ```
@@ -309,20 +338,19 @@ ScatFun.bad_restricts_to_level                                [PROVED ✓]
 ### Pillar B — Every CB-rank level is 2-BQO (finite generation)
 
 ```
-ScatFun.Reduces.isTwoBQO                                      [PROVED ✓, uses sorry below]
+ScatFun.Reduces.isTwoBQO                                      [PROVED ✓]
   "ScatFun is 2-BQO"                       (MainResults/ScatFunBQO.lean)
   ↑ bad_restricts_to_level (Pillar A) reduces this to: every level is 2-BQO
-ScatFun.Level.isTwoBQO / levels_no_bad  (α < ω₁)             [PROVED ✓, uses sorry below]
+ScatFun.Level.isTwoBQO / levels_no_bad  (α < ω₁)             [PROVED ✓]
   "level α is 2-BQO / has no bad pair-sequence"   (MainResults/ScatFunBQO.lean)
   ↓ via TwoBQO.comap along  Level α ↪ FinGl B
-ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [★ SORRY ★]
+ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [PROVED ✓]
   "every function of CB-rank α lies in a single finite gluing FinGl B"
-                                           (ScatFun/FiniteGluing.lean)
+                                (ScatFun/LevelsFinitelyGenerated/Induction.lean)
   │
-  This is the single key missing step. The intended mathematical proof is:
+  Proved by the Precise Structure and Double Successor chapters:
   │
-  ├── Finite Generation / Precise Structure Theorem               [SORRY, stub chapter]
-  │     (PreciseStructure/Theorems.lean — excluded from the public mirror)
+  ├── Finite Generation / Precise Structure Theorem               [FORMALIZED ✓]
   │     "Every function in Level α is continuously equivalent to a
   │      finite gluing of finitely many generators (MaxFun and centered functions)"
   │     │
@@ -332,10 +360,12 @@ ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [★ SORRY ★
   │     │      up to ≡ the only centered functions at rank λ+1 are k_{λ+1} and pgl ℓ_λ,
   │     │      for both λ=1 and λ a nonzero limit)."
   │     │     incl. 𝒞_{≤1} finite generation (LocallyConstantFunctions, cLeOne_finitely_generated).
-  │     │     (§4.3 simple-function classification 4.11–4.13 not needed here; not formalized.)
+  │     │     §4.3 simple-function classification 4.11–4.13 (CenteredFunctions/SimpleSuccessor/*)
+  │     │     and the Wedge operation (ScatFun/Wedge/*) are ✓ proved.
   │     │
-  │     └── DoubleSuccessor/Theorems.lean                          [ALL SORRY, stub chapter]
-  │           "vertical_theorem, diagonal_theorem, solvable_decomposition, ..."
+  │     └── Double Successor case            [PROVED ✓]
+  │           "vertical_theorem, diagonal_theorem, solvable_decomposition, ...
+  │            (DoubleSuccessor/*, ScatFun/LevelsFinitelyGenerated/DoubleSuccessor.lean)"
   │
   └── ScatFun.FinGl.isTwoBQO + TwoBQO.prod / TwoBQO.pi (Dickson)  [PROVED ✓]
         "a finite gluing FinGl B is 2-BQO; finite products of 2-BQOs are 2-BQO"
@@ -366,16 +396,19 @@ ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [★ SORRY ★
 | Bad seq concentrates on one level | ✓ fully proved | `ScatFun/ReflectLevel.lean` |
 | Each level / `ScatFun` is 2-BQO (given finite gen.) | ✓ fully proved | `MainResults/ScatFunBQO.lean` |
 | Finite gluing `FinGl B` is 2-BQO | ✓ fully proved | `ScatFun/FiniteGluing.lean` |
-| **`levels_finitely_generated`** (finite generation) | ✗ **sorry** | `ScatFun/FiniteGluing.lean` |
+| **`levels_finitely_generated`** (finite generation) | ✓ **proved** | `ScatFun/LevelsFinitelyGenerated/Induction.lean` |
 | **Centered functions (Chapter 4)** | ✓ **fully proved (sorry-free)** | `CenteredFunctions/*` |
 | — Thm 4.6 (centered ≡ pgl of rays) | ✓ proved | `CenteredFunctions/CenteredAsPgluing.lean` |
 | — Thm 4.7 (local centeredness from 2-BQO) | ✓ proved | `CenteredFunctions/LocallyCentered/Theorem.lean` |
 | — Thm 4.9 (finiteness) + Cor 4.10 (`centeredSuccessor`) | ✓ proved | `CenteredFunctions/Finiteness.lean` |
 | — 𝒞_{≤1} finite generation (LocallyConstantFunctions) | ✓ proved | `CenteredFunctions/FinitenessHelpers.lean` |
-| PreciseStructure definitions | ✓ fully proved | `PreciseStructure/Defs.lean` |
-| Finite Generation / Precise Structure | ✗ all sorry | `PreciseStructure/Theorems.lean` |
-| Double Successor theorems | ✗ all sorry | `DoubleSuccessor/Theorems.lean` |
-| **Main Theorem 3 (WQO conclusion)** | ✓ proved modulo above | `MainResults/ScatFunBQO.lean` |
+| Wedge operation (memoir Def 5.1) | ✓ proved (upper/lower bounds) | `ScatFun/Wedge/*` |
+| §4.3 simple functions at λ+1 (Prop 4.11–Thm 4.12) | ✓ proved | `CenteredFunctions/SimpleSuccessor/*` |
+| Finite Generation / Precise Structure (Chapter 5) | ✓ **fully proved** | `ScatFun/LevelsFinitelyGenerated/*`, `ScatFun/Generators/*`, `ScatFun/PreciseStructure/*` |
+| Double Successor theorems (Chapter 6) | ✓ **fully proved** | `DoubleSuccessor/*`, `ScatFun/LevelsFinitelyGenerated/DoubleSuccessor.lean` |
+| **Main Theorem 3 (WQO conclusion)** | ✓ **proved** | `MainResults/ScatFunBQO.lean` |
+| **First Reduction Theorem (Thm 2.12)** | ✓ fully proved | `MainResults/Main.lean` |
+| **Whole admissible class is 2-BQO** (`ZeroDimContFun.Reduces.isTwoBQO`) | ✓ **proved** | `MainResults/Main.lean` |
 
 ---
 
@@ -443,24 +476,24 @@ def TwoBQO (r : α → α → Prop) : Prop := ∀ f : PairSeq α, ¬ IsBad r f
 
 ---
 
-## 5. The Road Ahead
+## 5. How the last three chapters close the proof
 
-The single blocking sorry for Main Theorem 3 is:
+The structural input for Main Theorem 3 is `ScatFun.levels_finitely_generated`
+(`ScatFun/LevelsFinitelyGenerated/Induction.lean`):
 
 ```lean
-theorem ScatFun.levels_finitely_generated (α : Ordinal.{0}) (hα : α < omega1) :
-    ∃ (n : ℕ) (B : Fin n → ScatFun),
-      ∀ F : ScatFun, CBRank F.func = α → F ∈ FinGl B := by
-  sorry
+theorem levels_finitely_generated : ∀ (α : Ordinal.{0}), α < omega1 →
+    ∀ F : ScatFun, CBRank F.func = α → F ∈ FinGl (Generators α).toFinFun := ...
 ```
 
-Everything downstream of it (each level is 2-BQO ⟹ `ScatFun` is 2-BQO ⟹ WQO) is proved
-in `MainResults/ScatFunBQO.lean`; the transfinite induction is encapsulated in the eventual
-proof of `levels_finitely_generated`.
+It is **proved by transfinite induction on `α`**, dispatching each rank case to a named theorem;
+everything downstream (each level is 2-BQO ⟹ `ScatFun` is 2-BQO ⟹ WQO) is proved in
+`MainResults/ScatFunBQO.lean`. The whole development is now `sorry`-free, including the §6.4
+solvable-functions development (`DoubleSuccessor/Solvable.lean`).
 
-Proving this result is the purpose of the three last chapters of  the memoir:
+The last three chapters of the memoir supply this result:
 
-1. **Centered functions** (Chapter 4, `CenteredFunctions/*`) — ✓ **formalized, sorry-free.**
+1. **Centered functions** (Chapter 4, `CenteredFunctions/*`) — ✓ **fully proved, sorry-free.**
    - `IsCentered f`: the function `f` is centered — it is a pointed gluing of its ray functions.
    - Proved: Thm 4.6 (`centered_equiv_pgl_rays` — centered ≡ pgl of its rays),
      Thm 4.7 (`localCenterednessFromTwoBQO_scatFun`), Thm 4.9
@@ -469,17 +502,20 @@ Proving this result is the purpose of the three last chapters of  the memoir:
      and `pgl ℓ_λ`), for both `λ = 1` and `λ` a nonzero limit. The `λ = 1` base case
      uses the finite generation of `𝒞_{≤1}` (`cLeOne_finitely_generated`, the memoir's
      `LocallyConstantFunctions`).
-   - Still open: the §4.3 simple-function classification (Thm 4.11–4.13) — not needed
-     for finite generation — and the optional strict separation `k_{λ+1} < pgl ℓ_λ`
-     (kept commented out).
+   - The §4.3 simple-function classification (Thm 4.11–4.13) is formalized in
+     `CenteredFunctions/SimpleSuccessor/*`. The optional strict separation `k_{λ+1} < pgl ℓ_λ`
+     is kept commented out (not needed for finite generation).
 
-2. **Precise Structure Theorem** (`PreciseStructure/Theorems.lean`):
-   - The last operation the Wedge Operation
-   - Finite generation at successors of limit ordinals `\lambda +1`
-   - definition of the FINITE set of generators at each level.
-  
-3. **Double successors**
-   - Prove that the finite set of generators indeed generates each double successor `\alpha+2` levels (`DoubleSuccessor/Theorems.lean`).
+2. **Precise Structure Theorem** (Chapter 5, ✓ **fully proved**): the Wedge operation
+   `ScatFun/Wedge/*`, the finite generator families `ScatFun/Generators/*`, the ScatFun-level
+   bridges `ScatFun/PreciseStructure/*`, and finite generation at successors of limit ordinals
+   `λ+1` (`ScatFun/LevelsFinitelyGenerated/*`: `Two`, `LambdaPlusOne`, `LevelLTTwoBQO`,
+   `Sandwich_lemma`).
+
+3. **Double successors** (Chapter 6, ✓ **fully proved**): that the finite
+   generator set generates each double-successor `α+2` level
+   (the top-level `DoubleSuccessor/*` — `Fine`, `PseudoCentered`, `Diagonal`, `Solvable` —
+   and `ScatFun/LevelsFinitelyGenerated/DoubleSuccessor.lean`).
   
 **From finite generation to BQO** (`ScatFun/ReflectLevel.lean`):
    - Once Level β is finitely generated, `Level β` injects into a finite product

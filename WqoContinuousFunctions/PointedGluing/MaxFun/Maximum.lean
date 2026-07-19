@@ -123,7 +123,7 @@ lemma ray_to_sub_gluing
     swap
     exact fun x => ⟨prepend j x.val, mem_gluingSet_prepend (by simp)⟩
     refine ⟨?_, unprepend, ?_, ?_⟩
-    · refine Continuous.subtype_mk ?_ ?_
+    · refine' Continuous.subtype_mk _ _
       exact Continuous.comp (continuous_prepend j) continuous_subtype_val
     · exact continuous_unprepend.continuousOn
     · unfold MaxFun; aesop
@@ -190,7 +190,7 @@ lemma simple_reduces_to_MaxFun
       exact Set.mem_iUnion.mpr ⟨0, Set.mem_image_of_mem _ x.2⟩⟩
     generalize_proofs at *
     refine ⟨?_, ?_⟩
-    · refine Continuous.subtype_mk ?_ ?_
+    · refine' Continuous.subtype_mk _ _
       exact continuous_prepend 0 |> Continuous.comp <| continuous_subtype_val
     · refine ⟨fun x => unprepend x, ?_, ?_⟩ <;> norm_num [MaxFun]
       · exact continuous_unprepend.continuousOn
@@ -224,7 +224,7 @@ lemma isEmpty_of_CBLevel_zero_empty {X Y : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (h : CBLevel f 0 = ∅) : IsEmpty X := by
   unfold CBLevel at h
-  simp +zetaDelta at *
+  simp +zetaDelta only [mem_Iio, Ordinal.limitRecOn_zero, univ_eq_empty_iff] at *
   exact h
 
 /-
@@ -280,7 +280,7 @@ lemma simple_piece_reduces_to_maxfun
     · convert h ⟨⟨x.val, x.prop.1⟩, x.prop.2⟩ _
       convert hx using 1
       convert CBLevel_homeomorph (subtypeInterHomeo A U) (fun x => f ⟨x.val, x.prop.1⟩) β using 1
-      simp +decide [Set.ext_iff, CBLevel]
+      simp +decide only [mem_setOf_eq, CBLevel, mem_Iio, coe_setOf, Set.ext_iff, mem_preimage, Subtype.forall]
       constructor <;> intro h
       · convert CBLevel_homeomorph (subtypeInterHomeo A U) (fun x => f ⟨x.val, x.prop.1⟩) β using 1
         simp +decide [Set.ext_iff, CBLevel]
@@ -364,7 +364,7 @@ lemma maxFun_item1_from_ih'
     ContinuouslyReduces f (MaxFun α) := by
   -- Case: domain is empty
   by_cases h_empty : CBLevel f 0 = ∅
-  · haveI := isEmpty_of_CBLevel_zero_empty f h_empty
+  · have := isEmpty_of_CBLevel_zero_empty f h_empty
     exact continuouslyReduces_of_empty f (MaxFun α)
   -- Case: domain is nonempty, use CBRank < α
   · push_neg at h_empty

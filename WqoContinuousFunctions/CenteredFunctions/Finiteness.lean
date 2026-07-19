@@ -120,7 +120,7 @@ theorem finitenessOfCenteredFunctions
       have ht_mono : IsMonotoneSeq t := fun a b hab => hs_mono _ _ (by omega)
       have ht_mem : ∀ i, t i ∈ ScatFun.FinGl B := by
         intro i
-        refine hgen ⟨le_trans hi0 (hcb_mono i0 (i + i0) (by omega)), ?_⟩
+        refine' hgen ⟨le_trans hi0 (hcb_mono i0 (i + i0) (by omega)), _⟩
         exact le_trans (hsi_le_β _) hβ_le
       choose mult hmult1 hmult2 using ht_mem
       have ht_eq : ∀ i, ScatFun.Equiv (t i) (ScatFun.Gl B (mult i)) :=
@@ -144,7 +144,7 @@ theorem finitenessOfCenteredFunctions
         rw [hrank0] at hrank_t0
         exact hlamne (le_antisymm hrank_t0 (zero_le _))
       obtain ⟨k, ι, hk, hpgl⟩ := pgl_finGl_to_subfamily B t ht_mono mult ht_eq hS
-      refine Or.inr ⟨k, ι, hk, ?_⟩
+      refine' Or.inr ⟨k, ι, hk, _⟩
       exact etrans hgequiv (etrans (esymm (pgl_tail_equiv s hs_mono i0)) hpgl)
     · -- Minimum-function case: every block has rank `< lam`, so `g ≡ k_{lam+1}`.
       push_neg at hP

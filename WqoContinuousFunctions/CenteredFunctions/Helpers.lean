@@ -78,8 +78,8 @@ lemma pgl_isCenterFor_of_local (F : ℕ → ScatFun)
     continuous_invFun := Continuous.subtype_mk (Continuous.subtype_mk continuous_subtype_val _) _ }
   have hfe : ∀ p : ↥U, f_target (e p) = (pgl F).func p.val := fun _ => rfl
   have hCR : ContinuouslyReduces (pgl F).func f_target := by
-    apply pointedGluing_lower_bound (A := A_U) f_target hf_target_cont
-      (fun i => (F i).domain) (fun _ => (Set.univ : Set Baire)) (pglBlock F) xb
+    obtain ⟨σ0, hσ0, -, τ0, hτ0, heq0⟩ := pointedGluing_lower_bound (A := A_U) f_target
+      hf_target_cont (fun i => (F i).domain) (fun _ => (Set.univ : Set Baire)) (pglBlock F) xb (by
     intro i W hW hxW
     -- Push the inner neighbourhood `W ⊆ ↥A_U` to a neighbourhood `V` of `x₀`.
     set V : Set ↥(pgl F).domain := Subtype.val '' (⇑e.symm '' W) with hV
@@ -105,7 +105,8 @@ lemma pgl_isCenterFor_of_local (F : ℕ → ScatFun)
         rw [show (⟨σ z, hσU z⟩ : ↥U) = q from Subtype.ext hqσ.symm, ← hae,
           e.apply_symm_apply]
       rw [this]; exact haW
-    · rw [hfxb, hfun]; exact hclos
+    · rw [hfxb, hfun]; exact hclos)
+    exact ⟨σ0, hσ0, τ0, hτ0, heq0⟩
   -- Transport along `e`.
   have hres := hCR.comp_homeomorph_right e
   have hgoal : f_target ∘ ⇑e = (pgl F).func ∘ (Subtype.val : ↥U → ↥(pgl F).domain) := by
@@ -301,7 +302,7 @@ lemma cocenter_continuity_cylinder {A : Type*} [TopologicalSpace A]
   -- Define the set V as the intersection of all sets {a | g a k = y_g k} for k < m.
   set V := ⋂ k < m, {a | g a k = y_g k};
   have hV_open : IsOpen V := by
-    refine' isOpen_iff_forall_mem_open.mpr _;
+    refine isOpen_iff_forall_mem_open.mpr ?_;
     intro x hx
     use ⋂ k < m, {a | g a k = y_g k};
     simp_all +decide [ Set.subset_def ];
@@ -362,11 +363,11 @@ lemma isCentered_of_homeomorph {X X' Y : Type*}
   obtain ⟨σ, τ, hσ, hτ, hfg⟩ := hc (φ '' U) (by
   exact φ.isOpen_image.mpr hU) (by
   exact ⟨ _, hcu, φ.apply_symm_apply c ⟩);
-  refine' ⟨ _, _, _ ⟩;
+  refine ⟨ ?_, ?_, ?_ ⟩;
   exact fun x => ⟨ φ.symm ( σ ( φ x ) |>.1 ), by obtain ⟨ y, hy, hy' ⟩ := σ ( φ x ) |>.2; simpa [ ← hy' ] using hy ⟩;
   · fun_prop;
-  · refine' ⟨ hσ, _, _ ⟩;
-    · refine' hτ.mono _;
+  · refine ⟨ hσ, ?_, ?_ ⟩;
+    · refine hτ.mono ?_;
       rintro _ ⟨ x, rfl ⟩ ; simp +decide [ h ] ;
     · grind +suggestions
 
@@ -379,7 +380,7 @@ lemma isCentered_subtypeSubtype {X Y : Type*}
     IsCentered ((f ∘ Subtype.val) ∘ (Subtype.val : V → U)) →
     IsCentered (f ∘ (Subtype.val : (U ∩ (Subtype.val '' V) : Set X) → X)) := by
   rintro ⟨ c, hc ⟩;
-  refine' ⟨ ⟨ c.val.val, ⟨ c.val.prop, _ ⟩ ⟩, _ ⟩;
+  refine ⟨ ⟨ c.val.val, ⟨ c.val.prop, ?_ ⟩ ⟩, ?_ ⟩;
   exact ⟨ c, c.prop, rfl ⟩;
   intro W hW hcW;
   -- Let $W'$ be the preimage of $W$ under the inclusion map from $V$ to $U \cap \text{image}(V)$.
@@ -390,7 +391,7 @@ lemma isCentered_subtypeSubtype {X Y : Type*}
   have := hc W' hW'_open ( by aesop );
   obtain ⟨ τ, hτ₁, hτ₂ ⟩ := this;
   obtain ⟨ σ, hσ₁, hσ₂ ⟩ := hτ₂;
-  refine' ⟨ _, _, _ ⟩;
+  refine ⟨ ?_, ?_, ?_ ⟩;
   use fun x => ⟨ ⟨ τ ⟨ ⟨ x.val, by
     exact x.2.1 ⟩, by
     grind ⟩ |>.1 |>.1, by
@@ -400,7 +401,7 @@ lemma isCentered_subtypeSubtype {X Y : Type*}
   all_goals generalize_proofs at *;
   · fun_prop (disch := solve_by_elim);
   · use σ;
-    refine' ⟨ _, _ ⟩;
+    refine ⟨ ?_, ?_ ⟩;
     · convert hσ₁ using 1;
       ext; simp [Function.comp];
       exact ⟨ fun ⟨ a, ⟨ b, c ⟩, d ⟩ => ⟨ a, b, c, d ⟩, fun ⟨ a, b, c, d ⟩ => ⟨ a, ⟨ b, c ⟩, d ⟩ ⟩;
@@ -418,7 +419,7 @@ lemma isLocallyCentered_restrict_open {X Y : Type*}
     ∃ V : Set X, IsOpen V ∧ x ∈ V ∧ IsCentered (f ∘ (Subtype.val : V → X)) := by
   have := hlc ⟨ x, hxU ⟩;
   obtain ⟨ V, hV₁, hV₂, hV₃ ⟩ := this;
-  refine' ⟨ U ∩ ( Subtype.val '' V ), _, _, _ ⟩;
+  refine ⟨ U ∩ ( Subtype.val '' V ), ?_, ?_, ?_ ⟩;
   · obtain ⟨ t, ht₁, ht₂ ⟩ := hV₁;
     convert hU.inter ht₁ using 1 ; ext ; aesop;
   · grind +splitImp;
@@ -570,18 +571,18 @@ lemma minFun_cofinalSeq_isRegularSeq (lam : Ordinal.{0}) (hlam : lam < omega1)
     have h_cofinal : ∀ β < lam, ∃ n, β ≤ cofinalSeq lam n := by
       exact fun β a => cofinalSeq_eventually_ge lam hlam hlim hne β a
     obtain ⟨ b, hb ⟩ := h_cofinal ( Order.succ ( Finset.sup ( Finset.range ( a + 1 ) ) ( fun k => cofinalSeq lam k ) ⊔ cofinalSeq lam i ) ) ( by
-      refine' hlim.succ_lt _;
-      refine' max_lt _ _;
+      refine hlim.succ_lt ?_;
+      refine max_lt ?_ ?_;
       · induction' a with a ih;
         · simp +decide [ cofinalSeq_lt lam hlim hne ];
         · rw [ Finset.range_add_one, Finset.sup_insert ];
           exact max_lt ( cofinalSeq_lt _ hlim hne _ ) ih;
       · exact cofinalSeq_lt lam hlim hne i );
-    refine' ⟨ b, _, _ ⟩;
+    refine ⟨ b, ?_, ?_ ⟩;
     · contrapose! hb;
       exact lt_of_le_of_lt ( Finset.le_sup ( f := fun k => cofinalSeq lam k ) ( Finset.mem_range.mpr ( by linarith ) ) ) ( lt_of_le_of_lt ( le_max_left _ _ ) ( Order.lt_succ _ ) );
     · exact le_trans ( le_max_right _ _ ) ( le_trans ( le_of_lt ( Order.lt_succ _ ) ) hb );
-  refine' ⟨ b, _, hb.1 ⟩;
+  refine ⟨ b, ?_, hb.1 ⟩;
   convert MinFun_monotone ( cofinalSeq lam i ) ( cofinalSeq lam b ) _ _ hb.2 using 1;
   · exact lt_of_le_of_lt ( cofinalSeq_lt lam hlim hne i |> le_of_lt ) hlam;
   · exact lt_of_lt_of_le ( cofinalSeq_lt _ hlim hne _ ) hlam.le
@@ -706,7 +707,7 @@ lemma succMaxFun_le_maxFun_succ (β : Ordinal.{0}) :
     rotate_left;
     exact True;
     exact True.intro;
-    simp +decide [ MaxFun ];
+    simp +decide only [MaxFun, iff_true];
     congr! 1;
     convert MaxDom_succ β using 1
 
@@ -783,43 +784,5 @@ lemma minFun_le_pglMaxFun (lam : Ordinal.{0}) (hlam : lam < omega1) (hlam_ne : l
 -- cocenter-rigidity results of Proposition 4.4 (`rigidityOfCocenter_*`), which are
 -- defined there.  All the supporting facts above (`maxFun_cbRank_eq`,
 -- `minFun_le_pglMaxFun`, …) are imported by that file.
-
-/-!
-### Helpers for Proposition 4.11 (simpleIffCoincidenceOfCocenters)
--/
-
-/-! If f has successor CB-rank, then I = {n | CB(f_n) = sup CB(f_i)} is nonempty,
-where f_i are the pieces from an open partition.
-
-To be specialized to ScatFun, do not prove as it is
-lemma successor_rank_implies_I_nonempty
-    {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A]
-    [TopologicalSpace B] [T2Space B]
-    (f : A → B)
-    (P : ℕ → Set A) (hcover : ⋃ i, P i = univ)
-    (α : Ordinal) (hα : CBRank f = Order.succ α) :
-    {n : ℕ | CBRank (f ∘ (Subtype.val : P n → A)) =
-      ⨆ i, CBRank (f ∘ (Subtype.val : P i → A))}.Nonempty := by
-  sorry
-
-/-- If I = {n | CB(f_n) = sup CB(f_i)} is nonempty, then CB(f) is a successor.
-
-To be specialized to ScatFun, do not prove as it is -/
-lemma I_nonempty_implies_successor_rank
-    {A B : Type*}
-    [TopologicalSpace A] [MetrizableSpace A]
-    [TopologicalSpace B] [T2Space B]
-    (f : A → B)
-    (P : ℕ → Set A) (hclopen : ∀ i, IsClopen (P i))
-    (hdisj : ∀ i j, i ≠ j → Disjoint (P i) (P j))
-    (hcover : ⋃ i, P i = univ)
-    (hf_cent : ∀ i, IsCentered (f ∘ (Subtype.val : P i → A)))
-    (hf_scat : ScatteredFun f)
-    (hne : {n : ℕ | CBRank (f ∘ (Subtype.val : P n → A)) =
-      ⨆ i, CBRank (f ∘ (Subtype.val : P i → A))}.Nonempty) :
-    ∃ α : Ordinal.{0}, CBRank f = Order.succ α := by
-  sorry
- -/
 
 end

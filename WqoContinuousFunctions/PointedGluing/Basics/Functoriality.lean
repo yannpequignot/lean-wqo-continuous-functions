@@ -44,24 +44,6 @@ lemma pgl_fun_mem (A B : ℕ → Set (ℕ → ℕ)) (f : ∀ i, A i → B i)
     · exact Or.inr (Set.mem_iUnion.mpr ⟨_, _, (f _ ⟨_, h2⟩).prop, rfl⟩)
     · exact absurd (strip_mem_of_pointedGluingSet A x h1) h2
 
-/--
-Helper: the range of σ' consists of zeroStream and prependZerosOne i (σ a).val.
--/
-private lemma pgl_range_structure (A B : Set (ℕ → ℕ)) (σ : A → B) :
-    let σ' := fun x : PointedGluingSet (fun _ => A) =>
-      (⟨PointedGluingFun (fun _ => A) (fun _ => B) (fun _ => σ) x,
-        pgl_fun_mem _ _ _ x⟩ : PointedGluingSet (fun _ => B))
-    ∀ z ∈ Set.range (Subtype.val ∘ σ'), z ≠ zeroStream →
-      ∃ i : ℕ, ∃ a : A,
-        z = prependZerosOne i ((σ a).val) ∧
-        firstNonzero z = i ∧
-        stripZerosOne i z = (σ a).val := by
-  unfold PointedGluingFun
-  grind +suggestions
-
-/--
-Helper: ContinuousWithinAt at zeroStream for the τ' map.
--/
 private lemma pgl_tau_cwat_zero (A B : Set (ℕ → ℕ))
     (σ : A → B) (_hσ : Continuous σ)
     (τ : (ℕ → ℕ) → (ℕ → ℕ)) (_hτ : ContinuousOn τ (Set.range (Subtype.val ∘ σ)))
@@ -123,7 +105,7 @@ private lemma pgl_tau_cwat_block (A B : Set (ℕ → ℕ))
         · exact False.elim <| hx.2.2 <| by simp +decide [zeroStream]
     · exact fun x hx => Set.mem_range_self _
   have h_g_eq : ∀ z ∈ R, z ∈ {x | (∀ k < i₀, x k = 0) ∧ x i₀ ≠ 0} → τ' z = g z := by
-    simp +zetaDelta at *
+    simp +zetaDelta only [Subtype.forall, mem_range, comp_apply, Subtype.exists, ne_eq, mem_setOf_eq, and_imp, forall_exists_index] at *
     intro z x hx hz hz' hz''; rw [if_neg (by rintro rfl; exact hz'' (by simp +decide [zeroStream]))] ; rw [h_block z x hx hz hz' hz'']
   have h_g_eq : ContinuousWithinAt τ' (R ∩ {x | (∀ k < i₀, x k = 0) ∧ x i₀ ≠ 0}) z₀ := by
     exact ContinuousOn.continuousWithinAt (h_g_cont.congr fun x hx => h_g_eq x hx.1 hx.2 ▸ rfl) (by aesop)

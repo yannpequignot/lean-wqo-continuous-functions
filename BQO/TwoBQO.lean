@@ -89,7 +89,7 @@ def TwoBQO {α : Type*} (r : α → α → Prop) : Prop :=
 
 theorem TwoBQO.iff_noBad {α : Type*} (r : α → α → Prop) :
     TwoBQO r ↔ TwoBQO_n r := by
-  simp [TwoBQO_n, PairSeq.IsBad, not_exists, not_forall]
+  simp only [TwoBQO_n, PairSeq.IsBad, not_exists, not_forall, Decidable.not_not]
   exact Iff.symm (Eq.to_iff rfl)
 
 /-!
@@ -126,14 +126,13 @@ theorem TwoBQO.of_wellFoundedLT {α : Type*} [LinearOrder α] [WellFoundedLT α]
   exact hn (hstrict n)
 
 /-!
-## §5  ω₁ is 2-BQO
+## §5  Ordinals are 2-BQO
 
-The ordinal ω₁ is 2-BQO because it is a well-order.
+Ordinals are 2-BQO because they are well-ordered.
 -/
 
-/-- **ω₁ is 2-BQO** with respect to `≤`. -/
-theorem Ordinal.omega1_le_isTwoBQO :
-    TwoBQO (α := Set.Iio omega1) (· ≤ ·) :=
+/-- **Ordinals are 2-BQO** with respect to `≤`. -/
+theorem Ordinal.isTwoBQO : TwoBQO (α := Ordinal) (· ≤ ·) :=
   TwoBQO.of_wellFoundedLT
 
 /-!
@@ -165,6 +164,54 @@ theorem TwoBQO.mono {α : Type*} {r s : α → α → Prop}
   rw [TwoBQO.iff_noBad] at h ⊢
   intro ⟨f, hbad⟩
   exact h ⟨f, fun m n l hmn hnl hrel => hbad m n l hmn hnl (hincl _ _ hrel)⟩
+
+/-!
+### 6.2  Union of two parts, and finite colourings
+
+Both rest on Ramsey for pairs (`infinite_ramsey_pairs`): a 2-colouring of pairs by which
+*part* (resp. which *colour*) the single value `f m n` lands in has an infinite homogeneous
+restriction, on which the relevant 2-BQO (resp. same-colour relation) gives a good triple.
+-/
+
+/-- **Union of two 2-BQO parts is 2-BQO.**  If `p, q` cover `α` and `r` is 2-BQO on each
+sub-part `{x // p x}` and `{x // q x}`, then `r` is 2-BQO on `α`.
+
+2-colour each pair `(m,n)` by whether `p (f m n)` holds; Ramsey-for-pairs gives an infinite
+restriction landing wholly in one part, where the corresponding 2-BQO supplies a good triple. -/
+theorem TwoBQO.union {α : Type*} (r : α → α → Prop) (p q : α → Prop)
+    (hcover : ∀ a, p a ∨ q a)
+    (hp : TwoBQO (fun a b : {x : α // p x} => r a.val b.val))
+    (hq : TwoBQO (fun a b : {x : α // q x} => r a.val b.val)) :
+    TwoBQO r := by
+  classical
+  intro f
+  obtain ⟨e, he, k, hk⟩ :=
+    infinite_ramsey_pairs (fun m n h => (decide (p (f m n h)) : Bool))
+  cases k with
+  | true =>
+    have hpf : ∀ i j (h : i < j), p (f (e i) (e j) (he h)) :=
+      fun i j h => of_decide_eq_true (hk i j h)
+    obtain ⟨i, j, l, hij, hjl, hrel⟩ :=
+      hp (fun i j h => ⟨f (e i) (e j) (he h), hpf i j h⟩)
+    exact ⟨e i, e j, e l, he hij, he hjl, hrel⟩
+  | false =>
+    have hqf : ∀ i j (h : i < j), q (f (e i) (e j) (he h)) :=
+      fun i j h => (hcover _).resolve_left (of_decide_eq_false (hk i j h))
+    obtain ⟨i, j, l, hij, hjl, hrel⟩ :=
+      hq (fun i j h => ⟨f (e i) (e j) (he h), hqf i j h⟩)
+    exact ⟨e i, e j, e l, he hij, he hjl, hrel⟩
+
+/-- **A quasi-order with finitely many classes is 2-BQO.**  If `c : α → κ` with `κ` finite and
+*same colour ⟹ `r`-related*, then `r` is 2-BQO: colour pairs by `c (f m n)`, Ramsey-for-pairs
+makes the restriction monochromatic, so any triple is good.  (The "finite up-to-equivalence ⟹
+2-BQO" fact.) -/
+theorem TwoBQO.of_finite_coloring {α κ : Type*} [Fintype κ] (r : α → α → Prop)
+    (c : α → κ) (hc : ∀ a b, c a = c b → r a b) :
+    TwoBQO r := by
+  intro f
+  obtain ⟨e, he, k, hk⟩ := infinite_ramsey_pairs (fun m n h => c (f m n h))
+  exact ⟨e 0, e 1, e 2, he (by norm_num), he (by norm_num),
+    hc _ _ ((hk 0 1 (by norm_num)).trans (hk 1 2 (by norm_num)).symm)⟩
 
 /-- **Monotone image of a 2-BQO, up to equivalence.**
 
@@ -714,7 +761,7 @@ private lemma embed_combine {α : Type*} (r : α → α → Prop)
     (eG : ℕ → ℕ) (heG_mono : StrictMono eG)
     (heG_rel : ∀ i, r (Fa (i + ka)) (Fb (eG i + kb))) :
     ∃ e : ℕ → ℕ, StrictMono e ∧ ∀ n, r (Fa n) (Fb (e n)) := by
-  refine' ⟨ fun n => if hn : n < ka then ψ n else eG ( n - ka ) + kb, _, _ ⟩;
+  refine ⟨ fun n => if hn : n < ka then ψ n else eG ( n - ka ) + kb, ?_, ?_ ⟩;
   · intro m n hmn;
     by_cases hm : m < ka <;> by_cases hn : n < ka <;> simp +decide [ hm, hn ];
     · exact hψ_mono m n hmn hn;
@@ -729,22 +776,25 @@ theorem TwoBQO.embedForAll_wqo {α : Type*} {r : α → α → Prop} [IsPreorder
   intro F
   -- Step 0: split each F n into a regular tail G n, preceded by a finite head w n.
   have hreg : ∀ n, ∃ k, IsRegularSeq r (fun i => F n (i + k)) :=
-    fun n => WQO.eventuallyRegular r hr.wellQuasiOrdered (F n)
+    fun n => hr.wellQuasiOrdered.eventuallyRegular r (F n)
   choose kk hkk using hreg
   set G : ℕ → ℕ → α := fun n i => F n (i + kk n) with hG_def
   set w : ℕ → List α := fun n => (List.range (kk n)).map (F n) with hw_def
   have hw_len : ∀ n, (w n).length = kk n := fun n => by simp [hw_def]
   have hw_get : ∀ n (i : ℕ) (h : i < (w n).length), (w n)[i] = F n i := fun n i h => by
     simp [hw_def, List.getElem_map, List.getElem_range]
-  -- Step 1: Higman's WQO on lists gives a < b with w a Higman-embeds in w b.
-  have hwqo_list : WellQuasiOrdered (HigmanOrder r) :=
-    higman_theorem r hr.wellQuasiOrdered
+  -- Step 1: Higman's WQO on lists (Mathlib's `partiallyWellOrderedOn_sublistForall₂`,
+  -- specialized from an arbitrary subset to `univ`) gives a < b with w a Higman-embeds in w b.
+  have hwqo_list : WellQuasiOrdered (List.SublistForall₂ r) := by
+    rw [← partiallyWellOrderedOn_univ_iff]
+    simpa [Set.eq_univ_iff_forall] using
+      (partiallyWellOrderedOn_univ_iff.mpr hr.wellQuasiOrdered).partiallyWellOrderedOn_sublistForall₂ r
   -- Step 2: DomOrder r is WQO (from 2-BQO)
   have hdom_wqo : WellQuasiOrdered (DomOrder r) := hr.dom_twoBQO
   set S : ℕ → Set α := fun n => {x : α | ∃ i, r x (G n i)} with hS_def
   -- Step 3: product of the two WQOs applied to (w n, S n)
   have hprod_wqo : WellQuasiOrdered
-      (fun p q : List α × Set α => HigmanOrder r p.1 q.1 ∧ DomOrder r p.2 q.2) :=
+      (fun p q : List α × Set α => List.SublistForall₂ r p.1 q.1 ∧ DomOrder r p.2 q.2) :=
     WellQuasiOrdered.prod hwqo_list hdom_wqo
   obtain ⟨a, b, hab, hwgood, hSgood⟩ := hprod_wqo (fun n => (w n, S n))
   -- Step 4: build the index embedding for the regular tails using hSgood + regularity
@@ -800,22 +850,22 @@ lemma wqo_double_selection {Q : Type*} {r : Q → Q → Prop} [IsPreorder Q r]
       ∀ n : ℕ, m < n → ∀ i : ℕ, ∃ i' : ℕ, j ≤ i' ∧ r (s m (i + j)) (s n i') := by
   obtain ⟨k, hk⟩ : ∃ k : ℕ → ℕ, ∀ n, IsRegularSeq r (fun i => s n (i + k n)) := by
     have hwqo := hbqo.wellQuasiOrdered;
-    exact ⟨ fun n => Classical.choose ( WQO.eventuallyRegular r hwqo ( fun i => s n i ) ), fun n => Classical.choose_spec ( WQO.eventuallyRegular r hwqo ( fun i => s n i ) ) ⟩;
+    exact ⟨ fun n => Classical.choose ( hwqo.eventuallyRegular r ( fun i => s n i ) ), fun n => Classical.choose_spec ( hwqo.eventuallyRegular r ( fun i => s n i ) ) ⟩;
   set j : ℕ → ℕ := fun n => (Finset.range (n + 1)).sup k with hj_def;
   -- Step 3: The row sequence is EmbedForAll-antitone.
   have h_antitone : ∀ m n : ℕ, m ≤ n → EmbedForAll r (fun i => s n (i + j n)) (fun i => s m (i + j m)) := by
     intro m n hmn
     use fun i => i + (j n - j m);
-    simp +decide [ StrictMono ];
+    simp +decide only [StrictMono, add_lt_add_iff_right, imp_self, implies_true, true_and];
     intro i; convert hdec m n ( i + j n ) hmn using 1; rw [ add_assoc, tsub_add_cancel_of_le ( show j m ≤ j n from Finset.sup_mono ( Finset.range_mono ( by linarith ) ) ) ] ;
   obtain ⟨ m, hm ⟩ := WellQuasiOrdered.exists_forall_le_of_antitone ( hbqo.embedForAll_wqo ) ( fun n => fun i => s n ( i + j n ) ) h_antitone;
-  refine' ⟨ m, j m, _, _ ⟩;
+  refine ⟨ m, j m, ?_, ?_ ⟩;
   · have h_tail : IsRegularSeq r (fun i => s m (i + k m)) := by
       exact hk m;
     convert IsRegularSeq.tail h_tail ( j m - k m ) using 1;
     exact funext fun i => by rw [ add_assoc, Nat.sub_add_cancel ( show k m ≤ j m from Finset.le_sup ( f := k ) ( Finset.mem_range.mpr ( Nat.lt_succ_self m ) ) ) ] ;
   · intro n hn i
     obtain ⟨e, he_mono, he⟩ := hm n (le_of_lt hn);
-    refine' ⟨ e i + j n, _, _ ⟩;
+    refine ⟨ e i + j n, ?_, ?_ ⟩;
     · exact le_add_of_nonneg_of_le ( Nat.zero_le _ ) ( Finset.sup_mono ( Finset.range_mono ( by linarith ) ) );
     · exact he i

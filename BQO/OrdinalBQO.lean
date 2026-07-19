@@ -132,6 +132,49 @@ lemma Ordinal.natPart_add_natCast
     hlam
     (Ordinal.eq_limitPart_add_natPart (lam + ↑n)).symm).2
 
+/-- **Double-successor extraction.** An ordinal `ρ` strictly between `α.limitPart + 1` and
+`α + 1 + 1` (inclusive on the right) is itself a double successor `β + 1 + 1` with `β ≤ α` and
+`β.limitPart = α.limitPart`. Pure ordinal arithmetic: `ρ`'s limit part is `λ := α.limitPart`
+(the gap `ρ - λ` is finite), so `ρ = λ + r` with `r := ρ.natPart ∈ [2, α.natPart + 2]`; writing
+`r = j + 2` gives `β := λ + j`. Used in the double-successor structure theorem to hand
+`diagonalTheorem` a rank that is an exact double successor. -/
+lemma exists_doubleSucc_of_between (α ρ : Ordinal.{0})
+    (hlo : α.limitPart + 1 < ρ) (hhi : ρ ≤ α + 1 + 1) :
+    ∃ β : Ordinal.{0}, β ≤ α ∧ ρ = β + 1 + 1 ∧ β.limitPart = α.limitPart := by
+  set lam := α.limitPart with hlam
+  set m := α.natPart with hm
+  have hlim : Order.IsSuccLimit lam ∨ lam = 0 := Ordinal.limitPart_isLimit_or_zero α
+  have add_two : ∀ x : Ordinal.{0}, x + 1 + 1 = x + 2 := fun x => by rw [add_assoc]; norm_num
+  have hαsucc : α + 1 + 1 = lam + ((m : Ordinal) + 2) := by
+    rw [hlam, hm]; conv_lhs => rw [Ordinal.eq_limitPart_add_natPart α]
+    rw [add_two, add_assoc]
+  have hρlim : ρ.limitPart = lam := by
+    have hle : lam ≤ ρ := le_of_lt (lt_of_le_of_lt le_self_add hlo)
+    have hsub_le : ρ - lam ≤ ((m + 2 : ℕ) : Ordinal) := by
+      rw [Ordinal.sub_le]; refine hhi.trans (le_of_eq ?_); rw [hαsucc]; norm_cast
+    obtain ⟨n, hn⟩ : ∃ n : ℕ, ρ - lam = (n : Ordinal) :=
+      Ordinal.lt_omega0.mp (lt_of_le_of_lt hsub_le (Ordinal.nat_lt_omega0 (m + 2)))
+    have hρeq : ρ = lam + (n : Ordinal) := by
+      rw [← hn, Ordinal.add_sub_cancel_of_le hle]
+    rw [hρeq]; exact Ordinal.limitPart_add_natCast lam n hlim
+  have hρk : ρ = lam + ((ρ.natPart : ℕ) : Ordinal) := by
+    conv_lhs => rw [Ordinal.eq_limitPart_add_natPart ρ]
+    rw [hρlim]
+  set r := ρ.natPart with hr
+  have hr2 : 2 ≤ r := by
+    have hlt : lam + 1 < lam + (r : Ordinal) := hρk ▸ hlo
+    exact_mod_cast lt_of_add_lt_add_left hlt
+  have hrm : r ≤ m + 2 := by
+    have hle : lam + (r : Ordinal) ≤ lam + ((m : Ordinal) + 2) := by
+      rw [← hρk, ← hαsucc]; exact hhi
+    exact_mod_cast le_of_add_le_add_left hle
+  obtain ⟨j, hj⟩ : ∃ j, r = j + 2 := ⟨r - 2, by omega⟩
+  refine ⟨lam + (j : Ordinal), ?_, ?_, ?_⟩
+  · conv_rhs => rw [Ordinal.eq_limitPart_add_natPart α]
+    gcongr; exact_mod_cast (by omega : j ≤ m)
+  · rw [hρk, hj, add_two, add_assoc]; push_cast; ring_nf
+  · exact Ordinal.limitPart_add_natCast lam j hlim
+
 /-- An enumeration of ordinals below a countable ordinal `α`.
 For a nonzero `α`, returns a function `ℕ → Ordinal.{0}` whose range covers `{β | β < α}`
 whenever `α < ω₁`. For `α = 0`, returns the constant 0 function. -/
@@ -555,11 +598,11 @@ theorem Ordinal.leBullet.isTwoBQO : TwoBQO Ordinal.leBullet := by
     · let f_nat : PairSeq ℕ :=
         fun m n h => (f (e m) (e n) (he h)).natPart
       obtain ⟨m, n, l, hmn, hnl, hrel⟩ := TwoLT.isTwoBQO f_nat
-      refine absurd ?_ (hbad (e m) (e n) (e l) (he hmn) (he hnl))
+      refine' absurd _ (hbad (e m) (e n) (e l) (he hmn) (he hnl))
       exact Or.inr ⟨hconst m n l hmn hnl, hrel⟩
     · push_neg at hconst
       obtain ⟨m, n, l, hmn, hnl, hne⟩ := hconst
-      refine absurd ?_ (hbad (e m) (e n) (e l) (he hmn) (he hnl))
+      refine' absurd _ (hbad (e m) (e n) (e l) (he hmn) (he hnl))
       exact Or.inl (lt_of_le_of_ne (hperf m n l hmn hnl) hne)
   · exfalso
     have hstrict : ∀ k,

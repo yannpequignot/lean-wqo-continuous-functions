@@ -71,7 +71,7 @@ For each `n`, the sequence of rays `i ↦ ξ i n` takes values in
 `TwoBQO.wellQuasiOrdered`) by assumption, infinite sequences in `ScatFun.LevelLT α` are WQO
 under `EmbedForAll` by `TwoBQO.embedForAll_wqo`. We can choose by induction a non-decreasing
 sequence `(j_n)_n` in `ℕ` such that the sequence of functions
-`ρ_n = ξ i (n+j_n)` is regular for all `n` by `WQO.eventuallyRegular`.
+`ρ_n = ξ i (n+j_n)` is regular for all `n` by `WellQuasiOrdered.eventuallyRegular`.
 Note that `m < n` implies `ρ_m ≥_{(ScatFun.LevelLT α)^ℕ} ρ_n`, since `N_{x|m} ⊇ N_{x|n}` implies
 `(fR i)|_{N_{x|m}} ≥ (fR i)|_{N_{x|n}}` for all `i ≥ j_n`, so `(ρ_n)_n` is decreasing in
 `(ScatFun.LevelLT α)^ℕ`. Since `(ScatFun.LevelLT α)^ℕ` is WQO, there exists `m` such that for all `n > m` we have

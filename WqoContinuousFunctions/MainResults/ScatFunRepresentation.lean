@@ -60,8 +60,8 @@ lemma main3_to_ScatFun
   -- Step 2: range of f is countable
   have hcount : (Set.range f).Countable := Scattered_countable_range f hsc
   -- Step 3: embed range into Baire (range is separable metrizable countable → zero-dim)
-  haveI : Countable (Set.range f) := hcount.to_subtype
-  haveI hSepR : SeparableSpace (Set.range f) :=
+  have : Countable (Set.range f) := hcount.to_subtype
+  have hSepR : SeparableSpace (Set.range f) :=
     ((isSeparable_range hfc).mono subset_rfl).separableSpace
   obtain ⟨E, ⟨ψ⟩⟩ := ZeroDimensionalSpace.embedsBaire (X := Set.range f)
   -- Step 4: build ScatFun H with domain D ⊆ Baire

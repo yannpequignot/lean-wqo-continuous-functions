@@ -52,7 +52,7 @@ theorem stripZerosOne_prependZerosOne (i : ℕ) (x : ℕ → ℕ) :
   ext k; simp only [stripZerosOne, prependZerosOne]
   have h1 : ¬ (k + i + 1 < i) := by omega
   have h2 : ¬ (k + i + 1 = i) := by omega
-  simp [h1, h2]
+  simp only [h1, ↓reduceIte, h2]
   congr 1; omega
 
 theorem prependZerosOne_head_eq_zero (i : ℕ) (x : ℕ → ℕ) (k : ℕ) (hk : k < i) :
@@ -149,21 +149,6 @@ position `n`. This is a clopen subset of `B`. -/
 def RaySet (B : Set (ℕ → ℕ)) (y : ℕ → ℕ) (n : ℕ) : Set (ℕ → ℕ) :=
   {x ∈ B | (∀ k, k < n → x k = y k) ∧ x n ≠ y n}
 
-/-!
-## Reducibility by Pieces
--/
-
-/-- A sequence of functions `(f_i)_{i ∈ ℕ}` is *reducible by finite pieces* to a
-sequence `(g_j)_{j ∈ ℕ}` if there is a family `(I_n)_{n ∈ ℕ}` of pairwise disjoint
-finite subsets of `ℕ` such that for all `n`, `f_n ≤ ⊔_{i ∈ I_n} g_i`. -/
-def IsReducibleByPieces
-    {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    {X' Y' : Type*} [TopologicalSpace X'] [TopologicalSpace Y']
-    (f : ℕ → (X → Y)) (g : ℕ → (X' → Y')) : Prop :=
-  ∃ (I : ℕ → Finset ℕ),
-    (∀ m n, m ≠ n → Disjoint (I m) (I n)) ∧
-    ∀ n, ∃ (σ : X → X') (τ : Y' → Y), Continuous σ ∧ Continuous τ ∧
-      ∀ x, f n x = τ (g n (σ x))
 
 /-!
 ## Convergence of Sets to a Point

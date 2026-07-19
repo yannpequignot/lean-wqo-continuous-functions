@@ -54,7 +54,7 @@ theorem gluingFun_upper_bound_forward
               rwa [show j = i from hj1.symm.trans x.prop] at hj2⟩
             all_goals generalize_proofs at *
             · refine Continuous.subtype_mk ?_ ?_
-              refine continuous_pi fun n => ?_
+              refine' continuous_pi fun n => _
               exact continuous_apply _ |> Continuous.comp <| continuous_subtype_val.comp <| hσ.comp <| continuous_subtype_val
             · refine ⟨fun x => τ (prepend i x), ?_, ?_⟩
               · refine hτ.comp ?_ ?_
@@ -227,7 +227,7 @@ theorem gluing_backward_eq
   obtain ⟨i, hi⟩ : ∃ i, x.val ∈ P i := by
     exact Set.mem_iUnion.mp (hcover.symm ▸ x.2)
   convert heq_i i ⟨x.val, hi⟩ using 1
-  simp +decide [hσ_raw_eq x i hi]
+  simp +decide only [hσ_raw_eq x i hi]
   convert rfl
 
 /--
@@ -357,7 +357,7 @@ lemma clopen_partition_to_gluing_reduces
       intro i; specialize hσ i; exact (by
       exact Continuous.comp (show Continuous fun x : ℕ → ℕ => prepend i x from by exact continuous_pi fun n => by cases n <;> continuity) (show Continuous fun x : P i => (σ i x : ℕ → ℕ) from by exact Continuous.comp (show Continuous fun x : B => (x : ℕ → ℕ) from by continuity) hσ.1))
     have := continuous_pasting_on_clopen P Set.univ hP_clopen hP_disj hP_cover (fun i => fun x : P i => prepend i (σ i x).val) (fun i => h_cont i)
-    simp +zetaDelta at *
+    simp +zetaDelta only [ne_eq, Subtype.forall, mem_univ, forall_const, forall_true_left] at *
     obtain ⟨h, hh₁, hh₂⟩ := this (by
       intro a ha i hi j hj; have := hP_disj i j; simp_all +decide [Set.disjoint_left]
       grind)

@@ -32,18 +32,6 @@ lemma firstNonzero_tendsto_of_converge_zeroStream
   split_ifs <;> simp_all +decide
   exact False.elim <| hz_ne n <| funext ‹_›
 
-/-- If values agree with y on [0, j n) and j n → ∞, then values → y. -/
-lemma rayLike_tendsto_of_idx_tendsto
-    {y : ℕ → ℕ} {vals : ℕ → ℕ → ℕ} {j : ℕ → ℕ}
-    (hvals : ∀ n, (∀ k, k < j n → vals n k = y k))
-    (hj : Filter.Tendsto j Filter.atTop Filter.atTop) :
-    Filter.Tendsto vals Filter.atTop (nhds y) := by
-  exact tendsto_pi_nhds.mpr fun k => tendsto_const_nhds.congr' (by filter_upwards [Filter.eventually_gt_atTop k, hj.eventually_gt_atTop k] with n hn hn'; aesop)
-
-/--
-ContinuousWithinAt for a function τ at zeroStream, given structural properties
-of the range elements.
--/
 lemma continuousWithinAt_tau_at_zeroStream
     {y : ℕ → ℕ} {τ : (ℕ → ℕ) → ℕ → ℕ}
     {R : Set (ℕ → ℕ)}
@@ -61,7 +49,7 @@ lemma continuousWithinAt_tau_at_zeroStream
     exact ⟨Finset.sup (Finset.biUnion (Finset.range (k + 1)) I) id + 1, fun j hj i hi => Nat.lt_succ_of_le (Finset.le_sup (f := id) (Finset.mem_biUnion.mpr ⟨j, Finset.mem_range.mpr hj, hi⟩))⟩
   filter_upwards [(show { x : ℕ → ℕ | ∀ i < M, x i = 0 } ∈ 𝓝 zeroStream from by
                       rw [nhds_pi]
-                      simp +decide [Filter.mem_pi]
+                      simp +decide only [nhds_discrete, Filter.mem_pi, Filter.mem_pure]
                       exact ⟨Finset.range M, Finset.finite_toSet _, fun _ => { 0 }, fun _ => by simp +decide [zeroStream], fun x hx i hi => by simpa using hx i (Finset.mem_range.mpr hi)⟩)] with x hx hxR
   by_cases hx_zero : x = zeroStream <;> simp_all +decide [firstNonzero]
   grind

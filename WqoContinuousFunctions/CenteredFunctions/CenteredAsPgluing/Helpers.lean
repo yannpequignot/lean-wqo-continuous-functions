@@ -24,12 +24,6 @@ monotonization skeleton (`glWindow`, `exists_monotone_pgl_equiv`) underpinning T
 `CenteredAsPgluing` and `finitenessOfCenteredFunctions`.
 -/
 
-/-- The `i`-th ray of a `ScatFun` `G` at base point `y`, intersected with a subset `S`
-of the domain, packaged as a `ScatFun` via `G.restrict`. -/
-noncomputable def ScatFun.rayOn (G : ScatFun) (y : Baire) (S : Set ↑G.domain) (i : ℕ) :
-    ScatFun :=
-  G.restrict (S ∩ {a | G.func a ∈ RaySet Set.univ y i})
-
 
 /-- The rays of `G` at `y` on a set `T`, shifted to start at index `j` (block `i` is
 the ray of index `i + j`).  This is the block sequence used in the canonical reduction
@@ -47,7 +41,7 @@ If `v ≠ y` then `v` lies in the ray of index `firstDiff y v` at `y`.
 -/
 lemma firstDiff_mem_raySet (y v : Baire) (h : v ≠ y) :
     v ∈ RaySet Set.univ y (firstDiff y v) := by
-  refine' ⟨ Set.mem_univ _, _, _ ⟩;
+  refine ⟨ Set.mem_univ _, ?_, ?_ ⟩;
   · exact fun k hk => Classical.not_not.1 fun hk' => hk.not_ge <| Nat.sInf_le hk';
   · exact Nat.sInf_mem ( Function.ne_iff.mp h )
 
@@ -69,7 +63,7 @@ lemma firstDiff_eventuallyEq (y v : Baire) (h : v ≠ y) :
   set N := {w : Baire | ∀ k ≤ firstDiff y v, w k = v k} with hN_def;
   have hN_nhds : N ∈ nhds v := by
     rw [ nhds_pi ];
-    simp +decide [ Filter.mem_pi, hN_def ];
+    simp +decide only [nhds_discrete, hN_def, Filter.mem_pi, Filter.mem_pure];
     exact ⟨ Finset.Iic ( firstDiff y v ), Finset.finite_toSet _, fun k => { v k }, fun k => by simp +decide, fun w hw k hk => by simpa using hw k ( Finset.mem_Iic.mpr hk ) ⟩;
   filter_upwards [ hN_nhds ] with w hw;
   apply firstDiff_eq_of_mem y w (firstDiff y v);
@@ -83,7 +77,7 @@ lemma firstDiff_tendsto_atTop {y : Baire} {v : ℕ → Baire}
     Filter.Tendsto (fun n => firstDiff y (v n)) Filter.atTop Filter.atTop := by
   rw [ Filter.tendsto_atTop_atTop ];
   intro M; have := h; rw [ tendsto_pi_nhds ] at this; simp_all +decide;
-  choose N hN using this; use Finset.sup ( Finset.range M ) N; intro n hn; refine' le_csInf _ _ <;> norm_num at *; (
+  choose N hN using this; use Finset.sup ( Finset.range M ) N; intro n hn; refine le_csInf ?_ ?_ <;> norm_num at *; (
   exact Function.ne_iff.mp ( hne n ) |> Exists.imp fun k hk => by aesop;);
   exact fun k hk => not_lt.1 fun contra => hk <| hN k n <| hn k contra
 
@@ -189,7 +183,7 @@ lemma firstNonzero_eventuallyEq (w : Baire) (h : w ≠ zeroStream) :
   refine' Filter.eventually_of_mem ( _ ) _;
   exact { x : Baire | ∀ k ≤ firstNonzero w, x k = w k };
   · rw [ nhds_pi ];
-    simp +decide [ Filter.mem_pi ];
+    simp +decide only [nhds_discrete, Filter.mem_pi, Filter.mem_pure];
     exact ⟨ Finset.Iic ( firstNonzero w ), Finset.finite_toSet _, fun k => { w k }, fun k => by simp +decide, fun x hx k hk => by simpa using hx k ( Finset.mem_Iic.mpr hk ) ⟩;
   · intro x hx; unfold firstNonzero; simp +decide;
     split_ifs <;> simp_all +decide [ Nat.find_eq_iff ];
@@ -214,15 +208,15 @@ lemma pgl_reduces_of_rays (G : ScatFun) (y : Baire) (S T : Set ↑G.domain) (j :
       (G.func ∘ (Subtype.val : ↥S → ↑G.domain))
       (ScatFun.pgl (rayShiftSeq G y T j)).func := by
   use fun a => ⟨raySigma0 G y S j a, raySigma0_mem G y S T j hST hlow a⟩, (raySigma0_continuous G y S j).subtype_mk _;
-  refine' ⟨ fun w => if w = zeroStream then y else stripZerosOne ( firstNonzero w ) w, _, _ ⟩ <;> norm_num +zetaDelta at *;
+  refine ⟨ fun w => if w = zeroStream then y else stripZerosOne ( firstNonzero w ) w, ?_, ?_ ⟩ <;> norm_num +zetaDelta at *;
   · intro w hw; by_cases hw' : w = zeroStream <;> simp_all +decide [ ContinuousWithinAt ] ;
     · rw [ tendsto_pi_nhds ];
       intro k; rw [ nhdsWithin ] ; simp +decide [ Filter.Tendsto ] ;
-      refine' Filter.mem_inf_principal.mpr _;
+      refine Filter.mem_inf_principal.mpr ?_;
       refine' Filter.mem_of_superset ( _ ) _;
       exact { w' : Baire | ∀ i ≤ k, w' i = 0 };
       · rw [ nhds_pi ];
-        simp +decide [ Filter.mem_pi, zeroStream ];
+        simp +decide only [zeroStream, nhds_discrete, Filter.pure_zero, Filter.mem_pi, Filter.mem_zero];
         exact ⟨ Finset.Iic k, Finset.finite_toSet _, fun _ => { 0 }, fun _ => by simp +decide, fun w hw => fun i hi => by simpa using hw i ( Finset.mem_Iic.mpr hi ) ⟩;
       · intro w' hw' hw''; obtain ⟨ a, rfl ⟩ := hw''; simp_all +decide [ raySigma0_func ] ;
         split_ifs at * <;> simp_all +decide [ prependZerosOne ];
@@ -299,7 +293,7 @@ A window reduces into any larger window (`[m, M] ⊆ [m', M']`).
 lemma glWindow_reduces_of_subset (R : ℕ → ScatFun) {m M m' M' : ℕ}
     (hm : m' ≤ m) (hM : M ≤ M') :
     ScatFun.Reduces (glWindow R m M) (glWindow R m' M') := by
-  refine' ⟨ _, _, _ ⟩;
+  refine ⟨ ?_, ?_, ?_ ⟩;
   exact fun x => ⟨ x.val, by
     unfold glWindow at *; simp_all +decide [ ScatFun.gl ] ;
     obtain ⟨ k, hk ⟩ := x.2;
@@ -308,7 +302,7 @@ lemma glWindow_reduces_of_subset (R : ℕ → ScatFun) {m M m' M' : ℕ}
     grind ⟩
   all_goals generalize_proofs at *;
   · fun_prop;
-  · refine' ⟨ fun x => x, _, _ ⟩ <;> norm_num;
+  · refine ⟨ fun x => x, ?_, ?_ ⟩ <;> norm_num;
     · exact continuousOn_id;
     · unfold glWindow ScatFun.gl;
       unfold GluingSet GluingFunVal ScatFun.glBlock; simp +decide ;
@@ -324,7 +318,7 @@ lemma gl_glWindow_flatten (R : ℕ → ScatFun) (c d : ℕ → ℕ) (q Q : ℕ) 
     (hcontain : ∀ k, c k ≤ d k → q ≤ c k ∧ d k ≤ Q)
     (hkof : ∀ k j, c k ≤ j → j ≤ d k → kof j = k) :
     ScatFun.Reduces (ScatFun.gl (fun k => glWindow R (c k) (d k))) (glWindow R q Q) := by
-  refine' ⟨ _, _, _ ⟩;
+  refine ⟨ ?_, ?_, ?_ ⟩;
   use fun x => ⟨fun i => if i = 0 then x.val 1 else x.val (i + 1), by
     obtain ⟨ k, hk ⟩ := x.2;
     obtain ⟨ ⟨ k, rfl ⟩, hk ⟩ := hk;
@@ -340,11 +334,11 @@ lemma gl_glWindow_flatten (R : ℕ → ScatFun) (c d : ℕ → ℕ) (q Q : ℕ) 
     · grind⟩;
   · refine' Continuous.subtype_mk _ _;
     exact continuous_pi fun i => by split_ifs <;> [ exact continuous_apply 1 |> Continuous.comp <| continuous_subtype_val; exact continuous_apply _ |> Continuous.comp <| continuous_subtype_val ] ;
-  · refine' ⟨ fun y => _, _, _ ⟩;
+  · refine ⟨ fun y => ?_, ?_, ?_ ⟩;
     exact fun i => if i = 0 then kof ( y 0 ) else y ( i - 1 );
     · exact Continuous.continuousOn ( by continuity );
     · intro x
-      simp [ScatFun.gl, glWindow];
+      simp only [glWindow, ScatFun.gl];
       unfold GluingFunVal ScatFun.glBlock; simp +decide ;
       unfold unprepend; simp +decide [ prepend ] ;
       ext i; rcases i with ( _ | _ | i ) <;> simp +decide [ prepend ] ;
@@ -376,7 +370,7 @@ lemma exists_disjoint_subwindows (R : ℕ → ScatFun)
   set cur : ℕ → ℕ := fun k =>
     Nat.rec q (fun k cur_k =>
       if m ≤ k ∧ k ≤ M then (Classical.choose (hreg cur_k k)) + 1 else cur_k) k;
-  refine' h_contra ⟨ fun k => if m ≤ k ∧ k ≤ M then cur k else 1, fun k => if m ≤ k ∧ k ≤ M then Classical.choose ( hreg ( cur k ) k ) else 0, fun j => if h : ∃ k, m ≤ k ∧ k ≤ M ∧ cur k ≤ j ∧ j ≤ Classical.choose ( hreg ( cur k ) k ) then h.choose else 0, cur ( M + 1 ), _, _, _, _ ⟩;
+  refine h_contra ⟨ fun k => if m ≤ k ∧ k ≤ M then cur k else 1, fun k => if m ≤ k ∧ k ≤ M then Classical.choose ( hreg ( cur k ) k ) else 0, fun j => if h : ∃ k, m ≤ k ∧ k ≤ M ∧ cur k ≤ j ∧ j ≤ Classical.choose ( hreg ( cur k ) k ) then h.choose else 0, cur ( M + 1 ), ?_, ?_, ?_, ?_ ⟩;
   · -- By definition of `cur`, we know that `cur k` is non-decreasing.
     have h_cur_mono : ∀ k, cur k ≤ cur (k + 1) := by
       grind;
@@ -386,9 +380,9 @@ lemma exists_disjoint_subwindows (R : ℕ → ScatFun)
   · intro k hk; by_cases hk' : m ≤ k ∧ k ≤ M <;> simp +decide [ hk' ] at hk ⊢;
     have h_cur_mono : ∀ k, cur k ≤ cur (k + 1) := by
       grind;
-    refine' ⟨ _, _ ⟩;
+    refine ⟨ ?_, ?_ ⟩;
     · exact Nat.recOn k ( by rfl ) fun k ih => le_trans ih ( h_cur_mono k );
-    · refine' Nat.le_induction _ _ M hk'.2 <;> intros <;> simp_all +decide; all_goals grind;
+    · refine Nat.le_induction ?_ ?_ M hk'.2 <;> intros <;> simp_all +decide; all_goals grind;
   · intro k j hj₁ hj₂;
     by_cases hk : m ≤ k ∧ k ≤ M <;> simp +decide [ hk ] at hj₁ hj₂ ⊢;
     · split_ifs with h;
@@ -525,7 +519,7 @@ lemma rays_glRegular (F : ScatFun) (hF_cent : IsCentered F.func) :
   intros m n
   obtain ⟨M, hmM, hrig⟩ := rigidityOfCocenter_finiteGluing F F hF_cent hF_cent (ContinuouslyEquiv.refl F.func) m n
   have hchain := hrig.trans (union_rays_reduces_glWindow F (cocenter F.func hF_cent) m M);
-  refine' ⟨ M, hmM, _ ⟩;
+  refine ⟨ M, hmM, ?_ ⟩;
   convert ContinuouslyReduces.comp_homeomorph_left hchain (Homeomorph.trans (F.restrictEquiv _) (Homeomorph.setCongr _)) using 1
   generalize_proofs at *;
   ext; simp [RaySet]
@@ -580,21 +574,21 @@ lemma pgl_le_pgl_window_of_reg (R : ℕ → ScatFun) (a b : ℕ → ℕ)
   intro k; by_cases hk : q ≤ k ∧ k ≤ Q <;> simp +decide [ hk ] ;
   exact Or.inr rfl)
   generalize_proofs at *;
-  refine' ⟨ fun z => σ₂ ( σ₁ z ), fun w => τ₁ ( τ₂ w ), _, _, _, _, _ ⟩
+  refine ⟨ fun z => σ₂ ( σ₁ z ), fun w => τ₁ ( τ₂ w ), ?_, ?_, ?_, ?_, ?_ ⟩
   all_goals generalize_proofs at *;
   · exact hσ₂cont.comp hσ₁;
   · grind +locals;
-  · refine' hτ₁.comp ( hτ₂cont.mono _ ) _;
+  · refine hτ₁.comp ( hτ₂cont.mono ?_ ) ?_;
     · exact Set.range_subset_iff.mpr fun x => ⟨ σ₁ x, rfl ⟩;
     · intro x hx; obtain ⟨ z, rfl ⟩ := hx; simp +decide [ ← hσ₂eq ] ;
       exact ⟨ _, z.2, rfl ⟩;
   · intro z
     generalize_proofs at *;
-    refine' hq _;
+    refine hq ?_;
     intro k hk; specialize hdeep ( σ₁ z ) k; simp_all +decide [ nbhd' ] ;
     exact hdeep ( by linarith [ glWindow_val0_mem R q Q ( σ₁ z ) ] );
   · have h_closure : closure (Set.range (fun z => (ScatFun.pgl R).func (σ₂ (σ₁ z)))) ⊆ ⋃ p ∈ Finset.Icc q Q, {w : Baire | w p = 1} := by
-      refine' closure_minimal _ _;
+      refine closure_minimal ?_ ?_;
       · rintro _ ⟨ z, rfl ⟩ ; specialize hone ( σ₁ z ) ; specialize hdeep ( σ₁ z ) ; simp_all +decide [ Finset.mem_Icc ] ;
         exact ⟨ _, glWindow_val0_mem R q Q ( σ₁ z ), hone ⟩;
       · exact isClosed_biUnion_finset fun _ _ => isClosed_eq ( continuous_apply _ ) continuous_const
@@ -658,7 +652,7 @@ lemma pgl_le_pgl_of_monotone_cover (R g : ℕ → ScatFun)
 
 /-- **Monotonization (abstract), fully wired.**  A `glWindow`-regular sequence `R` admits a
 `≤`-monotone sequence `g` with `pgl g ≡ pgl R`.  Combines the four facts above; this lemma
-itself carries no `sorry`. -/
+itself is fully proved. -/
 lemma exists_monotone_pgl_equiv (R : ℕ → ScatFun)
     (hreg : ∀ m n : ℕ, ∃ M : ℕ, m ≤ M ∧ ScatFun.Reduces (R n) (glWindow R m M)) :
     ∃ (g : ℕ → ScatFun), IsMonotoneSeq g ∧

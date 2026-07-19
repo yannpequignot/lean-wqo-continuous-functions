@@ -85,6 +85,18 @@ bundled analogue of `ContinuouslyEquiv` on the underlying `.func`s). -/
 def Equiv (F G : ScatFun) : Prop :=
   Reduces F G ∧ Reduces G F
 
+/-- Continuous equivalence is reflexive. -/
+theorem Equiv.refl (F : ScatFun) : Equiv F F :=
+  ⟨ContinuouslyReduces.refl F.func, ContinuouslyReduces.refl F.func⟩
+
+/-- Continuous equivalence is symmetric. -/
+theorem Equiv.symm {F G : ScatFun} (h : Equiv F G) : Equiv G F :=
+  ⟨h.2, h.1⟩
+
+/-- Continuous equivalence is transitive. -/
+theorem Equiv.trans {F G H : ScatFun} (h1 : Equiv F G) (h2 : Equiv G H) : Equiv F H :=
+  ⟨h1.1.trans h2.1, h2.2.trans h1.2⟩
+
 /-- Level-wise reduction: forget to `ScatFun` via `.val`. -/
 @[reducible] def Level.reduces (β : Ordinal.{0}) :
     ScatFun.Level β → ScatFun.Level β → Prop :=

@@ -1,0 +1,37 @@
+name: CI
+
+# Kernel-checks the entire development on every push and pull request.
+#
+# A green run is the auditable certificate for this formalization: it builds every
+# module with Lean's kernel against the pinned Mathlib (v4.28.0), and because the
+# default target includes `WqoContinuousFunctions/AxiomAudit.lean`, it also asserts
+# that the headline theorems depend on nothing but propext, Classical.choice and
+# Quot.sound — in particular, no `sorry`. If any proof broke or a `sorry` slipped in,
+# this workflow would go red.
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & kernel-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Installs elan (reads lean-toolchain), fetches the prebuilt Mathlib cache
+      # (`lake exe cache get`), and runs `lake build` on the default target —
+      # which includes the axiom audit.
+      - name: Build with lean-action
+        uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: true

@@ -175,8 +175,8 @@ lemma ScatFun.rayOn_cbRank_lt (G : ScatFun) (α : Ordinal.{0}) (y : Baire)
     exact { z : Ray | z.val ∈ S };
     exact hS.preimage ( continuous_subtype_val );
     rotate_left;
-    refine' ⟨ _, _, _ ⟩;
-    refine' ⟨ fun x => ⟨ ⟨ x.val, x.property.2 ⟩, x.property.1 ⟩, fun x => ⟨ x.val.val, x.property, x.val.property ⟩, _, _ ⟩ <;> simp +decide;
+    refine ⟨ ?_, ?_, ?_ ⟩;
+    refine ⟨ fun x => ⟨ ⟨ x.val, x.property.2 ⟩, x.property.1 ⟩, fun x => ⟨ x.val.val, x.property, x.val.property ⟩, ?_, ?_ ⟩ <;> simp +decide;
     all_goals norm_num [ Function.LeftInverse, Function.RightInverse ];
     · fun_prop;
     · fun_prop;
@@ -192,10 +192,10 @@ lemma ScatFun.rayOn_reduces_mono (G : ScatFun) (y : Baire) {S S' : Set ↑G.doma
     ScatFun.Reduces (G.rayOn y S' i) (G.rayOn y S i) := by
   unfold ScatFun.Reduces;
   unfold ScatFun.rayOn; simp +decide [ ScatFun.restrict, ScatFun.restrictEquiv ] ;
-  refine' ⟨ _, _, _ ⟩;
+  refine ⟨ ?_, ?_, ?_ ⟩;
   exact fun x => ⟨ x.val, x.property.1, hSS x.property.2.1, x.property.2.2 ⟩;
   · fun_prop;
-  · refine' ⟨ fun x => x, _, _ ⟩ <;> norm_num;
+  · refine ⟨ fun x => x, ?_, ?_ ⟩ <;> norm_num;
     exact continuousOn_id
 
 /-- `LevelLT.reduces` is a preorder on `ScatFun.LevelLT β`, induced from the preorder
@@ -219,20 +219,20 @@ noncomputable def caseB_U (G : ScatFun) (y : Baire) (x : ↑G.domain) (m j : ℕ
 
 lemma caseB_U_isOpen (G : ScatFun) (y : Baire) (x : ↑G.domain) (m j : ℕ) :
     IsOpen (caseB_U G y x m j) := by
-  refine' IsOpen.inter ( G.cyl_isOpen x m ) _;
+  refine IsOpen.inter ( G.cyl_isOpen x m ) ?_;
   convert isOpen_biInter_finset ( fun i _ => ?_ ) using 1;
   rotate_left;
   exact ℕ;
   exact Finset.range j;
   exact fun i => { a : G.domain | G.func a ∉ RaySet Set.univ y i };
-  · refine' isOpen_compl_iff.mpr _;
-    simp +decide [ RaySet ];
-    refine' IsClosed.inter _ _;
+  · refine isOpen_compl_iff.mpr ?_;
+    simp +decide only [RaySet, mem_univ, ne_eq, true_and];
+    refine IsClosed.inter ?_ ?_;
     · simp +decide only [isClosed_iff_clusterPt];
       intro a ha k hk; exact (by
       rw [ clusterPt_principal_iff ] at ha;
       contrapose! ha;
-      refine' ⟨ { b : G.domain | G.func b k ≠ y k }, _, _ ⟩;
+      refine ⟨ { b : G.domain | G.func b k ≠ y k }, ?_, ?_ ⟩;
       · exact IsOpen.mem_nhds ( isOpen_compl_iff.mpr <| isClosed_eq ( continuous_apply k |> Continuous.comp <| G.hCont ) continuous_const ) ha;
       · exact Set.eq_empty_of_forall_notMem fun b hb => hb.1 <| hb.2 k hk);
     · exact isClosed_compl_iff.mpr ( IsOpen.preimage ( show Continuous fun a : G.domain => G.func a i from ( continuous_apply i ).comp G.hCont ) ( isOpen_discrete { y i } ) );
@@ -274,12 +274,12 @@ lemma caseB_lower (G : ScatFun) (y : Baire) (x : ↑G.domain) (m j : ℕ)
     obtain ⟨ n, hn ⟩ := baire_subspace_cylinder_mem_nhds _ _ hV hxV;
     obtain ⟨ i', hi', h ⟩ := hdom ( n + m + 1 ) ( by linarith ) i;
     obtain ⟨ σ, hσ, τ, hτ, h ⟩ := h;
-    refine' ⟨ _, _, _, _, _, _, _ ⟩;
+    refine ⟨ ?_, ?_, ?_, ?_, ?_, ?_, ?_ ⟩;
     use fun z => ⟨ σ z |>.1, by
-      simp +decide [ caseB_U, ScatFun.rayOn ] at *;
-      simp +decide [ ScatFun.restrict ] at *;
-      simp +decide [ ScatFun.cyl ] at *;
-      simp +decide [ nbhd', RaySet ] at *;
+      simp +decide only [ScatFun.rayOn, caseB_U, coe_setOf, mem_setOf_eq, Finset.mem_range, preimage_setOf_eq, Subtype.forall] at *;
+      simp +decide only [ScatFun.restrict, coe_setOf, mem_setOf_eq, mem_inter_iff, comp_apply, forall_exists_index, forall_and_index] at *;
+      simp +decide only [ScatFun.cyl] at *;
+      simp +decide only [nbhd', RaySet, ne_eq, mem_setOf_eq, Finset.mem_range, mem_univ, true_and, forall_and_index, not_and, Decidable.not_not, exists_and_left] at *;
       grind ⟩
     all_goals generalize_proofs at *;
     exact τ;
@@ -291,16 +291,75 @@ lemma caseB_lower (G : ScatFun) (y : Baire) (x : ↑G.domain) (m j : ℕ)
       intro k hk; have := σ z |>.2.2; simp_all +decide [ ScatFun.rayOn ] ;
       exact this.1 k ( by simpa using by linarith );
     · simp +decide [ ScatFun.rayOn, ScatFun.restrict ] at *;
-      simp +decide [ ScatFun.restrictEquiv ] at *;
-      simp +decide [ RaySet ] at *;
+      simp +decide only [ScatFun.restrictEquiv, coe_setOf, mem_setOf_eq, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk, Homeomorph.homeomorph_mk_coe_symm, Equiv.coe_fn_symm_mk] at *;
+      simp +decide only [RaySet, ne_eq, mem_setOf_eq, mem_univ, true_and, forall_and_index] at *;
       rw [ mem_closure_iff_seq_limit ];
-      simp +decide [ hfx, tendsto_pi_nhds ];
+      simp +decide only [mem_range, Subtype.exists, hfx, tendsto_pi_nhds, nhds_discrete, Filter.tendsto_pure, Filter.eventually_atTop, ge_iff_le, not_exists, not_and, not_forall];
       intro x_1 hx_1
       use i';
       intro n; obtain ⟨ a, ha, ha' ⟩ := hx_1 n; use n; simp +decide;
       grind +splitImp;
   · unfold ScatFun.Reduces; simp +decide [ ScatFun.pgl, ScatFun.restrict ] ;
     grind +suggestions
+
+/-- **Case B — the top point `x` is a center of its basin.**  Strengthening of `caseB_lower`:
+the lower reduction `pgl ρ ≤ G|_{caseB_U}` (built by `pgl_reduces_of_local` anchored at `x`)
+sends the gluing's distinguished point `zeroStream` to `x`.  Via `pgl_reduces_of_local_base`
+(which exposes that) and `centerInvariance_equiv`, `x` is a center of `G|_{caseB_U}`.  The
+reasoning is done at the `G.restrict caseB_U` level and transported back across `restrictEquiv`
+with `IsCenterFor.comp_homeomorph`. -/
+lemma caseB_x_isCenter (G : ScatFun) (y : Baire) (x : ↑G.domain) (m j : ℕ)
+    (hfx : G.func x = y)
+    (hreg : Preorder.IsRegularSeq ScatFun.Reduces (caseB_rho G y x m j))
+    (hdom : ∀ n : ℕ, m < n → ∀ i : ℕ, ∃ i' : ℕ, j ≤ i' ∧
+      ScatFun.Reduces (G.rayOn y (G.cyl x m) (i + j)) (G.rayOn y (G.cyl x n) i')) :
+    IsCenterFor (G.func ∘ (Subtype.val : ↥(caseB_U G y x m j) → ↑G.domain))
+      ⟨x, mem_caseB_U G y x m j hfx⟩ := by
+  obtain ⟨σ', hσ', hbase, τ', hτ', heq'⟩ :=
+    ScatFun.pgl_reduces_of_local_base (caseB_rho G y x m j) (G.restrict (caseB_U G y x m j))
+      ((G.restrictEquiv (caseB_U G y x m j)).symm ⟨x, mem_caseB_U G y x m j hfx⟩) (by
+        intro i V hV hxV
+        obtain ⟨ n, hn ⟩ := baire_subspace_cylinder_mem_nhds _ _ hV hxV
+        obtain ⟨ i', hi', h ⟩ := hdom ( n + m + 1 ) ( by linarith ) i
+        obtain ⟨ σ, hσ, τ, hτ, h ⟩ := h
+        refine ⟨ ?_, ?_, ?_, ?_, ?_, ?_, ?_ ⟩
+        use fun z => ⟨ σ z |>.1, by
+          simp +decide only [ScatFun.rayOn, caseB_U, coe_setOf, mem_setOf_eq, Finset.mem_range, preimage_setOf_eq, Subtype.forall] at *
+          simp +decide only [ScatFun.restrict, coe_setOf, mem_setOf_eq, mem_inter_iff, comp_apply, forall_exists_index, forall_and_index] at *
+          simp +decide only [ScatFun.cyl] at *
+          simp +decide only [nbhd', RaySet, ne_eq, mem_setOf_eq, Finset.mem_range, mem_univ, true_and, forall_and_index, not_and, Decidable.not_not, exists_and_left] at *
+          grind ⟩
+        all_goals generalize_proofs at *
+        exact τ
+        · fun_prop
+        · convert h using 1
+        · convert hτ using 1
+        · intro z; specialize hn; simp_all +decide [ Set.subset_def ]
+          convert hn _ _ _ using 1
+          intro k hk; have := σ z |>.2.2; simp_all +decide [ ScatFun.rayOn ]
+          exact this.1 k ( by simpa using by linarith )
+        · simp +decide [ ScatFun.rayOn, ScatFun.restrict ] at *
+          simp +decide only [ScatFun.restrictEquiv, coe_setOf, mem_setOf_eq, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk, Homeomorph.homeomorph_mk_coe_symm, Equiv.coe_fn_symm_mk] at *
+          simp +decide only [RaySet, ne_eq, mem_setOf_eq, mem_univ, true_and, forall_and_index] at *
+          rw [ mem_closure_iff_seq_limit ]
+          simp +decide only [mem_range, Subtype.exists, hfx, tendsto_pi_nhds, nhds_discrete, Filter.tendsto_pure, Filter.eventually_atTop, ge_iff_le, not_exists, not_and, not_forall]
+          intro x_1 hx_1
+          use i'
+          intro nn; obtain ⟨ a, ha, ha' ⟩ := hx_1 nn; use nn; simp +decide
+          grind +splitImp)
+  have hupper : ContinuouslyReduces (G.restrict (caseB_U G y x m j)).func
+      (ScatFun.pgl (caseB_rho G y x m j)).func :=
+    (caseB_upper G y x m j).comp_homeomorph_left (G.restrictEquiv (caseB_U G y x m j))
+  have hequiv : ContinuouslyEquiv (ScatFun.pgl (caseB_rho G y x m j)).func
+      (G.restrict (caseB_U G y x m j)).func := ⟨⟨σ', hσ', τ', hτ', heq'⟩, hupper⟩
+  have hc : IsCenterFor (G.restrict (caseB_U G y x m j)).func
+      (σ' ⟨zeroStream, zeroStream_mem_pointedGluingSet _⟩) :=
+    centerInvariance_equiv (pgluingOfRegularIsCentered _ hreg) hequiv hσ' hτ' heq'
+  rw [hbase] at hc
+  have hc2 := (IsCenterFor.comp_homeomorph (G.restrictEquiv (caseB_U G y x m j))
+    (G.func ∘ (Subtype.val : ↥(caseB_U G y x m j) → ↑G.domain))
+    ((G.restrictEquiv (caseB_U G y x m j)).symm ⟨x, mem_caseB_U G y x m j hfx⟩)).mp hc
+  rwa [Homeomorph.apply_symm_apply] at hc2
 
 /-- **Case B kernel — the heart of Theorem 4.7's successor case.**  Under the case-B
 hypotheses, `x` has an open neighbourhood `U` on which `G` is continuously equivalent

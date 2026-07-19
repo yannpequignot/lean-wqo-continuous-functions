@@ -6,16 +6,23 @@ name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4.git"
 rev = "v4.28.0"
 
-# Library layout: three libraries in a single package (so Mathlib is required once).
-# `BQO` and `ZeroDimensionalSpaces` are foundational and depend **only on Mathlib** — each
-# builds on its own (`lake build BQO`, `lake build ZeroDimensionalSpaces`). The main library
-# `WqoContinuousFunctions` builds on both.
+# Library layout: four libraries in a single package (so Mathlib is required once).
+# `BQO`, `ZeroDimensionalSpaces`, and `GeneralTopology` are foundational and depend **only on
+# Mathlib** — each builds on its own (`lake build BQO`, etc.). The main library
+# `WqoContinuousFunctions` builds on all three.
 # Boundary invariant: neither foundational library imports any `WqoContinuousFunctions.*` module.
 
 # Better-quasi-order foundations (ordinals, Ramsey, WQO/BQO). Mathlib-only.
 [[lean_lib]]
 name = "BQO"
 globs = ["BQO.+"]
+
+# General point-set topology facts (countable clopen partitions, discrete subspaces,
+# disjoint open neighbourhoods) that are not specific to the main development and are
+# Mathlib-candidates. Mathlib-only.
+[[lean_lib]]
+name = "GeneralTopology"
+globs = ["GeneralTopology.+"]
 
 # Standalone general-topology library: Baire/Cantor space basics, zero-dimensional
 # spaces, the Cantor-scheme embedding machinery, and the universality of the countable
@@ -26,14 +33,5 @@ globs = ["ZeroDimensionalSpaces.+"]
 
 [[lean_lib]]
 name = "WqoContinuousFunctions"
-# `DoubleSuccessor` and `PreciseStructure` (imprecise formalizations of the memoir's
-# last chapters) are intentionally excluded from the default build for now. They can
-# still be built on demand, e.g. `lake build WqoContinuousFunctions.PreciseStructure.Theorems`.
-globs = [
-  "WqoContinuousFunctions.Main",
-  "WqoContinuousFunctions.CenteredFunctions.+",
-  "WqoContinuousFunctions.ContinuousReducibility.+",
-  "WqoContinuousFunctions.MainResults.+",
-  "WqoContinuousFunctions.PointedGluing.+",
-  "WqoContinuousFunctions.ScatFun.+",
-]
+# Every module under `WqoContinuousFunctions` is in the default build; nothing is excluded.
+globs = ["WqoContinuousFunctions.+"]

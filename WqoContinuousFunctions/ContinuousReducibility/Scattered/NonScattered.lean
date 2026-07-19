@@ -160,7 +160,7 @@ lemma nlc_countable_embedding_concrete {X Y : Type*}
     [TopologicalSpace Y] [T2Space Y]
     (g : X → Y) (hg : Continuous g) (hnlc : NowhereLocallyConstant g) [Nonempty X] :
     ∃ (σ : CantorRat → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (g ∘ σ) := by
-  letI : MetricSpace X := TopologicalSpace.metrizableSpaceMetric X
+  let : MetricSpace X := TopologicalSpace.metrizableSpaceMetric X
   obtain ⟨x₀⟩ := id ‹Nonempty X›
   obtain ⟨c, r, U, _, hr_pos, hc_zero, hr_half, hball, hdisj, hU_open, hU_disj, hU_img⟩ :=
     cantor_scheme_exists g hg hnlc x₀
@@ -169,64 +169,6 @@ lemma nlc_countable_embedding_concrete {X Y : Type*}
   · exact cantor_sigma_isEmbedding hr_pos hc_zero hr_half hball hdisj
   · exact cantor_g_sigma_isEmbedding (U := U) g hg hr_pos hc_zero hr_half hball hdisj
       hU_open hU_disj hU_img
-
-/-
-**Cantor scheme construction.** If `g : X → Y` is continuous and NLC from a
-nonempty metrizable space to a T₂ space, then there exists a countable nonempty
-subset `S ⊆ X` such that:
-- `S` has no isolated points (in the subspace topology)
-- The restriction of `g` to `S` is a topological embedding into `Y`
--/
-lemma nlc_countable_embedding {X Y : Type*}
-    [TopologicalSpace X] [MetrizableSpace X]
-    [TopologicalSpace Y] [T2Space Y]
-    (g : X → Y) (hg : Continuous g) (hnlc : NowhereLocallyConstant g) [Nonempty X] :
-    ∃ (S : Set X), S.Countable ∧ S.Nonempty ∧
-      (∀ x : S, ¬ IsOpen ({x} : Set S)) ∧
-      Topology.IsEmbedding (fun (x : S) => g x.val) := by
-  obtain ⟨σ, hσ₁, hσ₂⟩ := nlc_countable_embedding_concrete g hg hnlc
-  refine ⟨Set.range σ, ?_, ?_, ?_, ?_⟩
-  · -- `Countable CantorRat` is now in scope (from `ZeroDimensionalSpaces.CantorRat`), so the
-    -- range is countable directly; the former manual support-counting argument is unnecessary.
-    exact Set.countable_range σ
-  · exact ⟨_, ⟨⟨fun _ => 0, ⟨0, fun _ _ => rfl⟩⟩, rfl⟩⟩
-  · intro x hx
-    -- Since CantorRat has no isolated points, the image of CantorRat under σ also has no isolated points.
-    have h_no_isolated : ∀ x : CantorEventuallyZero, ¬IsOpen ({x} : Set CantorEventuallyZero) := by
-      intro x hx
-      have h_no_isolated : ∀ x : CantorEventuallyZero, ¬IsOpen ({x} : Set CantorEventuallyZero) := by
-        intro x hx
-        have h_seq : ∃ seq : ℕ → CantorEventuallyZero, Filter.Tendsto seq Filter.atTop (nhds x) ∧ ∀ n, seq n ≠ x := by
-          obtain ⟨N, hN⟩ : ∃ N : ℕ, ∀ n ≥ N, x.val n = 0 := by
-            exact x.2
-          refine ⟨fun n => ⟨fun i => if i = N + n + 1 then 1 else x.val i, ?_⟩, ?_, ?_⟩ <;> simp_all +decide
-          use N + n + 2
-          grind
-          · rw [tendsto_subtype_rng]
-            rw [tendsto_pi_nhds]
-            intro n; by_cases hn : n = N + n + 1 <;> simp_all +decide [Nat.ne_of_lt]
-            exact ⟨n + 1, by intros; linarith⟩
-          · intro n hn; have := congr_arg (fun f => f.val (N + n + 1)) hn; simp +decide at this
-            rw [hN _ (by linarith)] at this ; contradiction
-        obtain ⟨seq, hseq₁, hseq₂⟩ := h_seq
-        exact absurd (hseq₁.eventually (hx.mem_nhds rfl)) fun h => by obtain ⟨n, hn⟩ := h.exists; exact hseq₂ n hn
-      exact h_no_isolated x hx
-    obtain ⟨y, hy⟩ := x.2
-    have h_preimage : IsOpen (σ ⁻¹' {↑x}) := by
-      convert hx.preimage (show Continuous (fun z : CantorEventuallyZero => ⟨σ z, Set.mem_range_self z⟩) from hσ₁.continuous.subtype_mk _) using 1
-      grind
-    exact h_no_isolated y (by simpa [show σ ⁻¹' { (x : X) } = { y } from Set.eq_singleton_iff_unique_mem.mpr ⟨by aesop, fun z hz => hσ₁.injective <| by aesop⟩] using h_preimage)
-  · rw [Topology.isEmbedding_iff] at *
-    constructor
-    · rw [Topology.isInducing_iff_nhds] at *
-      simp +decide
-      intro a x hx; specialize hσ₂; have := hσ₂.1 x; simp_all +decide [Filter.ext_iff]
-      intro s; specialize this (σ ⁻¹' (Subtype.val '' s)) ; simp_all +decide [Set.subset_def]
-      rw [mem_nhds_subtype]
-      grind
-    · intro x y hxy
-      rcases x with ⟨x, ⟨x', rfl⟩⟩ ; rcases y with ⟨y, ⟨y', rfl⟩⟩ ; have := hσ₂.2 (by aesop : g (σ x') = g (σ y')) ; aesop
-
 
 /-- If `f` is continuous from a metrizable to a Hausdorff space and not scattered, then
 `id_CantorRat` topologically embeds in `f`.  This uses the Cantor scheme
@@ -239,7 +181,7 @@ theorem nonscattered_embeds_idCantorRat {X Y : Type*}
     ∃ (σ : CantorRat → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (f ∘ σ) := by
   rw [not_scattered_iff_exists_nlc] at hns
   obtain ⟨A, hA, hnlc⟩ := hns
-  haveI : Nonempty A := hA.to_subtype
+  have : Nonempty A := hA.to_subtype
   have hcont : Continuous (f ∘ Subtype.val : A → Y) := hf.comp continuous_subtype_val
   obtain ⟨σ, hσ, hgσ⟩ := nlc_countable_embedding_concrete (f ∘ Subtype.val) hcont hnlc
   exact ⟨Subtype.val ∘ σ,
@@ -413,9 +355,9 @@ theorem nonscattered_embeds_idCantor {X Y : Type*}
     ∃ (σ : CantorSpace → X), Topology.IsEmbedding σ ∧ Topology.IsEmbedding (f ∘ σ) := by
   -- run the scheme inside the complete carrier `K = perfectKernelCB f`
   obtain ⟨K, hK_closed, hK_ne, hnlc⟩ := exists_closed_nonempty_nlc f hns
-  haveI : Nonempty K := hK_ne.to_subtype
-  haveI : PolishSpace K := hK_closed.polishSpace
-  letI := upgradeIsCompletelyMetrizable K
+  have : Nonempty K := hK_ne.to_subtype
+  have : PolishSpace K := hK_closed.polishSpace
+  let := upgradeIsCompletelyMetrizable K
   have hg : Continuous (f ∘ (Subtype.val : K → X)) := hf.comp continuous_subtype_val
   obtain ⟨σ, hσ, hgσ⟩ := nlc_cantor_embedding_concrete (f ∘ Subtype.val) hg hnlc
   exact ⟨Subtype.val ∘ σ,

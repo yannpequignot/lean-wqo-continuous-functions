@@ -199,7 +199,7 @@ lemma bit_zero_of_leastPt (x : X) (n : ℕ) (h : leastPt e (cellOf e x n) = x) :
     bitOf e x n = 0 := by
   unfold bitOf;
   -- Since `x` is the least point of its cell at level `n`, it must be in the zero child of its cell at level `n`.
-  simp [zeroChild, h];
+  simp only [zeroChild, h, mem_inter_iff, Fin.isValue, ite_eq_left_iff, not_and, one_ne_zero, imp_false, Classical.not_imp, Decidable.not_not];
   exact ⟨ mem_cellOf e x n, mem_cball x n ⟩
 
 /-
@@ -212,7 +212,7 @@ lemma leastPt_succ_of_leastPt (x : X) (n : ℕ) (h : leastPt e (cellOf e x n) = 
   split_ifs <;> simp_all +decide [ leastPt ];
   · split_ifs at * <;> simp_all +decide [ zeroChild ];
     · convert h using 2;
-      refine' le_antisymm _ _ <;> simp_all +decide;
+      refine le_antisymm ?_ ?_ <;> simp_all +decide;
       grind +suggestions;
     · grind;
     · grind;
@@ -288,9 +288,9 @@ The coordinate maps are continuous (locally constant).
 lemma bitOf_continuous (n : ℕ) : Continuous (fun x => bitOf e x n) := by
   have h_bit_of_locally_constant : ∀ x : X, ∃ U : Set X, IsOpen U ∧ x ∈ U ∧ ∀ y ∈ U, bitOf e y n = bitOf e x n := by
     intro x;
-    refine' ⟨ cellOf e x ( n + 1 ), ( cellOf_isClopen e x ( n + 1 ) ).2, mem_cellOf e x ( n + 1 ), _ ⟩;
+    refine ⟨ cellOf e x ( n + 1 ), ( cellOf_isClopen e x ( n + 1 ) ).2, mem_cellOf e x ( n + 1 ), ?_ ⟩;
     intro y hy; rw [ cellOf_eq ] at hy; exact hy n ( Nat.lt_succ_self _ ) ;
-  refine' continuous_iff_continuousAt.mpr _;
+  refine continuous_iff_continuousAt.mpr ?_;
   intro x; specialize h_bit_of_locally_constant x; rcases h_bit_of_locally_constant with ⟨ U, hUo, hxU, hU ⟩ ; exact tendsto_const_nhds.congr' ( by filter_upwards [ IsOpen.mem_nhds hUo hxU ] with y hy; aesop ) ;
 
 /-- The combined map into Cantor space. -/
@@ -324,7 +324,7 @@ lemma toCantor_injective (he : Surjective e) : Function.Injective (toCantor e) :
   exact h_eq
 
 lemma toCantor_isEmbedding (he : Surjective e) : Topology.IsEmbedding (toCantor e) := by
-  refine' ⟨ _, _ ⟩;
+  refine ⟨ ?_, ?_ ⟩;
   · -- To prove it's inducing, use `Topology.isInducing_iff_nhds`: for each `x`, `𝓝 x = Filter.comap f (𝓝 (f x))`.
     apply Topology.isInducing_iff_nhds.mpr
     intro x
@@ -340,7 +340,7 @@ lemma toCantor_isEmbedding (he : Surjective e) : Topology.IsEmbedding (toCantor 
         obtain ⟨ N, hN ⟩ := eventually_bit_zero e he x;
         obtain ⟨n, hn⟩ : ∃ n ≥ N, (1 / 2 : ℝ) ^ n < ε := by
           rcases exists_pow_lt_of_lt_one hε_pos one_half_lt_one with ⟨ n, hn ⟩ ; exact ⟨ n + N, by linarith, by exact lt_of_le_of_lt ( pow_le_pow_of_le_one ( by norm_num ) ( by norm_num ) ( by linarith ) ) hn ⟩;
-        refine' ⟨ n + 1, fun y hy => hε _ ⟩;
+        refine ⟨ n + 1, fun y hy => hε ?_ ⟩;
         have h_dist : dist x y < 2 * eps n := by
           have h_dist : x ∈ Metric.ball (leastPt e (cellOf e x n)) (eps n) ∧ y ∈ Metric.ball (leastPt e (cellOf e x n)) (eps n) := by
             have h_dist : x ∈ zeroChild e (cellOf e x n) n ∧ y ∈ zeroChild e (cellOf e x n) n := by
@@ -350,10 +350,10 @@ lemma toCantor_isEmbedding (he : Surjective e) : Topology.IsEmbedding (toCantor 
           exact lt_of_le_of_lt ( dist_triangle_right _ _ _ ) ( by linarith [ Metric.mem_ball.mp h_dist.1, Metric.mem_ball.mp h_dist.2 ] );
         simp_all +decide [ eps ];
         rw [ dist_comm ] ; exact h_dist.trans_le ( by ring_nf at *; linarith );
-      refine' ⟨ { z : CantorSpace | ∀ i < m, z i = toCantor e x i }, _, _ ⟩ <;> simp_all +decide [ Set.subset_def ];
+      refine ⟨ { z : CantorSpace | ∀ i < m, z i = toCantor e x i }, ?_, ?_ ⟩ <;> simp_all +decide [ Set.subset_def ];
       · rw [ nhds_pi ];
-        simp +decide [ Filter.mem_pi ];
-        refine' ⟨ Finset.range m, Finset.finite_toSet _, fun i => { toCantor e x i }, _, _ ⟩ <;> simp +decide [ Set.subset_def ];
+        simp +decide only [nhds_discrete, Filter.mem_pi, Filter.mem_pure];
+        refine ⟨ Finset.range m, Finset.finite_toSet _, fun i => { toCantor e x i }, ?_, ?_ ⟩ <;> simp +decide [ Set.subset_def ];
       · intro y hy; specialize hm y; rw [ cellOf_eq ] at hm; aesop;
   · exact toCantor_injective e he
 

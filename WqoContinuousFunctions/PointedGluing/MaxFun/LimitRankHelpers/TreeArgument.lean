@@ -27,12 +27,9 @@ used in the limit rank case of the General Structure Theorem.
 * `exists_disjoint_clopen_with_cofinal_ranks` — the main tree argument result
 -/
 
-
 section TreeArgument
 
-
 /-! ## §2  The tree T and its body [T] -/
-
 
 variable {B : Set (ℕ → ℕ)} {g : B → ℕ → ℕ}
 variable (η : Ordinal.{0})
@@ -50,33 +47,9 @@ def TreeT (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (η : Ordinal.{0}) :
     (Σ n : ℕ, Fin n → ℕ) → Prop :=
   fun ⟨_, s⟩ => cbRankRestr B g s = η
 
-
 lemma CoRestr_BaNbhd_empty : {b : B | g b ∈ BaNbhd (Fin.elim0 : Fin 0 → ℕ)} = Set.univ := by
   simp [BaNbhd_empty]
 
-/-- The empty sequence is in T: BaNbhd ∅ = univ, so gRestr univ = g, and CBRank g = η. -/
-lemma TreeT_contains_empty (hg : ScatteredFun g) (hrank : CBRank g = η) :
-    TreeT B g η ⟨0, Fin.elim0⟩ := by
-  unfold TreeT cbRankRestr
-  have hmem : {b : B | g b ∈ BaNbhd (Fin.elim0 : Fin 0 → ℕ)} = Set.univ :=
-    CoRestr_BaNbhd_empty
-  have hopen : IsOpen ({b : B | g b ∈ BaNbhd (Fin.elim0 : Fin 0 → ℕ)} : Set B) :=
-    hmem ▸ isOpen_univ
-  have hle : CBRank (fun x : {b : B | g b ∈ BaNbhd (Fin.elim0 : Fin 0 → ℕ)} =>
-      g x.val) ≤ CBRank g :=
-    CBRank_open_restrict_le g hg _ hopen
-  have hred : ContinuouslyReduces g (fun x : {b : B | g b ∈ BaNbhd (Fin.elim0 : Fin 0 → ℕ)} =>
-    g x.val) := by
-    exact ⟨fun b => ⟨b, hmem ▸ Set.mem_univ b⟩, Continuous.subtype_mk continuous_id _,
-          id, continuousOn_id, fun b => rfl⟩
-  have hge : CBRank g ≤ CBRank (fun x : {b : B | g b ∈ BaNbhd (Fin.elim0 : Fin 0 → ℕ)} =>
-    g x.val) :=
-    ContinuouslyReduces.rank_monotone hg (scattered_restrict g hg _) hred
-  simp only []
-  exact (le_antisymm hle hge).trans hrank
-
-
-/-- T is closed under prefixes: if t ∈ T and s is a prefix of t, then s ∈ T. -/
 lemma TreeT_prefix_closed (heta: η = CBRank g) {n m : ℕ} (s : Fin n → ℕ) (t : Fin m → ℕ)
     (hpre : IsPrefix s t) (ht : TreeT B g η ⟨m, t⟩)
     (hg : ScatteredFun g) (hgc : Continuous g) :
@@ -129,7 +102,6 @@ lemma TreeT_prefix_closed (heta: η = CBRank g) {n m : ℕ} (s : Fin n → ℕ) 
       _ = CBRank (fun x : Vt => g x.val) := ht.symm
   exact le_antisymm hge hle |>.trans ht
 
-
 /-- If s and t are incomparable (neither is a prefix of the other),
     their BaNbhds are disjoint. -/
 lemma BaNbhd_incomparable_disjoint {n m : ℕ} (s : Fin n → ℕ) (t : Fin m → ℕ)
@@ -144,7 +116,6 @@ lemma BaNbhd_incomparable_disjoint {n m : ℕ} (s : Fin n → ℕ) (t : Fin m �
     exact hi ((hs i).symm.trans (ht ⟨i, i.isLt.trans_le hnm.le⟩))
   · obtain ⟨i, hi⟩ := hts hnm
     exact hi ((ht i).symm.trans (hs ⟨i, i.isLt.trans_le hnm⟩))
-
 
 /-- Homeomorphism between `{b : B | g b ∈ C}` and `PreImage B g C`. -/
 def PreImageEquiv (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ)) :
@@ -166,7 +137,6 @@ lemma CoRestrict_CBRank_eq : ∀ (C : Set (ℕ → ℕ)), IsClopen C →
   intro C _
   rw [CoRestrict_eq_comp]
   exact CBRank_comp_homeomorph _ _
-
 
 /-- If all points in CBLevel g (succ β) map to a finite set under g, then
     CBLevel g (succ (succ β)) = ∅. -/
@@ -229,7 +199,6 @@ lemma discreteTopology_image_val {X : Type*} [TopologicalSpace X]
   intro x hx hxS; specialize ‹∀ a : X, ∀ b : a ∈ A, ⟨a, b⟩ ∈ S → Sᶜ ∈ 𝓝 ⟨a, b⟩ ⊓ Filter.principal { ⟨a, b⟩ } ᶜ› x hx hxS; simp_all +decide [Filter.mem_inf_principal]
   rw [mem_nhds_subtype] at *
   rcases ‹_› with ⟨u, hu, hu'⟩ ; filter_upwards [hu] with y hy ; specialize hu' ; aesop
-
 
 /-
 this lemma is the crux of the General structure theorem
@@ -298,14 +267,14 @@ lemma exists_disjoint_clopen_with_cofinal_ranks
                           ¬IsPrefix (seq j).2 (seq i).2) ∧
           ∀ i, T_prop (seq i).1 (seq i).2 := by
       obtain ⟨S, hS_inf, hS_disc⟩ :=
-        haveI : Infinite bodyT := hbody.to_subtype
+        have : Infinite bodyT := hbody.to_subtype
         exists_infinite_discreteTopology bodyT
       let S' : Set (ℕ → ℕ) := Subtype.val '' S
       have hS'_inf : S'.Infinite := hS_inf.image Subtype.val_injective.injOn
       have hS'_disc : DiscreteTopology ↥S' := @discreteTopology_image_val _ _ _ S hS_disc
       have hS'_sub : S' ⊆ bodyT := by
         rintro x ⟨⟨y, hy⟩, _, rfl⟩; exact hy
-      haveI : Infinite S' := hS'_inf.to_subtype
+      have : Infinite S' := hS'_inf.to_subtype
       let f : ℕ → ↥S' := hS'_inf.natEmbedding S'
       have hf_inj : Injective f := (hS'_inf.natEmbedding S').injective
       obtain ⟨seq, hseq_ac, hseq_trunc⟩ :=

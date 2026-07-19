@@ -99,9 +99,9 @@ theorem RelativeClopenPartition_stable_by_refine {X : Type*} [TopologicalSpace X
     let ψ : UA → I := fun x => Classical.choose (Set.mem_iUnion.mp x.2)
     -- equip I with discrete topology
     -- 1. Define the topology as discrete (bottom)
-    letI : TopologicalSpace I := ⊥
+    let : TopologicalSpace I := ⊥
     -- 2. Register that this topology satisfies the DiscreteTopology property
-    letI : DiscreteTopology I := ⟨rfl⟩
+    let : DiscreteTopology I := ⟨rfl⟩
     have hψ_cont : Continuous ψ := by
       apply continuous_of_relativeClopenPartition_seq hA
       intro j
@@ -373,7 +373,7 @@ theorem gluingFun_scattered
   refine ⟨{z : GluingSet A | z.val 0 = i} ∩ {z : GluingSet A | unprepend z.val ∈ V₀},
     ?_, ?_, ?_⟩
   · -- open: the first-coordinate fibre is clopen; the second factor is a preimage of `V₀`.
-    refine IsOpen.inter ?_ (hV₀_open.preimage (hunpre.comp continuous_subtype_val))
+    refine' IsOpen.inter _ (hV₀_open.preimage (hunpre.comp continuous_subtype_val))
     exact (baire_fiber_isClopen 0 i).2.preimage continuous_subtype_val
   · -- the witness set meets `S`.
     obtain ⟨z, hzV, w, ⟨hwS, hwBlock⟩, hwz⟩ := hV_ne

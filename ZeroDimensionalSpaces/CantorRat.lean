@@ -85,8 +85,8 @@ lemma cantorRat_no_isolated (x : CantorEventuallyZero) :
     intro x m
     obtain ⟨N, hN⟩ : ∃ N, ∀ n ≥ N, x.val n = 0 := by
       exact x.2;
-    refine' ⟨ ⟨ fun n => if n = m + N then 1 else x.val n, _ ⟩, _, _ ⟩;
-    refine' ⟨ m + N + 1, fun n hn => _ ⟩;
+    refine ⟨ ⟨ fun n => if n = m + N then 1 else x.val n, ?_ ⟩, ?_, ?_ ⟩;
+    refine ⟨ m + N + 1, fun n hn => ?_ ⟩;
     grind;
     · intro h; have := congr_arg ( fun f => f.val ( m + N ) ) h; simp +decide [ hN ] at this;
     · grind;

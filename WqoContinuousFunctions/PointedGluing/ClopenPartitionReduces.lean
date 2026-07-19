@@ -1,14 +1,22 @@
 import WqoContinuousFunctions.PointedGluing.SelfSimilarity
 import WqoContinuousFunctions.ContinuousReducibility.Gluing.UpperBound
 
+/-!
+# Local-to-global reduction to `MaxFun` (Chapter 3, pointed gluing)
+
+A locality principle for the maximum function: if every point of `A` has a clopen
+neighbourhood (within `A`) on which `f` reduces to `MaxFun α`, then `f` reduces to `MaxFun α`
+globally (`locally_reduces_to_maxfun_implies_reduces`). This packages the countable clopen
+cover into a gluing and appeals to the gluing upper bound; it is one of the ingredients of the
+General Structure Theorem (`3_general_struct_memo.tex`).
+-/
+
 open scoped Topology
 open Set Function TopologicalSpace Classical
 
 set_option autoImplicit false
 
 noncomputable section
-
-
 
 /-- If every point of A has a clopen neighborhood in A where f reduces to MaxFun α,
     then f globally reduces to MaxFun α. -/
@@ -65,13 +73,5 @@ def subtypeInterHomeo (A U : Set (ℕ → ℕ)) :
   continuous_toFun := by
     exact continuous_subtype_val.comp continuous_subtype_val |>.subtype_mk _
   continuous_invFun := by
-    refine Continuous.subtype_mk ?_ ?_
+    refine' Continuous.subtype_mk _ _
     exact continuous_subtype_val |>.subtype_mk _
-
-/-- Transfer: f ∘ Subtype.val on {a ∈ A | a.val ∈ U} equals f' ∘ e. -/
-lemma subtype_inter_fun_eq (A U : Set (ℕ → ℕ)) (f : A → ℕ → ℕ) :
-    f ∘ (Subtype.val : {a : A | (a : ℕ → ℕ) ∈ U} → A) =
-    (fun x : (A ∩ U : Set (ℕ → ℕ)) => f ⟨x.val, x.prop.1⟩) ∘ (subtypeInterHomeo A U) := by
-  ext a; simp [subtypeInterHomeo]
-
-end

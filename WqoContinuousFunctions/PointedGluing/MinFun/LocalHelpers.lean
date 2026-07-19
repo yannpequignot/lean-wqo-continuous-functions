@@ -16,21 +16,6 @@ noncomputable section
 ## Helper lemmas for minFun_local_condition'
 -/
 
-/-- Given sup of ray CB ranks equals α and β < α, there exists N with ray CB rank > β. -/
-lemma exists_ray_cbrank_gt
-    {A : Set (ℕ → ℕ)}
-    (f : A → ℕ → ℕ) (_hf : Continuous f) (_hscat : ScatteredFun f)
-    (α : Ordinal.{0})
-    (y : ℕ → ℕ) (_hy_simple : ∀ x ∈ CBLevel f α, f x = y)
-    (_hlevel_ne : (CBLevel f α).Nonempty)
-    (β : Ordinal.{0}) (hβ : β < α)
-    (B : Set (ℕ → ℕ)) (_hfB : ∀ a : A, f a ∈ B)
-    (hsup : ⨆ n, CBRank (fun (x : {a : A | f a ∈ RaySet B y n}) => f x.val) = α) :
-    ∃ N, CBRank (fun (x : {a : A | f a ∈ RaySet B y N}) => f x.val) > β := by
-  contrapose! hβ
-  exact hsup ▸ ciSup_le hβ
-
-/-- A point in a ray of a simple function has exit ordinal < α. -/
 lemma exit_ordinal_of_ray_point
     {A : Set (ℕ → ℕ)}
     (f : A → ℕ → ℕ)
@@ -166,13 +151,13 @@ lemma find_ray_point
           refine ⟨?_, ?_, ?_⟩
           · obtain ⟨t, ht₁, ht₂⟩ := hU₂.1
             use t ∩ V
-            simp +decide [← ht₂, Set.ext_iff]
+            simp +decide only [preimage_inter, ← ht₂, mem_preimage, Subtype.exists, exists_and_left, exists_prop, exists_eq_right_right', Set.ext_iff, mem_inter_iff, mem_setOf_eq, and_congr_right_iff, Subtype.forall]
             exact ⟨ht₁.inter hV, fun a ha ha' => ⟨fun ha'' => ⟨ha, ha''⟩, fun ha'' => ha''.2⟩⟩
           · exact ⟨_, hU₂.2.1, rfl⟩
           · simp +zetaDelta at *
             grind
     · rename_i o ho ih'
-      simp +decide [ho, Ordinal.limitRecOn_limit]
+      simp +decide only [mem_Iio, ho, Ordinal.limitRecOn_limit, mem_iInter]
       constructor <;> intro h i hi
       · convert ih i hi z hz_A' |>.1 (h i hi) using 1
       · exact ih' i hi (fun k hk => ih k (lt_trans hk hi)) z hz_A' |>.2 (h i hi)

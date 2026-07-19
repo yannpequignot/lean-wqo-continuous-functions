@@ -32,8 +32,6 @@ of a clopen set, and proves the key `gluing_via_codomain_partition` lemma.
 
 noncomputable section
 
-
-
 private lemma extract_B_map
     (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ) (C : Set (ℕ → ℕ))
     {A : Set (ℕ → ℕ)}
@@ -50,17 +48,6 @@ private lemma extract_B_map
   · exact fun x => (σ₀ x).prop.choose_spec
   · exact hτ₀_eq
 
-/-- Each piece of the gluing reduces to g, via transitivity with gClopenFun → g. -/
-private lemma piece_reduces_to_g
-    (B : Set (ℕ → ℕ)) (g : B → ℕ → ℕ)
-    (C : Set (ℕ → ℕ)) {A : Set (ℕ → ℕ)}
-    (hred : ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) (CoRestrict' B g C)) :
-    ContinuouslyReduces (Subtype.val : A → ℕ → ℕ) g := by
-  exact hred.trans ⟨fun x => ⟨x.val, x.prop.choose⟩,
-    Continuous.subtype_mk continuous_subtype_val _,
-    id, continuousOn_id, fun x => rfl⟩
-
-/-- Membership: unprepend x.val ∈ A (x.val 0) for x ∈ GluingSet A. -/
 private lemma gluingSet_unprepend_mem (A : ℕ → Set (ℕ → ℕ)) (x : GluingSet A) :
     unprepend x.val ∈ A (x.val 0) := by
   obtain ⟨i, hi, hmem⟩ := GluingSet_inverse_short A x

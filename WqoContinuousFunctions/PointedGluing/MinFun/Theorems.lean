@@ -50,9 +50,11 @@ theorem pointedGluing_lower_bound
         ContinuousOn τ (Set.range (fun z => f (σ z))) ∧
         (∀ z, σ z ∈ U) ∧
         f x ∉ closure (Set.range (fun z => f (σ z)))) :
-    ContinuouslyReduces
-      (fun (z : PointedGluingSet C) => PointedGluingFun C D g z)
-      f := by
+    ∃ σ : PointedGluingSet C → A, Continuous σ ∧
+      σ ⟨zeroStream, zeroStream_mem_pointedGluingSet C⟩ = x ∧
+      ∃ τ : (ℕ → ℕ) → ℕ → ℕ,
+        ContinuousOn τ (Set.range (f ∘ σ)) ∧
+        ∀ z, PointedGluingFun C D g z = τ (f (σ z)) := by
   -- Cylinder neighborhoods of x in A
   let cyl : ℕ → Set A := fun n => nbhd' A x n
   -- Cylinder neighborhoods of f x in ℕ→ℕ
@@ -191,7 +193,7 @@ theorem pointedGluing_lower_bound
     have h_not_in_closure : f x ∉ closure (range (fun z => f (σseq n z))) := by
       exact fun h => Set.notMem_empty _ <| hclos n ▸ Set.mem_inter h (hfx_cylfx _)
     convert h_not_in_closure using 1
-    simp +decide [An, Set.image]
+    simp +decide only [image, mem_range, Subtype.exists, An]
     congr! 2
     exact Set.ext fun x => ⟨by rintro ⟨a, ha, ⟨b, hb, hab⟩, rfl⟩ ; exact ⟨⟨b, hb⟩, by simp [hab]⟩, by rintro ⟨⟨a, ha⟩, rfl⟩ ; exact ⟨_, _, ⟨a, ha, rfl⟩, rfl⟩⟩
   · -- hrelclop: IsRelativeClopenPartition (fun m => f '' An m)
@@ -521,13 +523,14 @@ lemma minFun_is_minimum_simple
     · -- Limit case: α is a limit ordinal
       apply pgl_val_to_minFun_limit' α hlim hα0
       rw [← pgl_fun_id_eq_val' (fun n => MinDom (cofinalSeq α n))]
-      apply @pointedGluing_lower_bound A f hf
+      obtain ⟨σ, hσ, -, τ, hτ, heq⟩ := @pointedGluing_lower_bound A f hf
         (fun n => MinDom (cofinalSeq α n)) (fun n => MinDom (cofinalSeq α n)) (fun _ => id) x
-      intro i U hU hxU
-      exact minFun_local_condition' f hf hscat α hα y hy_simple hlevel_ne hlevel_succ_empty x hx
-        (fun β hβ hβω A' f' hf' hscat' hne' hempty' hsimple' =>
-          ih β hβ hβω A' f' hf' hscat' hne' hempty' hsimple')
-        (cofinalSeq α i) (cofinalSeq_lt α hlim hα0 i) U hU hxU
+        (fun i U hU hxU => minFun_local_condition' f hf hscat α hα y hy_simple hlevel_ne
+          hlevel_succ_empty x hx
+          (fun β hβ hβω A' f' hf' hscat' hne' hempty' hsimple' =>
+            ih β hβ hβω A' f' hf' hscat' hne' hempty' hsimple')
+          (cofinalSeq α i) (cofinalSeq_lt α hlim hα0 i) U hU hxU)
+      exact ⟨σ, hσ, τ, hτ, heq⟩
     · -- Successor case: α = Order.succ γ
       have : ¬ Order.IsSuccPrelimit α := by
         intro hp; exact hlim ⟨not_isMin_iff_ne_bot.mpr hα0, hp⟩
@@ -535,13 +538,14 @@ lemma minFun_is_minimum_simple
       obtain ⟨γ, _, rfl⟩ := this
       apply pgl_val_to_minFun_succ' γ
       rw [← pgl_fun_id_eq_val' (fun _ => MinDom γ)]
-      apply @pointedGluing_lower_bound A f hf
+      obtain ⟨σ, hσ, -, τ, hτ, heq⟩ := @pointedGluing_lower_bound A f hf
         (fun _ => MinDom γ) (fun _ => MinDom γ) (fun _ => id) x
-      intro i U hU hxU
-      exact minFun_local_condition' f hf hscat (Order.succ γ) hα y hy_simple hlevel_ne hlevel_succ_empty x hx
-        (fun β hβ hβω A' f' hf' hscat' hne' hempty' hsimple' =>
-          ih β hβ hβω A' f' hf' hscat' hne' hempty' hsimple')
-        γ (Order.lt_succ_of_not_isMax (not_isMax γ)) U hU hxU
+        (fun i U hU hxU => minFun_local_condition' f hf hscat (Order.succ γ) hα y hy_simple
+          hlevel_ne hlevel_succ_empty x hx
+          (fun β hβ hβω A' f' hf' hscat' hne' hempty' hsimple' =>
+            ih β hβ hβω A' f' hf' hscat' hne' hempty' hsimple')
+          γ (Order.lt_succ_of_not_isMax (not_isMax γ)) U hU hxU)
+      exact ⟨σ, hσ, τ, hτ, heq⟩
 
 private lemma minFun_reduces_to_subtype_reduces
     {α : Ordinal.{0}}

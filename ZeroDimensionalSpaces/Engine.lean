@@ -37,7 +37,7 @@ lemma open_infinite (hni : ∀ x : X, ¬ IsOpen ({x} : Set X)) {U : Set X}
     (hU : IsOpen U) (hne : U.Nonempty) : U.Infinite := by
   by_contra h_contra;
   obtain ⟨x, hxU⟩ : ∃ x, x ∈ U := hne;
-  refine' hni x _;
+  refine hni x ?_;
   convert hU.inter ( show IsOpen ( U \ { x } ) ᶜ from ?_ ) using 1;
   · grind;
   · exact isOpen_compl_iff.mpr ( Set.Finite.isClosed ( Set.Finite.subset ( Set.not_infinite.mp h_contra ) fun y hy => by aesop ) )
@@ -53,7 +53,7 @@ lemma clopen_split [ZeroDimensionalSpace X] (hni : ∀ x : X, ¬ IsOpen ({x} : S
   obtain ⟨y, hy, hxy⟩ : ∃ y ∈ U, y ≠ x := by
     exact Set.Infinite.nonempty ( Set.Infinite.diff ( open_infinite hni hU.2 ( Set.nonempty_of_mem hx ) ) ( Set.finite_singleton x ) );
   obtain ⟨ W, hW₁, hW₂, hW₃ ⟩ := exists_clopen_ball x ( show 0 < Dist.dist y x from dist_pos.mpr hxy );
-  refine' ⟨ U ∩ W, _, _, _, _ ⟩;
+  refine ⟨ U ∩ W, ?_, ?_, ?_, ?_ ⟩;
   · exact hU.inter hW₁;
   · exact Set.inter_subset_left;
   · exact ⟨ x, hx, hW₂ ⟩;

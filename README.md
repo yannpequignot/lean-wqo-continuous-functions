@@ -1,31 +1,29 @@
-# Formal Verification of Well-Quasi-Orders of Continuous Functions
+# A well-quasi-order for continuous functions — a Lean 4 formalization
 
-![Lean 4](https://img.shields.io/badge/Lean-4-purple.svg)
-![Status](https://img.shields.io/badge/Status-Active-success.svg)
-![Math](https://img.shields.io/badge/Domain-Mathematics%20%2F%20Order%20Theory-blue.svg)
+[![CI](https://github.com/yannpequignot/lean-wqo-continuous-functions/actions/workflows/ci.yml/badge.svg)](https://github.com/yannpequignot/lean-wqo-continuous-functions/actions/workflows/ci.yml)
+![Lean 4](https://img.shields.io/badge/Lean-v4.28.0-purple.svg)
+![Mathlib](https://img.shields.io/badge/Mathlib-v4.28.0-blue.svg)
+![sorry-free](https://img.shields.io/badge/headline%20results-sorry--free-success.svg)
 
-This repository contains the ongoing formal verification of mathematical results presented in the preprint **[A well-quasi-order for continuous functions](https://arxiv.org/abs/2410.13150)**, developed using **Lean 4**. 
+A **Lean 4** formalization of the results in the preprint
+**[A well-quasi-order for continuous functions](https://arxiv.org/abs/2410.13150)**
+(R. Carroy & Y. Pequignot). The three main theorems and the central 2-BQO result are
+**fully proved and `sorry`-free**; a green [CI run](#-verification--auditing) is a
+machine-checked certificate of that claim (see below).
 
+## 🧠 Mathematical overview
 
-## 🎯 Motivation: From Hilbert to AI Safety
+A **well-quasi-order** (WQO) is a quasi-order in which every infinite sequence
+$(x_i)_{i\in\mathbb N}$ contains an increasing pair $x_i \le x_j$ with $i < j$. WQO theory
+is central to termination arguments, ordinal analysis, and the theory of Borel/continuous
+reducibility in descriptive set theory.
 
-The original motivation for formalizing the concept of a program (or algorithm) was to answer Hilbert's *Entscheidungsproblem* regarding the provability of mathematical statements. While this endeavor culminated in Gödel's incompleteness theorems—establishing fundamental limits on what algorithms can do regarding mathematical truth—it also yielded one of computer science's greatest triumphs: **while a program cannot prove every truth, it *can* definitively decide if a formalized reasoning is sound.**
+We study the following quasi-order on functions.
 
-Less than a century later, we are witnessing a paradigm shift. Data-driven approaches, trained on natural language—one of humanity's greatest achievements and an incredibly compressed way to model the world using a small vocabulary of tokens—have reached a level where they can help formalize mathematics, bridge gaps in proofs, and generate meaningful mathematical reasoning. It is a tremendously exciting time.
-
-However, as AI models become increasingly complex and are deployed in ever-broader contexts, guaranteeing their reliability is paramount. We must ensure that the reasoning they output is fundamentally sound. Formal languages for mathematics, like **Lean 4**, implement a rigorous way to automatically verify reasoning.
-
-
-At this critical intersection of AI and mathematics, formalized reasoning provides a unique and necessary pathway for verifying LLM outputs. To put this philosophy into practice, I am actively collaborating with frontier AI assistants—including **Claude Code**, **Gemini Pro**, and **Aristotle**—throughout this formalization exercise. By leveraging these models to accelerate the translation of mathematical intuition into Lean 4 code, I am directly exploring the synergistic loop between AI-generated reasoning and machine-verified soundness.
-
-## 🧠 Mathematical Overview
-
-A **well-quasi-ordering** (WQO) is a quasi-order where any infinite sequence of elements contains an increasing pair ($x_i \le x_j$ with $i < j$). This concept is ubiquitous in mathematics, fundamental in termination proofs and logic.
-
-The paper formalized here deals with the following quasi-order on functions:
-
-**Definition** A function `f : X → Y'` **continuously reduces** to `g : X' → Y'`, written `f ≤ g`, if there is a continuous `σ : X → X'` and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
-such that `f(x) = τ(g(σ(x)))` for all `x` in `X`.
+> **Definition (continuous reducibility).** A function $f : X \to Y$ **continuously reduces**
+> to $g : X' \to Y'$, written $f \le g$, if there are a continuous $\sigma : X \to X'$ and a
+> map $\tau : Y' \to Y$ that is continuous on $\operatorname{im}(g\circ\sigma)$ such that
+> $f = \tau \circ g \circ \sigma$.
 
 ```mermaid
 flowchart LR
@@ -40,140 +38,127 @@ flowchart LR
     style B fill:transparent,stroke-width:0px,stroke-dasharray:0
 ```
 
->Intuitively, `f` reduces to `g` if `g` can compute (or realize) `f` exactly, once you're allowed to continuously recode `f`'s inputs before feeding them to `g` (preprocessing `σ`), and   continuously recode `g`'s outputs back afterward (postprocessing `τ`).
+> **Main Theorem 1.** Continuous reducibility is a well-quasi-order on the class of
+> continuous functions between separable metrizable spaces with Polish zero-dimensional domains.
 
-<!--<img src="ContinuouslyReducesDiagram.png" alt="A diagram to help visualize the continuous reduction" style="width:33%; height:auto;">-->
+> **Main Theorem 2.** Continuous reducibility is a well-quasi-order on the class of
+> continuous functions between separable metrizable spaces with zero-dimensional domains and countable codomains.
 
-The main result states that this quasi-order is a WQO on a large class of functions
-
-**Theorem (Main Result)** Continuous reducibility is a well-quasi-order on all continuous functions from a zero-dimensional separable metrizable space, as long as either the source space is analytic or the target space is countable.
-
->Continuous functions between these spaces come in bewildering variety, but our main theorem shows they're not chaotic: under continuous reducibility, you can never find infinitely many pairwise-incomparable functions, nor an infinite chain of strictly simpler and simpler ones. So despite the apparent complexity of the class, reducibility sorts it into a well-founded hierarchy — any large enough collection of functions must contain two that are comparable, and any attempt to keep reducing to something strictly simpler must terminate.
-
-Because WQOs lack closure properties under infintary operations, this is achieved by proving a stronger property, that of better-quasi-ordering (BQO). 
+> **Main Theorem 3.** Continuous reducibility is a well-quasi-order on the class of
+> **scattered** continuous functions from a zero-dimensional separable metrizable space to a metrizable space.
 
 
-## 🚀 Current Status
+Because WQOs are not closed under the infinitary operations the proof requires, the theorem
+is obtained by establishing the stronger property of being a **better-quasi-order** (BQO) —
+in fact the formalization uses **2-BQO**, an intermediate strengthening of WQO that suffices to run the argument.
 
-- [x] **Core Definitions:** Formalized the main concepts about functions and the notion of 2-BQO, an intermediate strengthening of WQO sufficient to carry out the proof.
-- [x] **Preliminary Lemmas and intermediate Theorems:** Proved intermediate results concerning scattered functions and the Pointed Gluing operation, including the General Structure theorem and its corollaries.
-- [x] **Standalone foundational libraries:** Extracted two Mathlib-only libraries that the main development builds on:
-  - **`ZeroDimensionalSpaces`** — Baire/Cantor space basics, zero-dimensional spaces, the Cantor-scheme embedding machinery, and **Sierpiński universality** (`sierpinski_universal`: every countable metrizable space embeds into any nonempty perfect countable metrizable space). This is fully proved (`#print axioms` shows no `sorryAx`) and yields the universality of `CantorRat` used as the top element in Main Theorem 2.
-  - **`BQO`** — better-quasi-order foundations (Ramsey theorems, 2-BQO closure properties, ordinal BQO).
-- [x] **Centered functions (Chapter 4):** Now **fully formalized and `sorry`-free** — the consequences of the General Structure Theorem (every limit-rank function `≡ ℓ_λ`), the centered-as-pointed-gluing characterization (Thm 4.6), local centeredness from 2-BQO (Thm 4.7), finiteness of centered functions (Thm 4.9), and Corollary 4.10 (`centeredSuccessor`: up to equivalence the only centered functions at rank `λ+1` are `k_{λ+1}` and `pgl ℓ_λ`, for both `λ=1` and `λ` a nonzero limit), including the finite generation of `𝒞_{≤1}` (`LocallyConstantFunctions`).
-- [~] **Main Theorems 1–3:** All three are stated and their full proof architecture is wired end-to-end (the scattered/non-scattered dichotomy, the WQO/BQO machinery, and the universality top elements). The single remaining structural input is `ScatFun.levels_finitely_generated` (finite generation of each CB-rank level), to be supplied by the Precise Structure and Double Successor chapters (Chapters 5–6). See [STRUCTURE.md](STRUCTURE.md) for the detailed proof tree.
+## 📖 Where the mathematics lives
 
-### 🏆 Most Advanced Formally Verified Result
+Each memoir result maps to a named Lean declaration. `#print axioms <name>` on any of these
+lists only the three standard axioms — no `sorryAx`.
 
-The screenshot below shows Lean 4's kernel accepting the proof of `ScatFun.Reduces.isTwoBQO`
-— that continuous reducibility is a **2-BQO on scattered functions** — the central claim of
-the project. It is fully proved up to the single remaining structural input
-`ScatFun.levels_finitely_generated` (finite generation of each CB-rank level), the subject of
-the Precise Structure and Double Successor chapters still to be formalized (the Centered
-Functions chapter that precedes them is now complete):
+| Memoir | Statement | Lean declaration | File |
+| --- | --- | --- | --- |
+| Main Theorem 1 | WQO, Polish zero-dimensional source | `MainTheorem1` | [`MainResults/Main.lean`](WqoContinuousFunctions/MainResults/Main.lean) |
+| Main Theorem 2 | WQO, countable codomain | `MainTheorem2` | [`MainResults/Main.lean`](WqoContinuousFunctions/MainResults/Main.lean) |
+| Main Theorem 3 | WQO, zero-dim. separable metrizable source | `MainTheorem3` | [`MainResults/Main.lean`](WqoContinuousFunctions/MainResults/Main.lean) |
+| (core) the 2-BQO version of Theorem 1.4 | Continuous reducibility on `ScatFun` --- scattered continuous functions $f:A\to \mathbb{N}^\mathbb{N}$ with $A\subseteq \mathbb{N}^\mathbb{N}$ ---  is a 2-BQO | `ScatFun.Reduces.isTwoBQO` | [`MainResults/ScatFunBQO.lean`](WqoContinuousFunctions/MainResults/ScatFunBQO.lean) |
+| Thm 4.7 | Centered ⟺ a pointed gluing (monotone) | `centeredAsPgluing_iff_monotone` | [`CenteredFunctions/CenteredAsPgluing.lean`](WqoContinuousFunctions/CenteredFunctions/CenteredAsPgluing.lean) |
+| Thm 4.8 | Local centeredness from 2-BQO | `localCenterednessFromTwoBQO_scatFun` | [`CenteredFunctions/LocallyCentered/Theorem.lean`](WqoContinuousFunctions/CenteredFunctions/LocallyCentered/Theorem.lean) |
+| Thm 4.10 | Finiteness of centered functions | `finitenessOfCenteredFunctions` | [`CenteredFunctions/Finiteness.lean`](WqoContinuousFunctions/CenteredFunctions/Finiteness.lean) |
+| `scatterediffemptykernel` | `f` scattered ⟺ empty perfect kernel | `scattered_iff_empty_perfectKernel` | [`ContinuousReducibility/Scattered/CBAnalysis.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/CBAnalysis.lean) |
+| `prop:nlc_implies_nonscattered` | Non-scattered `f` ⇒ `id_ℚ` embeds (`CantorRat` model) | `nonscattered_embeds_idCantorRat` | [`ContinuousReducibility/Scattered/NonScattered.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/NonScattered.lean) |
+| `uncountablerange` | Non-scattered `f` on a Polish domain ⇒ `id_𝒩` embeds (`CantorSpace` model; weak Perfect Function Property) | `nonscattered_embeds_idCantor` | [`ContinuousReducibility/Scattered/NonScattered.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/NonScattered.lean) |
 
-![Lean 4 proof of ScatFun.Reduces.isTwoBQO](proof_isTwoBQO.png)
+For the full proof tree — every lemma, and how the chapters fit together — see
+[STRUCTURE.md](STRUCTURE.md).
 
-**Fully verified, `sorry`-free results (Chapter 4 — centered functions).** The two theorems
-below are the mathematical heart of the centered-functions chapter. Each is proved with **no
-`sorry` anywhere in its dependency tree** — `#print axioms` lists only the three standard
-axioms `propext`, `Classical.choice`, `Quot.sound`:
+## ✅ Verification & auditing
 
-- **`localCenterednessFromTwoBQO_scatFun`** (Theorem 4.7) — for every `α < ω₁`, if the lower
-  levels `𝒞_{<α}` are 2-BQO, then every scattered continuous function of CB-rank `α` is
-  *locally centered*:
+Since the memoir is under review, this repository doubles as a **machine-checked
+certificate**: the Lean kernel accepts every proof, and a script re-checks that the headline
+results use no `sorry`. Nothing needs to be trusted beyond Lean's kernel and the pinned
+Mathlib version.
 
-  ```lean
-  theorem localCenterednessFromTwoBQO_scatFun
-      (α : Ordinal.{0}) (hα : α < omega1)
-      (hbqo : TwoBQO (ScatFun.LevelLT.reduces α)) :
-      ∀ (F : ScatFun), CBRank F.func = α → IsLocallyCentered F.func
-  ```
+There are two independent ways an auditor can confirm this:
 
-- **`finitenessOfCenteredFunctions`** (Theorem 4.9) — if `𝒞_{[λ, λ+n]}` is generated by a
-  finite family `B`, then every *centered* function of rank in `[λ, λ+n+1]` is continuously
-  equivalent either to the minimum function `k_{λ+1}` or to a pointed gluing of a non-empty
-  sub-family of `B`:
+1. **Continuous integration.** Every push and pull request runs
+   [`.github/workflows/ci.yml`](.github/workflows/ci.yml): it builds the entire development
+   with the pinned Mathlib (`v4.28.0`) and kernel-checks every proof. The badge at the top of
+   this file reflects the latest run. A green badge ⇒ everything compiles and the axiom audit
+   passed.
 
-  ```lean
-  theorem finitenessOfCenteredFunctions
-      {lam : Ordinal.{0}} (hlam : lam < omega1)
-      (hlim : Order.IsSuccLimit lam ∨ lam = 0)
-      {m n : ℕ} (B : Fin m → ScatFun)
-      (hgen : ScatFun.LevelInter lam (lam + ↑n) ⊆ ScatFun.FinGl B)
-      (g : ScatFun) (hg_lvl : g ∈ ScatFun.LevelInter lam (lam + ↑n + 1))
-      (hg_cent : IsCentered g.func) :
-      ScatFun.Equiv g (ScatFun.minFun lam hlam) ∨
-        ∃ (k : ℕ) (ι : Fin k → Fin m), 0 < k ∧
-          ScatFun.Equiv g (ScatFun.pgl (ScatFun.repSeq (B ∘ ι)))
-  ```
+2. **The axiom audit.** [`WqoContinuousFunctions/AxiomAudit.lean`](WqoContinuousFunctions/AxiomAudit.lean)
+   is part of the default build. For each headline theorem it collects the axioms its proof
+   depends on and **fails the build** unless that set is contained in
+   `{propext, Classical.choice, Quot.sound}` — the three standard axioms of classical Lean.
+   Since `sorry` elaborates to the extra axiom `sorryAx`, this rejects any hidden `sorry`.
 
-  Its Corollary 4.10 (`centeredSuccessor`) is likewise `sorry`-free: up to continuous
-  equivalence the only centered functions at rank `λ+1` are `k_{λ+1}` and `pgl ℓ_λ` (for both
-  `λ = 1` and `λ` a nonzero limit).
-
-## 🛠️ Building & Checking
-
-This is a **Lean 4** project (Lean `v4.28.0`, with Mathlib pinned to `v4.28.0`). There is no
-executable to run — *"running"* the development means having Lean's kernel **check** the
-proofs, which is exactly what `lake build` does.
-
-### Prerequisites
-
-Install [`elan`](https://github.com/leanprover/elan), the Lean toolchain manager. It reads
-`lean-toolchain` and fetches the correct Lean version automatically:
-
-```bash
-curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
-```
-
-### Build
+To reproduce locally:
 
 ```bash
 git clone https://github.com/yannpequignot/lean-wqo-continuous-functions.git
 cd lean-wqo-continuous-functions
 lake exe cache get      # download the prebuilt Mathlib cache (do this first!)
-lake build              # build & kernel-check the default target (WqoContinuousFunctions)
+lake build              # builds + kernel-checks everything, incl. the axiom audit
 ```
 
-> ⚠️ **Run `lake exe cache get` before `lake build`.** This is by far the most common cause of
-> a *"failed"* build: without the cache, `lake` tries to compile all of Mathlib from source,
-> which takes hours and frequently exhausts memory. With the cache, a clean `lake build` of
-> this development completes in a few minutes (it has been verified end-to-end on a fresh
-> clone this way).
+> ⚠️ **Run `lake exe cache get` before `lake build`.** Without the cache, `lake` compiles all
+> of Mathlib from source (hours, and frequently out of memory). With it, a clean build takes a
+> few minutes. Install [`elan`](https://github.com/leanprover/elan) first — it reads
+> `lean-toolchain` and fetches the correct Lean version automatically.
 
-### Individual libraries and files
+To spot-check a single result interactively, add e.g.
 
-The package bundles three libraries; each can be built on its own:
+```lean
+#print axioms ScatFun.Reduces.isTwoBQO
+```
+
+to any file; the output lists `sorryAx` **iff** a `sorry` is reachable from that theorem.
+
+## 📦 Project layout
+
+The package bundles four Lean libraries; each builds on its own:
 
 ```bash
 lake build BQO                     # better-quasi-order foundations (Mathlib-only)
 lake build ZeroDimensionalSpaces   # Baire/Cantor topology + Sierpiński universality (Mathlib-only)
+lake build GeneralTopology         # general point-set topology helpers (Mathlib-only)
 lake build WqoContinuousFunctions  # the main development (default target)
 ```
 
-You can also check a single module, e.g.
+- **`BQO`** — better-quasi-order foundations: Ramsey-type theorems, 2-BQO closure properties,
+  ordinal BQO. Depends only on Mathlib.
+- **`ZeroDimensionalSpaces`** — Baire/Cantor space basics, zero-dimensional spaces, the
+  Cantor-scheme embedding machinery, and **Sierpiński universality** (every countable
+  metrizable space embeds into any nonempty perfect countable metrizable space), which
+  supplies the universal top element of Main Theorem 2. Depends only on Mathlib.
+- **`GeneralTopology`** — general point-set facts (countable clopen partitions, discrete
+  subspaces, disjoint open neighbourhoods) that are Mathlib candidates. Depends only on
+  Mathlib.
+- **`WqoContinuousFunctions`** — the main development, building on all three.
 
-```bash
-lake build WqoContinuousFunctions.CenteredFunctions.Finiteness
-lake build WqoContinuousFunctions.MainResults.ScatFunBQO
-```
+## 🚀 Status
 
-A successful `lake build` means every proof in the target has been verified by Lean's kernel.
-To audit that a specific result depends on no `sorry`, add `#print axioms <name>` to a file
-(e.g. `#print axioms ScatFun.Reduces.isTwoBQO`); the output lists `sorryAx` iff a `sorry` is
-reachable.
+- [x] **Core definitions** — continuous reducibility, scattered functions, and 2-BQO.
+- [x] **Main Theorems 1–3** — all three stated and **fully proved, `sorry`-free**, end to end
+  (the scattered/non-scattered dichotomy, the WQO/BQO machinery, the universality top
+  elements).
+- [x] **Centered functions (Chapter 4)** — fully formalized and `sorry`-free: the consequences
+  of the General Structure Theorem, the centered-as-pointed-gluing characterization (Thm 4.6),
+  local centeredness from 2-BQO (Thm 4.7), finiteness of centered functions (Thm 4.9), and the
+  successor classification (Cor 4.10).
+- [x] **Precise Structure (Ch. 5) & Double Successor (Ch. 6)** — the input
+  `ScatFun.levels_finitely_generated` (finite generation of each CB-rank level) is fully
+  formalized, resting on the §6.4 solvable-functions development in
+  `DoubleSuccessor/Solvable.lean`.
 
-## 💻 Code Highlight
-
-Here is a snippet demonstrating how the core property is elegantly formalized in Lean 4:
+## 💻 Core definitions in Lean
 
 ```lean
-/--
-A function `f` continuously reduces to `g` if there is a continuous `σ : X → X'`
+/-- `f` continuously reduces to `g` if there is a continuous `σ : X → X'`
 and a function `τ : Y' → Y` that is continuous on `im(g ∘ σ)`
-such that `f(x) = τ(g(σ(x)))` for all `x`.
--/
+such that `f x = τ (g (σ x))` for all `x`. -/
 def ContinuouslyReduces {X Y X' Y' : Type*}
     [TopologicalSpace X] [TopologicalSpace Y]
     [TopologicalSpace X'] [TopologicalSpace Y']
@@ -181,35 +166,24 @@ def ContinuouslyReduces {X Y X' Y' : Type*}
   ∃ σ : X → X', Continuous σ ∧
   ∃ τ : Y' → Y, ContinuousOn τ (Set.range (g ∘ σ)) ∧
     ∀ x : X, f x = τ (g (σ x))
-    
-/-- A function `f : X → Y` is *scattered* if every nonempty subset `S` of `X`
-contains a nonempty relatively open subset on which `f` is constant.
--/
+
+/-- A function `f : X → Y` is *scattered* if every nonempty `S ⊆ X` contains a nonempty
+relatively open subset on which `f` is constant. -/
 def ScatteredFun {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) : Prop :=
   ∀ S : Set X, S.Nonempty → ∃ U : Set X, IsOpen U ∧ (U ∩ S).Nonempty ∧
     ∀ x ∈ U ∩ S, ∀ x' ∈ U ∩ S, f x = f x'
-    
-/-- Continuous reducibility is a well-quasi-order on scattered continuous functions
-from a zero-dimensional separable metrizable space to a metrizable space.  Proved via
-the stronger 2-BQO property of the associated `ScatFun` invariants. -/
-theorem MainTheorem3
-    (X : ℕ → Type*) (Y : ℕ → Type*)
-    [∀ n, TopologicalSpace (X n)] [∀ n, TopologicalSpace (Y n)]
-    [∀ n, SeparableSpace (X n)] [∀ n, MetrizableSpace (X n)]
-    [∀ n, ZeroDimensionalSpace (X n)]
-    [∀ n, MetrizableSpace (Y n)]
-    (f : ∀ n, X n → Y n) (hf : ∀ n, Continuous (f n))
-    (hsc : ∀ n, ScatteredFun (f n)) :
-    ∃ m n : ℕ, m < n ∧ ContinuouslyReduces_range_based (f m) (f n) := by
-  ...
-
 ```
+
 ## 📄 References
-This formalization is a direct implementation of the mathematical research presented in the following articles:
 
-1. **[Raphaël Carroy, Yann Pequignot] (2024).** *"[A well-quasi-order for continuous functions]"*. arXiv:2410.13150.  
-   [Read the paper on arXiv](https://arxiv.org/abs/2410.13150)
+1. R. Carroy & Y. Pequignot (2024). *A well-quasi-order for continuous functions.*
+   [arXiv:2410.13150](https://arxiv.org/abs/2410.13150).
+2. Y. Pequignot (2017). *Towards better: a motivated introduction to better-quasi-orders.*
+   EMS Surveys in Mathematical Sciences.
+   [ems.press](https://ems.press/journals/emss/articles/15096).
 
-2. **[Yann Pequignot] (2017).** *"[Towards better: A motivated introduction to better-quasi-orders]"*. EMS Surveys in Mathematical Sciences.  
-   [Read the article on EMS Press](https://ems.press/journals/emss/articles/15096)
+## 🙏 Acknowledgements
+
+This formalization was developed with the assistance of frontier AI proof assistants,
+including **[Aristotle](https://aristotle.harmonic.fun)** (Harmonic), **Claude Code**.

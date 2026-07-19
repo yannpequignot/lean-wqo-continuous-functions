@@ -31,9 +31,11 @@ theorem pointedGluing_lower_bound_lemma
     (hred : ∀ n, ContinuouslyReduces
       (fun (z : C n) => (g n z : ℕ → ℕ))
       (f ∘ (Subtype.val : An n → A))) :
-    ContinuouslyReduces
-      (fun (z : PointedGluingSet C) => PointedGluingFun C D g z)
-      f := by
+    ∃ σ : PointedGluingSet C → A, Continuous σ ∧
+      σ ⟨zeroStream, zeroStream_mem_pointedGluingSet C⟩ = x ∧
+      ∃ τ : B → ℕ → ℕ,
+        ContinuousOn τ (Set.range (f ∘ σ)) ∧
+        ∀ z, PointedGluingFun C D g z = τ (f (σ z)) := by
   --  PHASE 0 — Extract witnesses from hypotheses
   --
   -- `hrelclop` bundles two pieces: pairwise disjointness of the
@@ -131,14 +133,14 @@ theorem pointedGluing_lower_bound_lemma
         Set.mem_union_left _ (Set.mem_singleton _)
 
       let z₀ : ↑(PointedGluingSet C) := ⟨zeroStream, hz₀⟩
-      refine ⟨firstNonzero z.val, z.2, ?_, firstNonzero_ne hz⟩
+      refine ⟨firstNonzero z.val, z.2, ?_, firstNonzero_val_ne hz⟩
       intro k hk
       exact firstNonzero_zero hz k hk
     · rintro ⟨n, _, _, hne⟩
       -- z.val n ≠ zeroStream n = 0, so z.val ≠ zeroStream
       intro heq
       apply hne
-      simp [zeroStream, funext_iff] at heq
+      simp only [funext_iff, zeroStream] at heq
       exact heq n
 
   have hpiece_disj : ∀ m n, m ≠ n → Disjoint (piece m) (piece n) := by
@@ -379,7 +381,7 @@ theorem pointedGluing_lower_bound_lemma
         by simp [σ, dif_neg hz]⟩⟩
   --  PHASE 5 — Produce the reduction witness and verify goals
 
-  refine ⟨σ, σ_cont, τ_global, ?_, ?_⟩
+  refine' ⟨σ, σ_cont, dif_pos rfl, τ_global, _, _⟩
 
   -- Goal 1: ContinuousOn τ_global on range(f ∘ σ)
   --
@@ -509,7 +511,7 @@ theorem pointedGluing_lower_bound_lemma
     by_cases h : z.val = zeroStream
     · -- Basepoint case: PointedGluingFun sends zeroStream to zeroStream.
       have hσz : σ z = x := dif_pos h
-      simp [τ_global, hσz, hfx_notUI]
+      simp only [hσz, hfx_notUI, ↓reduceDIte, τ_global]
       simp [PointedGluingFun, h]
     · -- Non-basepoint case.
       show PointedGluingFun C D g z = τ_global (f (σ z))
