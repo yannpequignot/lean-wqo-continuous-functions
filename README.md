@@ -75,9 +75,9 @@ lists only the three standard axioms — no `sorryAx`.
 | Thm 4.7 | Centered ⟺ a pointed gluing (monotone) | `centeredAsPgluing_iff_monotone` | [`CenteredFunctions/CenteredAsPgluing.lean`](WqoContinuousFunctions/CenteredFunctions/CenteredAsPgluing.lean) |
 | Thm 4.8 | Local centeredness from 2-BQO | `localCenterednessFromTwoBQO_scatFun` | [`CenteredFunctions/LocallyCentered/Theorem.lean`](WqoContinuousFunctions/CenteredFunctions/LocallyCentered/Theorem.lean) |
 | Thm 4.10 | Finiteness of centered functions | `finitenessOfCenteredFunctions` | [`CenteredFunctions/Finiteness.lean`](WqoContinuousFunctions/CenteredFunctions/Finiteness.lean) |
-| `scatterediffemptykernel` | `f` scattered ⟺ empty perfect kernel | `scattered_iff_empty_perfectKernel` | [`ContinuousReducibility/Scattered/CBAnalysis.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/CBAnalysis.lean) |
-| `prop:nlc_implies_nonscattered` | Non-scattered `f` ⇒ `id_ℚ` embeds (`CantorRat` model) | `nonscattered_embeds_idCantorRat` | [`ContinuousReducibility/Scattered/NonScattered.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/NonScattered.lean) |
-| `uncountablerange` | Non-scattered `f` on a Polish domain ⇒ `id_𝒩` embeds (`CantorSpace` model; weak Perfect Function Property) | `nonscattered_embeds_idCantor` | [`ContinuousReducibility/Scattered/NonScattered.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/NonScattered.lean) |
+| Proposition 2.11 | `f` scattered ⟺ empty perfect kernel | `scattered_iff_empty_perfectKernel` | [`ContinuousReducibility/Scattered/CBAnalysis.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/CBAnalysis.lean) |
+| Theorem 2.7 | Non-scattered `f` ⇒ `id_ℚ` embeds (`CantorRat` model) | `nonscattered_embeds_idCantorRat` | [`ContinuousReducibility/Scattered/NonScattered.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/NonScattered.lean) |
+| Proposition 2.10 | Non-scattered `f` on a Polish domain ⇒ `id_𝒩` embeds (`CantorSpace` model; weak Perfect Function Property) | `nonscattered_embeds_idCantor` | [`ContinuousReducibility/Scattered/NonScattered.lean`](WqoContinuousFunctions/ContinuousReducibility/Scattered/NonScattered.lean) |
 
 For the full proof tree — every lemma, and how the chapters fit together — see
 [STRUCTURE.md](STRUCTURE.md).
