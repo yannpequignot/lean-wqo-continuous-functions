@@ -8,7 +8,7 @@
 A **Lean 4** formalization of the results in the preprint
 **[A well-quasi-order for continuous functions](https://arxiv.org/abs/2410.13150)**
 (R. Carroy & Y. Pequignot). The three main theorems and the central 2-BQO result are
-**fully proved and `sorry`-free**; a green [CI run](#-verification--auditing) is a
+**fully proved and `sorry`-free**; a green [CI run](#-verification--auditing-for-reviewers) is a
 machine-checked certificate of that claim (see below).
 
 ## 🧠 Mathematical overview
@@ -82,48 +82,84 @@ lists only the three standard axioms — no `sorryAx`.
 For the full proof tree — every lemma, and how the chapters fit together — see
 [STRUCTURE.md](STRUCTURE.md).
 
-## ✅ Verification & auditing
+## ✅ Verification & auditing (for reviewers)
 
-Since the memoir is under review, this repository doubles as a **machine-checked
-certificate**: the Lean kernel accepts every proof, and a script re-checks that the headline
-results use no `sorry`. Nothing needs to be trusted beyond Lean's kernel and the pinned
-Mathlib version.
+This section is written for a mathematician who does **not** use Lean. The short version:
+the correctness of every proof here is checked *by a computer*, not by a human referee, and
+you can see the result of that check without installing anything — the green **CI** badge at
+the top of this page.
 
-There are two independent ways an auditor can confirm this:
+### What "machine-checked" means
 
-1. **Continuous integration.** Every push and pull request runs
-   [`.github/workflows/ci.yml`](.github/workflows/ci.yml): it builds the entire development
-   with the pinned Mathlib (`v4.28.0`) and kernel-checks every proof. The badge at the top of
-   this file reflects the latest run. A green badge ⇒ everything compiles and the axiom audit
-   passed.
+Lean 4 is a *proof assistant*. Every definition and theorem is written in a formal language,
+and a small, fixed program called the **kernel** verifies that each proof follows from the
+axioms and previously proved results by the rules of logic — with no gaps, no "clearly", no
+appeals to intuition. If a single step does not check, the whole thing is rejected. Building
+the project (the command `lake build`) runs the kernel over the entire development. **A
+successful build is the certificate**: it means the kernel accepted every proof against the
+*pinned* library versions (Lean `v4.28.0`, Mathlib `v4.28.0`), so the result does not depend
+on our machine, our mood, or a later change to Lean.
 
-2. **The axiom audit.** [`WqoContinuousFunctions/AxiomAudit.lean`](WqoContinuousFunctions/AxiomAudit.lean)
-   is part of the default build. For each headline theorem it collects the axioms its proof
-   depends on and **fails the build** unless that set is contained in
-   `{propext, Classical.choice, Quot.sound}` — the three standard axioms of classical Lean.
-   Since `sorry` elaborates to the extra axiom `sorryAx`, this rejects any hidden `sorry`.
+### The one loophole, and how it is closed
 
-To reproduce locally:
+A formal proof can still be *incomplete* in one specific way: Lean lets an author write
+`sorry` as a placeholder for a missing step. Lean only **warns** about `sorry`; it does not
+fail the build. So "it builds" alone would not rule out a hidden gap.
 
-```bash
-git clone https://github.com/yannpequignot/lean-wqo-continuous-functions.git
-cd lean-wqo-continuous-functions
-lake exe cache get      # download the prebuilt Mathlib cache (do this first!)
-lake build              # builds + kernel-checks everything, incl. the axiom audit
-```
+The file [`WqoContinuousFunctions/AxiomAudit.lean`](WqoContinuousFunctions/AxiomAudit.lean)
+closes exactly this loophole. Lean tracks, for any theorem, the complete list of **axioms**
+its proof ultimately depends on. A genuine proof in this development should use only the three
+standard axioms of classical mathematics (propositional extensionality, the axiom of choice,
+and quotient soundness). A `sorry` shows up in that list as a fourth, tell-tale axiom
+(`sorryAx`). For each headline theorem, `AxiomAudit.lean` computes this axiom list and
+**deliberately makes the build fail** if anything other than the three standard axioms appears
+— so a hidden `sorry`, or any exotic axiom, turns the build red. Because this file is part of
+the normal build, **the green badge already includes this audit.**
 
-> ⚠️ **Run `lake exe cache get` before `lake build`.** Without the cache, `lake` compiles all
-> of Mathlib from source (hours, and frequently out of memory). With it, a clean build takes a
-> few minutes. Install [`elan`](https://github.com/leanprover/elan) first — it reads
-> `lean-toolchain` and fetches the correct Lean version automatically.
+### What the green badge does and does not tell you
 
-To spot-check a single result interactively, add e.g.
+- ✅ It tells you: every listed theorem is proved *in full*, with no `sorry` and no non-standard
+  axiom, and accepted by Lean's kernel.
+- ⚠️ It does **not** tell you that the theorem *statements* say what the memoir claims — a
+  formal proof of the wrong statement would also be green. Checking the statements is a
+  mathematician's job, and it is deliberately made easy: the [mapping table](#-where-the-mathematics-lives)
+  above links each memoir result to its Lean declaration, whose statement you can read
+  directly. **Reading `AxiomAudit.lean` is not itself the certificate** — it lets you confirm
+  the audit is honest (that it really checks the theorems you care about, against the right
+  three-axiom whitelist). The *check* is performed by the build; reading tells you the check is
+  the right one.
 
-```lean
-#print axioms ScatFun.Reduces.isTwoBQO
-```
+### Three levels of scrutiny
 
-to any file; the output lists `sorryAx` **iff** a `sorry` is reachable from that theorem.
+1. **Trust the badge (no setup).** The green **CI** badge at the top of this page links to the
+   run log on GitHub, which shows the kernel building the whole project plus the axiom audit
+   passing.
+
+2. **Reproduce it yourself (a Lean toolchain, a few minutes).** Install
+   [`elan`](https://github.com/leanprover/elan) (the Lean version manager — it reads
+   `lean-toolchain` and fetches the right compiler automatically), then:
+
+   ```bash
+   git clone https://github.com/yannpequignot/lean-wqo-continuous-functions.git
+   cd lean-wqo-continuous-functions
+   lake exe cache get      # download the prebuilt Mathlib (do this FIRST — see warning below)
+   lake build              # kernel-checks the whole development, incl. the axiom audit
+   ```
+
+   > ⚠️ **Run `lake exe cache get` before `lake build`.** Without it, `lake` recompiles all of
+   > Mathlib from source (hours, often out of memory). With it, a clean build takes a few
+   > minutes.
+
+3. **Spot-check one theorem by hand.** Open any file and add a line such as
+
+   ```lean
+   #print axioms ScatFun.Reduces.isTwoBQO
+   ```
+
+   Lean prints the axioms that theorem depends on. You should see only `propext`,
+   `Classical.choice`, `Quot.sound`; the word `sorryAx` appears **if and only if** a `sorry` is
+   reachable from that theorem. (This is the same query `AxiomAudit.lean` automates for all the
+   headline results.)
 
 ## 📦 Project layout
 
