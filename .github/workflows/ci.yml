@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Installs elan (reads lean-toolchain), fetches the prebuilt Mathlib cache
       # (`lake exe cache get`), and runs `lake build` on the default target —
