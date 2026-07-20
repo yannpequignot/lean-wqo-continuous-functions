@@ -1,9 +1,7 @@
 # Mathlib-guideline compliance — honest assessment
 
 **Date:** 2026-07-20
-**Scope:** the **public repository** — all `.lean` files *except* `MathlibPR/` (a staging copy of
-the `BQO` library for upstreaming). Confirmed against `.publishignore`: `.tex`/`.pdf`, internal
-notes, and `MathlibPR/` are excluded from the public showcase; no Lean chapters are excluded.
+**Scope:** the **present repository**.
 **Size:** 117 `.lean` files · 49,916 lines · 1,616 declarations.
 **Build:** green — `lake build` = 3231 jobs, 0 errors, 0 warnings.
 
@@ -64,9 +62,8 @@ itself the certificate. The whole development is 0-sorry.
   mechanical items (`grind +suggestions`, `maxHeartbeats`, `autoImplicit`) are done. What remains
   (line length, proof length, `refine'`, naming) is either genuinely hard to automate safely,
   legitimately non-conforming (giant proofs that do not factor), or deliberately deferred.
-- **Scope reality:** most of this repo is a **private memoir formalization**. Only the `MathlibPR/`
-  staging area is actually headed upstream and should be held to the full bar; applying strict
-  mechanics to all ~50k lines is low ROI.
+- **Scope reality:** most of this repo is a **private memoir formalization**. Applying strict
+  mechanics to all ~50k lines is low potentially low value.
 
 ---
 

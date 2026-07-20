@@ -182,21 +182,6 @@ lake build WqoContinuousFunctions  # the main development (default target)
   Mathlib.
 - **`WqoContinuousFunctions`** — the main development, building on all three.
 
-## 🚀 Status
-
-- [x] **Core definitions** — continuous reducibility, scattered functions, and 2-BQO.
-- [x] **Main Theorems 1–3** — all three stated and **fully proved, `sorry`-free**, end to end
-  (the scattered/non-scattered dichotomy, the WQO/BQO machinery, the universality top
-  elements).
-- [x] **Centered functions (Chapter 4)** — fully formalized and `sorry`-free: the consequences
-  of the General Structure Theorem, the centered-as-pointed-gluing characterization (Thm 4.6),
-  local centeredness from 2-BQO (Thm 4.7), finiteness of centered functions (Thm 4.9), and the
-  successor classification (Cor 4.10).
-- [x] **Precise Structure (Ch. 5) & Double Successor (Ch. 6)** — the input
-  `ScatFun.levels_finitely_generated` (finite generation of each CB-rank level) is fully
-  formalized, resting on the §6.4 solvable-functions development in
-  `DoubleSuccessor/Solvable.lean`.
-
 ## 💻 Core definitions in Lean
 
 ```lean
