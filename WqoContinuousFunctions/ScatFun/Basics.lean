@@ -1,5 +1,7 @@
 import WqoContinuousFunctions.ScatFun.Defs
 
+set_option autoImplicit false
+
 /-!
 # `ScatFun` basics: disjoint unions and CB-rank of restrictions
 

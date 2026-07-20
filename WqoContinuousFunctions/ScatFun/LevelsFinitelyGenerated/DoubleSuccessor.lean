@@ -193,7 +193,7 @@ lemma block_finGl (α : Ordinal.{0}) (hα_lt : α + 1 + 1 < omega1)
       apply Ordinal.limitPart_add_natCast;
       exact Ordinal.limitPart_isLimit_or_zero α
     have hδ_lt : δ < omega1 := by
-      grind +suggestions
+      grind [omega1_add_nat]
     have hδ_rank : CBRank F'.func = δ + 1 + 1 := by
       rcases k with ( _ | _ | k ) <;> simp_all +decide [ add_assoc ];
       norm_cast
@@ -296,7 +296,7 @@ theorem Generators_doubleSuccessor_finitely_generates (α : Ordinal.{0}) (hα : 
       · rw [ ← add_assoc, ← Ordinal.eq_limitPart_add_natPart α ];
     · convert hFG using 1;
       rw [ Ordinal.eq_limitPart_add_natPart α ] ; norm_num [ add_assoc ];
-      grind +suggestions;
+      grind [Ordinal.eq_limitPart_add_natPart];
   · exact isDisjointUnion_domainOver hA U hU.2.2.1 hU.2.2.2
 
 end ScatFun

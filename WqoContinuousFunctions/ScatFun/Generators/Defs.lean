@@ -297,7 +297,7 @@ lemma isCentered_of_mem_Centered (α : Ordinal.{0}) (x : ScatFun) (hx : x ∈ Ce
     · unfold ScatFun.centBase1 at hx; split_ifs at hx <;> simp_all +decide [ Finset.mem_singleton ] ;
       · exact hx.symm ▸ minFun_isCentered 0 ‹_›;
       · rcases hx with ( rfl | rfl ) <;> [ exact minFun_isCentered _ _; exact pgl_isCentered_of_regular _ ( scatFun_const_isRegularSeq _ ) ];
-        grind +suggestions;
+        grind [minFun_func, minFun_isCentered];
     · unfold centStep at hx; simp_all +decide [ nonemptySubsets ] ;
       rcases hx with ( hx | ⟨ a, ⟨ ha₁, ha₂ ⟩, rfl ⟩ ) <;> simp_all +decide [ pglFinset ];
       apply pgl_isCentered_of_regular;
@@ -328,7 +328,7 @@ lemma Centered_add_nat_subset_succ {lam : Ordinal.{0}}
   -- We'll prove this by induction on `j`.
   induction' j with j ih;
   · unfold Centered;
-    grind +suggestions;
+    grind [Ordinal.natPart_add_natCast];
   · convert ScatFun.CentBlock_subset_succ _ _ using 1;
     convert ScatFun.Centered_lam_add_succ hlim j using 1;
     · norm_num [ add_assoc ];

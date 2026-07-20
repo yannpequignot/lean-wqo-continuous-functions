@@ -221,7 +221,7 @@ lemma ScatFun.pgl_repSeq_equiv_pglFinset_image {k : ℕ} (b : Fin k → ScatFun)
       exact fun s t a => pgl_reduces_pgl s t a
     convert h_pgl_reduces_pgl _ _ _ using 1;
     intro i j₀; use j₀; simp [hf];
-    grind +suggestions;
+    grind [mem_reduces_glList, Finset.mem_toList];
   · -- By definition of `repSeq`, every element in the image of `b` appears cofinally in `repSeq b`.
     have h_cofinal : ∀ x ∈ Finset.image b Finset.univ, ∀ j₀ : ℕ, ∃ j ≥ j₀, ScatFun.Reduces x (ScatFun.repSeq b j) := by
       intro x hx j₀
@@ -666,7 +666,7 @@ theorem ScatFun.cbRank_mem_Centered_le (β : Ordinal.{0}) (_hβ : β < omega1)
               exact ciSup_const;
             exact hG_rank.symm ▸ ih a ha;
         have hG_rank : CBRank (ScatFun.glList G.toList).func ≤ lam + (k + 1) := by
-          grind +suggestions;
+          grind [cbRank_glList_le, Finset.mem_toList];
         have hG_rank : CBRank (ScatFun.pgl (fun _ : ℕ => ScatFun.glList G.toList)).func = Order.succ (CBRank (ScatFun.glList G.toList).func) := by
           exact cbRank_pgl_const (glList G.toList);
         convert hG_rank.le.trans ( Order.succ_le_succ ‹_› ) using 1;
@@ -678,7 +678,7 @@ theorem ScatFun.cbRank_mem_Centered_le (β : Ordinal.{0}) (_hβ : β < omega1)
     convert h_ind k x _;
     · cases hlam <;> simp_all +singlePass;
     · unfold ScatFun.Centered at hx; simp +decide [ hk ] at hx;
-      grind +suggestions
+      grind [centBase1_of_limit, Ordinal.eq_limitPart_add_natPart, Ordinal.limitPart_isLimit_or_zero, ordinal_limit_nat_decomposition_unique]
 
 /-- **"Finite generation propagates one level up" for centered functions at a double successor**
 (the genuine content of Theorem 4.9 / `finitenessOfCenteredFunctions` instantiated at rank
@@ -1609,7 +1609,7 @@ lemma ScatFun.glList_reduces_glList_map (L : List ScatFun) (f : ScatFun → Scat
     (h : ∀ w ∈ L, ScatFun.Reduces w (f w)) :
     ScatFun.Reduces (ScatFun.glList L) (ScatFun.glList (L.map f)) := by
   convert ScatFun.gl_reduces_of_pointwise _ _ _ using 1;
-  grind +suggestions
+  grind [List.getElem?_eq_none, List.getElem_mem, empty_reduces]
 
 /--
 The interleaved flattening `[c,d₀,c,d₁,…]` is a permutation of `replicate |D| c ++ D`.

@@ -78,7 +78,6 @@ treeView-beta
         "📁 CBRank/"
           "📄 Helpers.lean - CB levels of blocks in pgl; zeroStream in CB levels"
           "📄 SimpleHelpers.lean - ray CB ranks, regularity lemmas"
-          "📄 RegularSimple.lean - CBrank_regular_simple (Prop 3.8)"
         "📁 MinFun/"
           "📄 Helpers.lean - basic properties of MinFun"
           "📄 LocalHelpers.lean - local conditions for MinFun"
@@ -135,7 +134,16 @@ treeView-beta
 
 ## 2. Module Dependency Graph
 
-The following diagram shows the logical import order from foundations to the main result.
+The following diagram shows the logical import order from foundations to the main result
+(a curated view of the key modules, not all 117).
+
+**Crown-path coverage.** Of the 117 project modules, **115 are transitively imported by
+`MainResults/Main`** — i.e. they are genuinely part of the proof of the main results. The
+remaining two build only because each library is globbed (`WqoContinuousFunctions.+`, etc.),
+not because Main needs them, and both in fact sit *above* the crown rather than on the path to it:
+
+* `WqoContinuousFunctions/Main.lean` — the top-level re-export umbrella (it *imports* `MainResults/Main`);
+* `WqoContinuousFunctions/AxiomAudit.lean` — the verification harness (`#assert_standard_axioms` on the five crown results).
 
 ```mermaid
 flowchart LR
@@ -153,7 +161,8 @@ flowchart LR
     SCBA --> SNS[Scattered/NonScattered]
     SCBA --> SD[Scattered/Decomposition]
 
-    BQOR[BQO/Ramsey] --> BQO2[BQO/TwoBQO]
+    MB --> BQOR[BQO/Ramsey]
+    BQOR --> BQO2[BQO/TwoBQO]
     BQO2 --> BQOO[BQO/OrdinalBQO]
 
     BQOO --> PGD[PointedGluing/Defs]
@@ -171,7 +180,6 @@ flowchart LR
 
     MF --> MFT[MinFun/Theorems]
 
-    CBR --> CBRS[CBRank/RegularSimple]
 
     BP --> BF[Basics/Functoriality]
     BP --> BGI[Basics/GluingInjection]
@@ -225,7 +233,6 @@ flowchart LR
     style MF fill:#993C1D,color:#FAECE7,stroke:#712B13
     style MFT fill:#712B13,color:#FAECE7,stroke:#4A1B0C
     style CBR fill:#993C1D,color:#FAECE7,stroke:#712B13
-    style CBRS fill:#712B13,color:#FAECE7,stroke:#4A1B0C
     style BP fill:#993556,color:#FBEAF0,stroke:#72243E
     style BF fill:#72243E,color:#FBEAF0,stroke:#4B1528
     style BGI fill:#72243E,color:#FBEAF0,stroke:#4B1528
@@ -275,7 +282,7 @@ BQO/Ramsey ──▶ BQO/TwoBQO ──▶ BQO/OrdinalBQO             │
                     │
                     ├──▶ MinFun/* ──▶ MinFun/Theorems
                     │
-                    ├──▶ CBRank/* ──▶ CBRank/RegularSimple
+                    ├──▶ CBRank/*
                     │
                     ├──▶ Basics/Properties ──▶ Basics/Functoriality
                     │         └────────────▶ Basics/GluingInjection ──▶ Basics/ContinuousOnTau
@@ -371,44 +378,87 @@ ScatFun.levels_finitely_generated  (α : Ordinal, α < ω₁)     [PROVED ✓]
         "a finite gluing FinGl B is 2-BQO; finite products of 2-BQOs are 2-BQO"
 ```
 
-### Summary: What is proved vs. open
+### Memoir ↔ Lean dictionary
 
-| Component | Status | File |
+> The **entire development is `sorry`-free** and builds green (3232 jobs); the five headline
+> results are certified to use only standard axioms by `#assert_standard_axioms` in
+> `AxiomAudit.lean`. Since nothing is open, the table below maps the memoir's numbered results
+> to their Lean declarations rather than tracking a proved/open status. Paths are relative to the
+> repository root; `WqoContinuousFunctions/` is abbreviated `Wqo/`.
+
+**Headline results** (`Wqo/MainResults/`)
+
+| Memoir statement | Lean declaration | File |
 |---|---|---|
-| Baire space topology | ✓ fully proved | `BaireSpace/Basics.lean` |
-| Core reducibility defs | ✓ fully proved | `ContinuousReducibility/Defs.lean` |
-| CB analysis (CB rank, CB derivative) | ✓ mostly proved | `Scattered/CBAnalysis.lean` |
-| `CBRank_lt_omega1` | ✓ fully proved | `Scattered/CBAnalysis.lean` |
-| Non-scattered ⟹ ℚ embeds (Thm 2.5) | ✓ fully proved | `Scattered/NonScattered.lean` |
-| Locally-simple decomposition (Lem 2.15) | ✓ fully proved | `Scattered/Decomposition.lean` |
-| First Reduction Theorem (Thm 2.12) | ✓ fully proved (CantorRat/CantorSpace models) | `MainResults/Main.lean` |
-| Gluing upper/lower bound | ✓ fully proved | `Gluing/*` |
-| Ramsey RT² and RT³ | ✓ fully proved | `BQO/Ramsey.lean` |
-| 2-BQO framework (products, lex sums) | ✓ fully proved | `BQO/TwoBQO.lean` |
-| (Ordinal, ≤•) is 2-BQO | ✓ fully proved | `BQO/OrdinalBQO.lean` |
-| Pointed gluing (pgl) machinery | ✓ fully proved | `PointedGluing/Basics/*` |
-| MinFun is minimum; MaxFun is maximum | ✓ fully proved | `PointedGluing/Min/MaxFun/*` |
-| Upper / lower bound propositions | ✓ fully proved | `PointedGluing/UpperBound/*` + `LowerBoundLemma.lean` |
-| Self-similarity of MaxFun | ✓ fully proved | `PointedGluing/SelfSimilarity.lean` |
-| **General Structure Theorem** | ✓ **fully proved** | `PointedGluing/GeneralStructure.lean` |
-| ScatFun type definitions | ✓ fully proved | `ScatFun/Defs.lean` |
-| Lift bad seq to lex sum | ✓ fully proved | `ScatFun/LiftToLex.lean` |
-| Bad seq concentrates on one level | ✓ fully proved | `ScatFun/ReflectLevel.lean` |
-| Each level / `ScatFun` is 2-BQO (given finite gen.) | ✓ fully proved | `MainResults/ScatFunBQO.lean` |
-| Finite gluing `FinGl B` is 2-BQO | ✓ fully proved | `ScatFun/FiniteGluing.lean` |
-| **`levels_finitely_generated`** (finite generation) | ✓ **proved** | `ScatFun/LevelsFinitelyGenerated/Induction.lean` |
-| **Centered functions (Chapter 4)** | ✓ **fully proved (sorry-free)** | `CenteredFunctions/*` |
-| — Thm 4.6 (centered ≡ pgl of rays) | ✓ proved | `CenteredFunctions/CenteredAsPgluing.lean` |
-| — Thm 4.7 (local centeredness from 2-BQO) | ✓ proved | `CenteredFunctions/LocallyCentered/Theorem.lean` |
-| — Thm 4.9 (finiteness) + Cor 4.10 (`centeredSuccessor`) | ✓ proved | `CenteredFunctions/Finiteness.lean` |
-| — 𝒞_{≤1} finite generation (LocallyConstantFunctions) | ✓ proved | `CenteredFunctions/FinitenessHelpers.lean` |
-| Wedge operation (memoir Def 5.1) | ✓ proved (upper/lower bounds) | `ScatFun/Wedge/*` |
-| §4.3 simple functions at λ+1 (Prop 4.11–Thm 4.12) | ✓ proved | `CenteredFunctions/SimpleSuccessor/*` |
-| Finite Generation / Precise Structure (Chapter 5) | ✓ **fully proved** | `ScatFun/LevelsFinitelyGenerated/*`, `ScatFun/Generators/*`, `ScatFun/PreciseStructure/*` |
-| Double Successor theorems (Chapter 6) | ✓ **fully proved** | `DoubleSuccessor/*`, `ScatFun/LevelsFinitelyGenerated/DoubleSuccessor.lean` |
-| **Main Theorem 3 (WQO conclusion)** | ✓ **proved** | `MainResults/ScatFunBQO.lean` |
-| **First Reduction Theorem (Thm 2.12)** | ✓ fully proved | `MainResults/Main.lean` |
-| **Whole admissible class is 2-BQO** (`ZeroDimContFun.Reduces.isTwoBQO`) | ✓ **proved** | `MainResults/Main.lean` |
+| Main Theorem 1 (WQO on the introduction's class 1) | `MainTheorem1` | `Main.lean` |
+| Main Theorem 2 (WQO on class 2) | `MainTheorem2` | `Main.lean` |
+| Main Theorem 3 (WQO on `ScatFun`) | `MainTheorem3` / `ScatFun.Reduces.isWQO` | `Main.lean` / `ScatFunBQO.lean` |
+| Thm 2.12 — First Reduction (trichotomy) | `first_reduction_theorem` | `Main.lean` |
+| Whole admissible class is 2-BQO | `ZeroDimContFun.Reduces.isTwoBQO` | `Main.lean` |
+| `ScatFun` is 2-BQO (drives Thm 3) | `ScatFun.Reduces.isTwoBQO` | `ScatFunBQO.lean` |
+| Each CB-rank level is 2-BQO | `ScatFun.Level.isTwoBQO` | `ScatFunBQO.lean` |
+
+**Chapter 2 — scattered functions & the trichotomy**
+
+| Memoir statement | Lean declaration | File |
+|---|---|---|
+| CB rank of every scattered `f` is `< ω₁` | `CBRank_lt_omega1` | `ContinuousReducibility/Scattered/CBAnalysis.lean` |
+| Thm 2.5 — non-scattered ⟹ `id_CantorRat` (resp. `id_2^ℕ`) embeds | `nonscattered_embeds_idCantorRat` / `nonscattered_embeds_idCantor` | `.../Scattered/NonScattered.lean` |
+| Lem 2.15 — locally-simple decomposition | `locally_implies_disjoint_union_baire`, `restriction_to_clopen_is_simple` | `.../Scattered/Decomposition.lean` |
+| CB rank of a clopen cover = sup of restriction ranks | `cb_rank_of_clopen_union` | `.../Scattered/Decomposition.lean` |
+| Sierpiński universality (`CantorRat` is top) | `sierpinski_universal` | `ZeroDimensionalSpaces/Universality.lean` |
+
+**Chapter 3 — pointed gluing**
+
+| Memoir statement | Lean declaration | File |
+|---|---|---|
+| Def 3.5 — `ℓ_α` / `k_{α+1}` (max/min functions) | `MaxFun` / `MinFun` | `Wqo/PointedGluing/Defs.lean` |
+| Prop 3.5 — pointed-gluing upper bound | `pointedGluing_upper_bound` | `.../UpperBound/Theorem.lean` |
+| Lem 3.13 — pointed-gluing lower bound | `pointedGluing_lower_bound_lemma` / `pointedGluing_lower_bound` | `.../LowerBoundLemma.lean` / `.../MinFun/Theorems.lean` |
+| `k_{α+1}` is the minimum at its level | `minFun_is_minimum` | `.../MinFun/Theorems.lean` |
+| Thm 3.13 — **General Structure Theorem** | `general_structure_theorem` | `.../GeneralStructure.lean` |
+
+**Chapter 4 — centered functions**
+
+| Memoir statement | Lean declaration | File |
+|---|---|---|
+| Thm 4.6 — centered ≡ `pgl` of its rays | `centered_equiv_pgl_rays` / `centeredAsPgluing_iff_monotone` | `Wqo/CenteredFunctions/CenteredAsPgluing.lean` |
+| Prop 4.4 — rigidity of the cocenter | `rigidityOfCocenter_{tau,separation,finiteGluing,reducibleByPieces}` | `.../CenteredFunctions/Theorems.lean` |
+| Thm 4.7 — local centeredness from 2-BQO | `localCenterednessFromTwoBQO_scatFun` | `.../LocallyCentered/Theorem.lean` |
+| Thm 4.9 — finiteness of centered functions | `finitenessOfCenteredFunctions` | `.../Finiteness.lean` |
+| Cor 4.10 — `centeredSuccessor` dichotomy (`λ=1` & limit) | `centeredSuccessor` | `.../Finiteness.lean` |
+| `𝒞_{≤1}` finite generation (locally-constant functions) | `cLeOne_finitely_generated` | `.../FinitenessHelpers.lean` |
+| Thm 4.11–4.13 — simple functions at `λ+1` | `SimpleSuccessor/*` | `.../CenteredFunctions/SimpleSuccessor/` |
+
+**Chapter 5 — precise structure / finite generation**
+
+| Memoir statement | Lean declaration | File |
+|---|---|---|
+| Def 5.1 — the Wedge operation | `wedge` / `wedgeDomFamily` | `Wqo/ScatFun/Wedge/Defs.lean` |
+| Wedge upper / lower bounds | `Wedge/UpperBound`, `Wedge/LowerBound` | `.../ScatFun/Wedge/` |
+| Finite generator families `𝒢_α` | `Generators` | `.../ScatFun/Generators/` |
+| **Finite generation** (each level lies in one `FinGl B`) | `levels_finitely_generated` | `.../LevelsFinitelyGenerated/Induction.lean` |
+| A finite gluing `FinGl B` is 2-BQO | `ScatFun.FinGl.isTwoBQO` | `.../ScatFun/FiniteGluing.lean` |
+
+**Chapter 6 — the double-successor case**
+
+| Memoir statement | Lean declaration | File |
+|---|---|---|
+| Vertical theorem | `verticalTheorem` | `Wqo/DoubleSuccessor/Diagonal/SecondCase/Vertical.lean` |
+| Diagonal theorem | `diagonalTheorem` | `.../DoubleSuccessor/Diagonal.lean` |
+| §6.4 — solvable functions | `finiteGenerationForSolvable` (+ `Solvable/*`) | `.../DoubleSuccessor/Solvable.lean` |
+
+**BQO framework** (`BQO/`)
+
+| Memoir statement | Lean declaration | File |
+|---|---|---|
+| Ramsey `RT²` / `RT³` for `ℕ` | `Ramsey.lean` | `BQO/Ramsey.lean` |
+| 2-BQO; closure under products & lex sums | `TwoBQO`, `TwoBQO.prod`, `TwoBQO.lexSigmaQO_reflect` | `BQO/TwoBQO.lean` |
+| `(Ordinal, ≤•)` is 2-BQO | `Ordinal.leBullet.isTwoBQO` | `BQO/OrdinalBQO.lean` |
+
+*Reduction plumbing:* `ScatFun.bad_restricts_to_level` (`ScatFun/ReflectLevel.lean`) concentrates a
+bad sequence on one CB-rank level; `ScatFun.liftToLex_bad` (`ScatFun/LiftToLex.lean`) transports it
+into the lex sum. Together with finite generation (Ch 5–6) these close Main Theorem 3.
 
 ---
 
@@ -503,8 +553,9 @@ The last three chapters of the memoir supply this result:
      uses the finite generation of `𝒞_{≤1}` (`cLeOne_finitely_generated`, the memoir's
      `LocallyConstantFunctions`).
    - The §4.3 simple-function classification (Thm 4.11–4.13) is formalized in
-     `CenteredFunctions/SimpleSuccessor/*`. The optional strict separation `k_{λ+1} < pgl ℓ_λ`
-     is kept commented out (not needed for finite generation).
+     `CenteredFunctions/SimpleSuccessor/*`. The strict separation `k_{λ+1} < pgl ℓ_λ` for `λ` a
+     nonzero limit is proved as `pglMaxFun_not_le_minFunPlusOne_limit` in
+     `ScatFun/PreciseStructure/Strictness.lean` (not needed for finite generation, but available).
 
 2. **Precise Structure Theorem** (Chapter 5, ✓ **fully proved**): the Wedge operation
    `ScatFun/Wedge/*`, the finite generator families `ScatFun/Generators/*`, the ScatFun-level

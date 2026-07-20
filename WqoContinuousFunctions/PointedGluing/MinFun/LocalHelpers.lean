@@ -226,13 +226,13 @@ lemma decompose_at_point
   obtain ⟨W₁, hW₁_clopen, hpW₁, hW₁⟩ : ∃ W₁ : Set (ℕ → ℕ), IsClopen W₁ ∧ p.val ∈ W₁ ∧ SimpleFun (f ∘ (Subtype.val : {a : A | a.val ∈ W₁} → A)) ∧ CBLevel f (Order.succ γ) ∩ (Subtype.val ⁻¹' W₁ : Set A) = ∅ ∧ ∃ c : ℕ → ℕ, ∀ a ∈ (Subtype.val ⁻¹' W₁ : Set A) ∩ CBLevel f γ, f a = c := by
     obtain ⟨U, hU⟩ : ∃ U : Set (ℕ → ℕ), IsOpen U ∧ p.val ∈ U ∧ CBLevel f (Order.succ γ) ∩ (Subtype.val ⁻¹' U : Set A) = ∅ ∧ ∃ c : ℕ → ℕ, ∀ a ∈ (Subtype.val ⁻¹' U : Set A) ∩ CBLevel f γ, f a = c := by
       have h_isolated : p ∈ isolatedLocus f (CBLevel f γ) := by
-        grind +suggestions
+        grind [CBLevel_succ']
       obtain ⟨U, hU₁, hU₂, hU₃, hU₄⟩ := isolatedLocus_gives_simple_neighborhood γ p h_isolated
       obtain ⟨V, hV₁, hV₂⟩ := hU₁; use V; aesop
     obtain ⟨W₁, hW₁_clopen, hpW₁⟩ : ∃ W₁ : Set (ℕ → ℕ), IsClopen W₁ ∧ p.val ∈ W₁ ∧ W₁ ⊆ U := by
       have := baire_exists_clopen_subset_of_open p.val U hU.1 hU.2.1; aesop
     refine ⟨W₁, hW₁_clopen, hpW₁.1, ?_, ?_, ?_⟩
-    · grind +suggestions
+    · grind [simple_restrict_clopen]
     · exact Set.eq_empty_of_forall_notMem fun x hx => hU.2.2.1.subset ⟨hx.1, hpW₁.2 hx.2⟩
     · exact ⟨hU.2.2.2.choose, fun a ha => hU.2.2.2.choose_spec a ⟨hpW₁.2 ha.1, ha.2⟩⟩
   have h_open : IsOpen {a : A | f a N ≠ y N} := by

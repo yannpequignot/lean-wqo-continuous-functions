@@ -24,6 +24,8 @@ via `Nat.nth`. Currently only used by `case_N1_finite_nonempty_subcase_b_two`
 
 open Set Function
 
+set_option autoImplicit false
+
 /-- Basic neighborhoods shrink as the prefix length grows. -/
 lemma nbhd_antitone {x : Baire} {k K : ℕ} (hkK : k ≤ K) :
     nbhd x K ⊆ nbhd x k := by

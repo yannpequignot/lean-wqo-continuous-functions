@@ -699,7 +699,7 @@ theorem refiningBy1_Ppart_equiv
   rotate_right;
   exact F.restrict P;
   · constructor;
-    · grind +suggestions;
+    · grind [restrict_reduces_of_subset];
     · obtain ⟨c, hc⟩ : ∃ c : ↑(F.restrict P).domain, (F.restrict P).func c = y ∧ IsCenterFor (F.restrict P).func c := by
         have hcent : IsCentered (F.restrict P).func := hA.centered P Q
         refine ⟨hcent.choose, ?_, hcent.choose_spec⟩
@@ -793,7 +793,7 @@ lemma cPartition_restrict_transport (F : ScatFun) (A0 : Set ↑F.domain) (hA0 : 
           aesop;
         have h_equiv : p = {w : ↑(F.restrict A0).domain | (F.restrictEquiv A0 w : ↑F.domain) ∈ Subtype.val '' (F.restrictEquiv A0 '' p)} := by
           exact Set.ext fun x => h_equiv x;
-        grind +suggestions;
+        grind [equiv_restrict_restrict_of_subset];
       exact isCentered_of_equiv ( hPart0.centered p hp ) h_equiv.symm;
     · have h_subset : Subtype.val '' (F.restrictEquiv A0 '' p) ⊆ A0 := by
         grind +revert;
@@ -1270,12 +1270,12 @@ lemma refiningBy1_reassemble_new_lump_rank
             have hR_equiv_g' : (F.restrict R).Equiv g' := by
               exact hR_equiv
             have hR_equiv_g_g' : g.Equiv g' := by
-              grind +suggestions
+              grind [ScatFun.Equiv.symm, ScatFun.Equiv.trans]
             have hR_cocenter_y : y' = y := by
               have hR_cocenter_y : cocenter (F.restrict R).func (hA'.centered R hRPart) = y := by
                 convert refiningBy1_Ppart_cocenter hA hU hyU hP _ using 1;
                 grind +qlia;
-                grind +suggestions;
+                grind [ScatFun.IsCPartition.centered];
               convert hR_cocenter_y using 1;
               convert hR_cocenter.symm using 1
             have hR_not_lump : ¬ hA'.IsLump g y := by
@@ -1664,7 +1664,7 @@ lemma pgl_const_block_reduces_coRestrict
     · exact fun x hx => Set.mem_univ _;
   · intro z
     simp only [ScatFun.coRestrict];
-    grind +suggestions;
+    grind [restrict_func_eq, stripZerosOne_prependZerosOne];
   · fun_prop
 
 /-
@@ -2758,7 +2758,7 @@ no small piece (`∈ S`, rank `< λ`) realises `g`; and `D` realises `(g,y)` iff
 (`F↾D ≡ F↾P`, same cocenter). Hence the `𝒫'`-block equals the `hA`-block (`= V`) if `P` is not
 in the `hA`-block, or `V` with `P` swapped for `D = P ∪ U` (so `V ∪ U`) if it is.
 -/
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 800000 in
 lemma gobble_blockPieces_sUnion_eq {F : ScatFun} {Part Part' : Set (Set ↑F.domain)}
     (hA : F.IsCPartition Part) {lam : Ordinal.{0}}
     (P U D : Set ↑F.domain) (S B : Set (Set ↑F.domain))
@@ -2784,7 +2784,7 @@ lemma gobble_blockPieces_sUnion_eq {F : ScatFun} {Part Part' : Set (Set ↑F.dom
           exact ⟨ hDequivP.1.trans hP.1.1, hP.1.2.trans hDequivP.2 ⟩;
           · exact hA.centered P hPPart;
           · grobner;
-        · grind +suggestions;
+        · grind [cbRank_eq_of_equiv];
     have hPU : P ∪ ⋃₀ (hA.blockPieces g y \ {P}) = ⋃₀ hA.blockPieces g y := by
       rw [← Set.sUnion_insert, Set.insert_diff_singleton, Set.insert_eq_of_mem hP]
     rw [h_blockPieces_eq, Set.sUnion_insert, hD, Set.union_right_comm, hPU]

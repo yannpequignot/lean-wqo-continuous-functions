@@ -187,9 +187,9 @@ lemma firstNonzero_eventuallyEq (w : Baire) (h : w ≠ zeroStream) :
     exact ⟨ Finset.Iic ( firstNonzero w ), Finset.finite_toSet _, fun k => { w k }, fun k => by simp +decide, fun x hx k hk => by simpa using hx k ( Finset.mem_Iic.mpr hk ) ⟩;
   · intro x hx; unfold firstNonzero; simp +decide;
     split_ifs <;> simp_all +decide [ Nat.find_eq_iff ];
-    · grind +suggestions;
+    · grind [firstNonzero_val_ne, Nat.find_le];
     · exact h ( funext ‹_› );
-    · grind +suggestions
+    · grind [firstNonzero_val_ne]
 
 /-- **Canonical reduction into the gluing of rays.**  A `ScatFun` `G` restricted to a
 set `S` continuously reduces to the pointed gluing of its rays at `y` taken on a
@@ -231,8 +231,8 @@ lemma pgl_reduces_of_rays (G : ScatFun) (y : Baire) (S T : Set ↑G.domain) (j :
       · refine' Continuous.continuousWithinAt _;
         exact continuous_pi fun _ => continuous_apply _;
   · intro a ha hb; split_ifs <;> simp_all +decide [ raySigma0_func ] ;
-    · grind +suggestions;
-    · grind +suggestions
+    · grind [prependZerosOne_ne_zeroStream];
+    · grind [firstNonzero_prependZerosOne, stripZerosOne_prependZerosOne]
 
 /-- **Rays as upper bound (`ScatFun` form).**  Every `ScatFun` `G` continuously reduces
 to the pointed gluing of *all* its rays at any base point `y`.  This is the constructive
@@ -306,7 +306,7 @@ lemma glWindow_reduces_of_subset (R : ℕ → ScatFun) {m M m' M' : ℕ}
     · exact continuousOn_id;
     · unfold glWindow ScatFun.gl;
       unfold GluingSet GluingFunVal ScatFun.glBlock; simp +decide ;
-      grind +suggestions
+      grind [glWindow_val0_mem]
 
 /-
 **Flattening of disjoint sub-windows.**  If `kof : ℕ → ℕ` inverts the sub-window

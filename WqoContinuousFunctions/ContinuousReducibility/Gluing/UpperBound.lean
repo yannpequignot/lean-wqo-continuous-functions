@@ -334,7 +334,7 @@ theorem disjoint_union_reduces_gluing
     · exact Continuous.continuousOn (by continuity)
     · unfold prepend unprepend; aesop
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 600000 in
 /-- Clopen partition combining: if each piece reduces to `Subtype.val` on `B`,
     then `f` reduces to `Subtype.val` on `GluingSet(fun _ => B)`. -/
 lemma clopen_partition_to_gluing_reduces
@@ -352,7 +352,7 @@ lemma clopen_partition_to_gluing_reduces
   obtain ⟨σ', hσ'⟩ : ∃ σ' : A → ℕ → ℕ, Continuous σ' ∧ ∀ x : A, σ' x = prepend (partitionIndex P hP_cover x) (σ (partitionIndex P hP_cover x) ⟨x, partitionIndex_mem P hP_cover x⟩).val := by
     have h_cont : Continuous (fun x : A => partitionIndex P hP_cover x) := by
       convert partitionIndex_locallyConstant P hP_clopen hP_disj hP_cover using 1
-      grind +suggestions
+      grind [IsLocallyConstant.iff_continuous]
     have h_cont : ∀ i, Continuous (fun x : P i => prepend i (σ i x).val) := by
       intro i; specialize hσ i; exact (by
       exact Continuous.comp (show Continuous fun x : ℕ → ℕ => prepend i x from by exact continuous_pi fun n => by cases n <;> continuity) (show Continuous fun x : P i => (σ i x : ℕ → ℕ) from by exact Continuous.comp (show Continuous fun x : B => (x : ℕ → ℕ) from by continuity) hσ.1))

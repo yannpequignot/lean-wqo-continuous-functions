@@ -107,7 +107,7 @@ private lemma exists_injection_above_targets (η : Ordinal.{0}) (hη : η < omeg
       · exact Nat.find_spec (h_infinite _ |> Set.Infinite.exists_gt <| _) |>.1
   · unfold cofinalSeq; aesop
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 600000 in
 /-- Core inequality: `MaxFun(η + n) ≤ MinFun(η + 2n)`, by well-founded induction on `η`
     and regular induction on `n`. -/
 private lemma MaxFun_le_MinFun : ∀ (η : Ordinal.{0}), η < omega1 →
@@ -190,7 +190,6 @@ private lemma MaxFun_le_MinFun : ∀ (η : Ordinal.{0}), η < omega1 →
       -- goal closes structurally in milliseconds.
       with_reducible exact MaxFun_le_MinFun_succ (η + ↑n) (η + 2 * ↑n) ih
 
-set_option maxHeartbeats 8000000 in
 /- Tree argument: MaxFun(η) ≤ g for limit η with CBRank g = η.
 PROVIDED SOLUTION
 We are going to find a sequence '(s_n)_{n\in\N}' in $\N^{<\N}$ of finite sequences
@@ -274,7 +273,7 @@ lemma MaxFun_le_limit_rank (η : Ordinal.{0}) (hη : η < omega1)
     exact hmax_min.trans hmin_g
   exact gluing_via_codomain_partition η hη hlam B g hgc C hC_clopen hC_disj p hp_inj hred
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 2000000 in
 /-- **Theorem (JSLgeneralstructure). General Structure Theorem.** -/
 theorem general_structure_theorem
     (A B : Set Baire)

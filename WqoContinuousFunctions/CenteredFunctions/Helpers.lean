@@ -155,7 +155,7 @@ lemma center_in_CBLevel {A B : Type*}
       intro h
       obtain ⟨U, hU_open, hxU, hU_const⟩ := h
       have h_const : ∀ a ∈ CBLevel f β, f a = f x := by
-        grind +suggestions
+        grind [center_const_on_CBLevel]
       have h_empty : CBLevel f (Order.succ β) = ∅ := by
         have h_empty : isolatedLocus f (CBLevel f β) = CBLevel f β := by
           ext y; simp [isolatedLocus];
@@ -164,7 +164,7 @@ lemma center_in_CBLevel {A B : Type*}
       exact hne.ne_empty h_empty;
     have h_nonempty : (CBLevel f β).Nonempty := by
       exact hne.mono ( CBLevel_antitone f ( Order.le_succ β ) );
-    grind +suggestions;
+    grind [CBLevel_succ'];
   · rename_i o ho ih;
     have h_inter : ∀ o' < o, x ∈ CBLevel f o' := by
       intro o' ho';
@@ -369,7 +369,7 @@ lemma isCentered_of_homeomorph {X X' Y : Type*}
   · refine ⟨ hσ, ?_, ?_ ⟩;
     · refine hτ.mono ?_;
       rintro _ ⟨ x, rfl ⟩ ; simp +decide [ h ] ;
-    · grind +suggestions
+    · grind [Homeomorph.apply_symm_apply]
 
 /-
 IsCentered transfers from nested subtypes to flat intersection subtype.
@@ -691,7 +691,7 @@ lemma maxFun_cbLevel_self_empty (lam : Ordinal.{0}) (hlam : lam < omega1) :
             apply (maxfun_is_scatter_leq_α (enumBelow lam i) h_enum_lt_omega1).2 lam h_enum_lt
           exact h_cbLevel_empty;
       unfold MaxFun;
-      grind +suggestions
+      grind [MaxDom_limit]
 
 open ScatFun in
 /-- `pgl(ℓ_β) = SuccMaxFun β` is the `0`-th block of `ℓ_{β+1} = MaxFun (β+1)`, hence
@@ -778,11 +778,9 @@ lemma minFun_le_pglMaxFun (lam : Ordinal.{0}) (hlam : lam < omega1) (hlam_ne : l
   minFun_is_minimum lam hlam (SuccMaxDom lam) (SuccMaxFun lam) continuous_subtype_val
     (succMaxFun_scattered lam hlam) (pglMaxFun_cbLevel_lam_nonempty lam hlam hlam_ne)
 
--- NB: the two conclusion lemmas of Corollary 4.10 — `pglMaxFun_not_le_minFunPlusOne`
--- (strict non-reduction) and `minFun_lt_pglMaxFun` (the packaged strict inequality) —
--- live in `CenteredFunctions/Theorems.lean`, not here: their proof needs the
--- cocenter-rigidity results of Proposition 4.4 (`rigidityOfCocenter_*`), which are
--- defined there.  All the supporting facts above (`maxFun_cbRank_eq`,
--- `minFun_le_pglMaxFun`, …) are imported by that file.
+-- NB: this is the easy direction of Corollary 4.10.  The strict non-reduction
+-- `pglMaxFun_not_le_minFunPlusOne_limit` (for `lam` a nonzero limit) lives in
+-- `ScatFun/PreciseStructure/Strictness.lean`, where the cocenter-rigidity results of
+-- Proposition 4.4 it depends on are available.
 
 end

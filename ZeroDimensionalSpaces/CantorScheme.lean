@@ -121,7 +121,7 @@ lemma res_extends_prefix (x : CantorEventuallyZero) (n : ℕ)
     PiNat.res x.val n = List.replicate (n - @Nat.find _ (Classical.decPred _) x.prop) 0 ++ cantorRatPrefix x := by
   induction' n with n ih
   · unfold cantorRatPrefix
-    grind +suggestions
+    grind [PiNat.res_zero]
   · by_cases h : n ≥ Nat.find x.prop
     · rw [Nat.succ_sub h, PiNat.res]
       grind
@@ -163,7 +163,7 @@ lemma cantor_sigma_injective {X : Type*} [MetricSpace X]
         exact le_max_of_le_right (by rw [cantorRatPrefix_length]))
     have := @scheme_disjoint_of_ne X _ c r hr_pos hball hdisj (PiNat.res x.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length)) (PiNat.res y.val (max (cantorRatPrefix x).length (cantorRatPrefix y).length)) ; simp_all +decide
   refine Subtype.ext ?_
-  grind +suggestions
+  grind [cantorRatPrefix_length, PiNat.res_eq_res, PiNat.res.eq_def, res_extends_prefix, cantorRat_zero_beyond]
 
 /--
 σ(x) is always in the closed ball at any truncation level n.
@@ -192,7 +192,6 @@ lemma sigma_in_closedBall_res {X : Type*} [MetricSpace X]
     simp +decide only [h_center_eq, Metric.mem_closedBall, dist_self, ge_iff_le]
     exact le_of_lt (hr_pos _)
 
-set_option maxHeartbeats 8000000 in
 /--
 The σ map is continuous from CantorRat to X.
 -/
@@ -237,7 +236,7 @@ lemma cantor_sigma_continuous {X : Type*} [MetricSpace X]
   rfl)) (by
   exact fun y hy => h_cont y hy)
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 600000 in
 /--
 The embedding property of σ : CantorRat → X.
 Given a Cantor scheme with the standard properties, the map
@@ -313,8 +312,8 @@ lemma cantor_sigma_isEmbedding {X : Type*}
           exact Disjoint.symm (hdisj l)
         generalize_proofs at *; (
         convert h_disjoint (PiNat.res (y.val) k) (y.val k) (x.val k) _ using 1 <;> simp_all +decide [PiNat.res]
-        · grind +suggestions
-        · grind +suggestions)
+        · grind [PiNat.res_eq_res]
+        · grind [PiNat.res_eq_res])
       generalize_proofs at *; (
       exact h_disjoint.le_bot ⟨h_closedBall_y, h_closedBall⟩))))
   have h_embedding : ∀ x : CantorEventuallyZero, ∀ U ∈ nhds x, ∃ V ∈ nhds (c (cantorRatPrefix x)), ∀ y : CantorEventuallyZero, c (cantorRatPrefix y) ∈ V → y ∈ U := by
@@ -370,9 +369,9 @@ lemma g_sigma_in_U {X Y : Type*} [MetricSpace X] [TopologicalSpace Y]
       · exact hr_pos
       · exact hc_zero
       · exact hball
-    grind +suggestions
+    grind [PiNat.res_succ]
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 800000 in
 /-- The embedding property of `g ∘ σ : CantorRat → Y`. -/
 lemma cantor_g_sigma_isEmbedding {X Y : Type*}
     [MetricSpace X] [TopologicalSpace Y] [T2Space Y]
@@ -445,7 +444,7 @@ lemma cantor_g_sigma_isEmbedding {X Y : Type*}
         -- Since $y \notin s$, there exists some $k < n$ such that $y.val k \neq x.val k$.
         obtain ⟨k, hk₁, hk₂⟩ : ∃ k < n, y.val k ≠ x.val k ∧ ∀ j < k, y.val j = x.val j := by
           have h_exists_k : ∃ k < n, y.val k ≠ x.val k := by
-            grind +suggestions
+            grind [PiNat.res_eq_res]
           exact ⟨Nat.find h_exists_k, Nat.find_spec h_exists_k |>.1, Nat.find_spec h_exists_k |>.2, fun j hj => Classical.not_not.1 fun h => Nat.find_min h_exists_k hj ⟨by linarith [Nat.find_spec h_exists_k |>.1], h⟩⟩
         refine ⟨k, hk₁, ?_⟩
         have h_g_sigma_in_U : g (c (cantorRatPrefix y)) ∈ U (PiNat.res y.val (k + 1)) := by
@@ -457,7 +456,7 @@ lemma cantor_g_sigma_isEmbedding {X Y : Type*}
             · exact fun x hx => hU_img.1 x hx
             · exact fun x hx => hU_img.2 x <| by simpa using hx
         have h_g_sigma_in_U : PiNat.res y.val (k + 1) = y.val k :: PiNat.res x.val k := by
-          grind +suggestions
+          grind [PiNat.res_succ, PiNat.res_eq_res]
         cases Fin.exists_fin_two.mp ⟨y.val k, rfl⟩ <;> cases Fin.exists_fin_two.mp ⟨x.val k, rfl⟩ <;> simp_all +decide [Set.disjoint_left]
         exact fun h => hU_disj _ h ‹_›
   · exact h_injective

@@ -124,6 +124,9 @@ lemma Gl_subfamily_mem {m : ℕ} (B : Fin m → ScatFun) (mult : Fin m → ℕ)
         rw [ ← Finset.sum_subset ( Finset.subset_univ ( Finset.image ι Finset.univ ) ) ];
         · rw [ Finset.sum_image <| by tauto ];
         · grind;
+      -- Kept as `+suggestions`: this counting subgoal needs library lemmas the suggestion
+      -- engine finds but `grind?` does not surface as an explicit, reproducible set (the two
+      -- names it reports are already `@[grind =]`; the real hints are anonymous local hyps).
       grind +suggestions;
     · rw [ List.sum_eq_zero, List.sum_eq_zero ] <;> simp_all +decide [ Function.comp, List.count_replicate ];
       exact fun f hf => Classical.not_not.1 fun h => by obtain ⟨ y, rfl ⟩ := hsupp f h; exact ha y hf;
@@ -484,7 +487,7 @@ lemma Gl_genLeOne_func_eq (N : ℕ) (x : ↥(ScatFun.Gl genLeOne ![N, 0]).domain
       simp_all +decide [ ScatFun.copiesList ];
       simp_all +decide [ List.finRange, List.flatMap ];
       exact minFun_zero_domain.subset hi.2;
-    grind +suggestions;
+    grind [prepend_unprepend, Gl_genLeOne_func_prepend];
   · have h_empty_domain : (ScatFun.empty : ScatFun).domain = ∅ := rfl
     cases i <;> simp_all +decide [ ScatFun.copiesList ];
     cases ‹ℕ› <;> simp_all +decide [ List.finRange ]
@@ -545,7 +548,7 @@ lemma glCopies_reduces_of_enum (F : ScatFun) (N : ℕ)
     · intro x;
       convert Gl_genLeOne_func_eq N x |>.2.2 using 1;
       simp +decide only [hrep, exists_apply_eq_apply, ↓reduceDIte];
-      grind +suggestions
+      grind
 
 /-- **Gap 2 — finite image → gluing.**  A (continuous) scattered function with finite
 image is `≡` to a finite gluing of copies of the point `k₁`, hence lies in

@@ -24,6 +24,8 @@ import WqoContinuousFunctions.MainResults.ScatFunBQO
 import WqoContinuousFunctions.CenteredFunctions.LocallyCentered.Theorem
 import WqoContinuousFunctions.CenteredFunctions.Finiteness
 
+set_option autoImplicit false
+
 open Lean Elab Command in
 /-- `#assert_standard_axioms foo` fails the build unless every axiom reachable from `foo`'s
 proof is one of the three standard classical axioms `propext`, `Classical.choice`,

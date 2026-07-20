@@ -94,7 +94,7 @@ theorem locally_constant_infinite_image_forward {X Y : Type*}
   exact fun x => g.symm ⟨f x, Set.mem_range_self x⟩
   swap
   exact fun n => (g n).val
-  · grind +suggestions
+  · grind [IsLocallyConstant.continuous, IsLocallyConstant.iff_isOpen_fiber_apply, IsLocallyConstant.iff_eventually_eq, IsLocallyConstant.iff_exists_open, IsLocallyConstant.iff_isOpen_fiber, IsLocallyConstant.of_constant]
   · simp +decide [continuousOn_iff_continuous_restrict]
     exact continuous_of_discreteTopology
 

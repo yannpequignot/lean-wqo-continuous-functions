@@ -34,7 +34,7 @@ lemma gluedSigma_continuous {A A' : ℕ → Set Baire}
         s ⟨prepend i a.val, mem_gluingSet_prepend a.prop⟩
           = ⟨prepend i (k i a).val, mem_gluingSet_prepend (k i a).prop⟩ := by
   refine ⟨fun x => ⟨GluingFunVal A A' k x, ?_⟩, ?_, ?_⟩
-  · unfold GluingFunVal; grind +suggestions
+  · unfold GluingFunVal; grind [mem_gluingSet_prepend]
   · exact (gluingFunVal_preserves_continuity A A' k hk).subtype_mk _
   · intro i a; unfold GluingFunVal; aesop
 
@@ -76,7 +76,7 @@ theorem gl_reduces_of_pointwise (F G : ℕ → ScatFun)
     exact mem_gluingSet_prepend ( σ _ ⟨ _, ‹_› ⟩ ).2 ⟩
   all_goals generalize_proofs at *;
   · convert ScatFun.gluedSigma_continuous ( fun i => σ i ) hσ |> Classical.choose_spec |> And.left using 1;
-    grind +suggestions;
+    grind [prepend_unprepend];
   · refine ⟨ fun y => prepend ( y 0 ) ( τ ( y 0 ) ( unprepend y ) ), ?_, ?_ ⟩;
     · refine gluedTau_continuousOn ?_ ?_ ?_;
       intro i;

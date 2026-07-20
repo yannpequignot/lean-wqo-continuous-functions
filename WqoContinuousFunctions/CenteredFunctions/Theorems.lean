@@ -43,10 +43,9 @@ memoir on continuous reducibility between functions.
   limit CB-rank `lam` is `≡ ℓ_lam` (used to feed Corollary 4.10).
 
 ### Corollary 4.10 (centeredSuccessor)
-* `pglMaxFun_not_le_minFunPlusOne` / `minFun_lt_pglMaxFun` — the strict-inequality
-  part (`k_{lam+1} < pgl ℓ_lam`); **commented out below** (see the block comment near the
-  end of this file). The hard direction (`pgl ℓ_lam ⊄ k_{lam+1}`) needs the cocenter-rigidity
-  results of Proposition 4.4 and is delegated to aristotle; this file stays complete.
+* The strict-inequality part (`k_{lam+1} < pgl ℓ_lam`) for `lam` a nonzero limit is proved in
+  `ScatFun/PreciseStructure/Strictness.lean` (`pglMaxFun_not_le_minFunPlusOne_limit`, paired with
+  the easy direction `minFun_le_pglMaxFun` in `Helpers.lean`).
 * The dichotomy part of Corollary 4.10 (`centeredSuccessor`: a centered function of
   rank `lam + 1` is `≡ k_{lam+1}` or `≡ pgl ℓ_lam`) lives in
   `CenteredFunctions/Finiteness.lean` (it consumes Theorem 4.9), and is proved there
@@ -748,7 +747,7 @@ lemma cbRank_rayFun_pgl (s : ℕ → ScatFun) (n : ℕ) :
             exact ⟨ ⟨ w, by aesop ⟩, by aesop ⟩)))
           generalize_proofs at *; (
           obtain ⟨ w, rfl ⟩ := h_block; simp +decide [ ScatFun.pgl_func_block ] ;
-          grind +suggestions))
+          grind [stripZerosOne_prependZerosOne]))
     generalize_proofs at *; (
     apply_rules [ ContinuouslyReduces.rank_monotone ];
     · have h_ray_scattered : ScatteredFun (ScatFun.pgl s).func := by
@@ -769,7 +768,7 @@ lemma cbRank_rayFun_pgl (s : ℕ → ScatFun) (n : ℕ) :
         refine' Continuous.subtype_mk _ _;
         exact continuous_prependZerosOne n |> Continuous.comp <| continuous_subtype_val;
       · exact Continuous.continuousOn ( continuous_stripZerosOne n );
-      · grind +suggestions;
+      · grind [ScatFun.pgl_func_block, stripZerosOne_prependZerosOne];
     apply_rules [ ContinuouslyReduces.rank_monotone ];
     · exact ( s n ).hScat;
     · have h_scattered : ScatteredFun (ScatFun.pgl s).func := by
@@ -1082,71 +1081,4 @@ theorem consequencesGeneralStructure_pgl_le_minFun
   exact ContinuouslyReduces.trans step1
     (ConseqMinFunAux.minFun_limit_equiv_pgl lam hlam_lt hlim hne).2
 
-/-!
-### Corollary 4.10 (centeredSuccessor) — strict inequality
-
-The strict-inequality lemmas `pglMaxFun_not_le_minFunPlusOne` and `minFun_lt_pglMaxFun`
-are **commented out below**.  They are not needed for the main results, and the hard
-direction (`pgl ℓ_lam ⊄ k_{lam+1}`) is still open — delegated to aristotle (see the
-spec in the commented docstring).  They are kept here, fully stated and documented,
-ready to be reinstated once that direction is proved; meanwhile this file stays
-complete.
-
-The easy direction `k_{lam+1} ≤ pgl(ℓ_lam)` remains available as `minFun_le_pglMaxFun`
-in `Helpers.lean`.
--/
-
-/-
-open ScatFun in
-/-- `pgl(ℓ_lam)` does not reduce to `k_{lam+1} + 1` (the strictness of the inequality
-in Corollary 4.10).
-
-This is the genuinely hard direction.  Both `pgl(ℓ_lam)` and `k_{lam+1}` are centered,
-scattered and *simple* of CB-rank `lam + 1` (their top CB-level is the singleton
-`{0^ω}`), so the CB-rank alone cannot separate them: the obstruction is finer and is
-exactly the content of the cocenter-rigidity results of Proposition 4.4
-(`rigidityOfCocenter_*`, above).  Following the informal proof (`cor:CenteredSucessor`),
-equivalence would force, via `rigidityOfCocenter_reducibleByPieces`, a reduction
-`ℓ_lam ≤ gl_{n<M} k_{α_n+1}` for some finite `M`, whence
-`CBRank ℓ_lam = lam ≤ sup_{n<M} (α_n+1) < lam`, a contradiction.
-
-The supporting rigidity results are now available: `rigidityOfCocenter_finiteGluing`
-(Item 3) and `rigidityOfCocenter_reducibleByPieces` (Item 4) are both proved (over
-`ScatFun`).  What remains here is to instantiate them at `F := pgl(ℓ_lam)`
-(`succMaxFun lam`, centered by `pglSuccMaxFun_isCentered`) and `G := k_{lam+1}`
-(`minFun lam`, centered by `minFun_isCentered`), feed the reducibility-by-pieces to
-bound `CBRank ℓ_lam = lam` by `sup_{n<M}(α_n+1) < lam`, and derive the contradiction.
-
-The structural plumbing exists; the missing analytic
-infrastructure to be supplied is:
-* CB-rank of the rigidity-rays of `pgl(ℓ_lam)` (`= lam`) and of `k_{lam+1}`
-  (the `n`-th ray `≡ k_{α_n+1}`, of rank `α_n + 1`);
-* CB-rank of a *finite* gluing `= ` the finite `sup` of the block ranks;
-* a finite `sup` of ordinals each `< lam` is `< lam` for `lam` a limit;
-* the separate `lam = 1` base case (`ℓ_1 = id_ℕ ≤ n · id_1 = n · k_1`, a
-  contradiction via `Rigidityofthecocenter`).
-The easy direction `k_{lam+1} ≤ pgl(ℓ_lam)` is already proved as `minFun_le_pglMaxFun`
-(`Helpers.lean`) and packaged with this lemma in `minFun_lt_pglMaxFun`. -/
-lemma pglMaxFun_not_le_minFunPlusOne (lam : Ordinal.{0})
-    (hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
-    (hlam_lt : lam < omega1) :
-    ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam) := by
-  sorry
-
-open ScatFun in
-/-- k_{λ+1} and pgl(ℓ_λ) are not equivalent (strict inequality): `k_{lam+1} ≤ pgl ℓ_lam`
-(the existing `minFun_le_pglMaxFun` in `Helpers.lean`) but not conversely
-(`pglMaxFun_not_le_minFunPlusOne`). -/
-lemma minFun_lt_pglMaxFun (lam : Ordinal.{0})
-    (hlam : lam = 1 ∨ (Order.IsSuccLimit lam ∧ lam ≠ 0))
-    (hlam_lt : lam < omega1) :
-      ContinuouslyReduces (MinFun lam) (SuccMaxFun lam) ∧
-      ¬ ContinuouslyReduces (SuccMaxFun lam) (MinFun lam) := by
-  have hlam_ne : lam ≠ 0 := by
-    rcases hlam with h | ⟨_, h⟩
-    · rw [h]; exact one_ne_zero
-    · exact h
-  exact ⟨minFun_le_pglMaxFun lam hlam_lt hlam_ne,
-    pglMaxFun_not_le_minFunPlusOne lam hlam hlam_lt⟩
--/
 end

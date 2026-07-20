@@ -377,7 +377,7 @@ lemma block_classified (h : (1 : Ordinal.{0}) < omega1) (F : ScatFun) (A : ℕ �
 -/
 lemma minFun_one_equiv_pgl_minFun_zero (h : (1 : Ordinal.{0}) < omega1) :
     Equiv (minFun 1 h) (pgl (fun _ => minFun 0 zero_lt_omega1)) := by
-  grind +suggestions
+  grind [pgl_const_minFun_zero_equiv_minFun_one, Equiv.symm]
 
 /-
 `ω(k₁) ≤ pgl(k₁)`: the plain gluing of countably many copies of `k₁` reduces into the
@@ -588,7 +588,7 @@ lemma reduces_F_omega_minFun_one (h : (1 : Ordinal.{0}) < omega1) (F : ScatFun)
     · exact maxFun_one_reduces_minFun_one h;
     · simp +decide [ copiesList ];
       simp +decide only [List.finRange, List.ofFn_succ, Fin.isValue, Fin.succ_zero_eq_one, List.ofFn_zero, List.flatMap_cons, Matrix.cons_val_zero, List.replicate_one, Matrix.cons_val_one, Matrix.cons_val_fin_one, List.flatMap_nil, List.append_nil, List.cons_append, List.nil_append, List.length_cons, List.length_nil, zero_add, Nat.reduceAdd, not_lt, le_add_iff_nonneg_left, zero_le, getElem?_neg, Option.getD_none];
-      grind +suggestions;
+      grind [empty_reduces];
   -- By `omega_reduces_of_reduces`, we get `omega (minFun 1 h ⊕ maxFun 1 h) ≤ omega (minFun 1 h ⊕ minFun 1 h)`.
   have h_omega_minFun1_maxFun1_le_omega_minFun1_minFun1 : (ScatFun.omega (minFun 1 h ⊕ maxFun 1 h)).Reduces (ScatFun.omega (minFun 1 h ⊕ minFun 1 h)) := by
     apply gl_reduces_of_pointwise;
@@ -999,7 +999,7 @@ theorem case_N1_finite_nonempty_subcase_a_two (h : (1 : Ordinal.{0}) < omega1)
     exact ⟨h_upper, h_lower''⟩;
   apply finGl_closed_equiv (B := (Generators 2).toFinFun) (hf := ?_) (h := h_equiv.symm);
   apply finGl_glBin_mem;
-  · grind +suggestions;
+  · grind [finGl_glList_replicate_mem, succMaxFun_one_mem_finGl_two];
   · exact omega_minFun_one_mem_finGl_two h
 
 /-- **Sub-case (b)** of `case_N1_finite_nonempty_two` (`lam = 1`): every clopen `U ⊇ Y₁` contains

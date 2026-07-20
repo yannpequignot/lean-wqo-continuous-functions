@@ -156,7 +156,7 @@ theorem laminar_cover_disjoint_selection {X : Type*} (C : ℕ → Set X) (d : �
     -- Let `l` be the least index such that `isMax l` and `x ∈ C l`.
     obtain ⟨l, hl⟩ : ∃ l, isMax l ∧ x ∈ C l ∧ ∀ j < l, ¬ isMax j ∨ ¬ x ∈ C j := by
       exact ⟨ Nat.find ( ⟨ k₀, hk₀_max, hk₀.1 ⟩ : ∃ k, isMax k ∧ x ∈ C k ), Nat.find_spec ( ⟨ k₀, hk₀_max, hk₀.1 ⟩ : ∃ k, isMax k ∧ x ∈ C k ) |>.1, Nat.find_spec ( ⟨ k₀, hk₀_max, hk₀.1 ⟩ : ∃ k, isMax k ∧ x ∈ C k ) |>.2, fun j hj => by contrapose! hj; aesop ⟩;
-    grind +suggestions
+    grind [disjoint_or_nonempty_inter]
 
 /-
 **Countable `ℕ`-indexed centered cylinder subcover.** From the pointwise centered-cylinder

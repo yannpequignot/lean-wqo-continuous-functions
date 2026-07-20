@@ -61,7 +61,7 @@ lemma simple_caseB_Gl_reduces_g (lam : Ordinal.{0}) (hlam_lt : lam < omega1)
       exact rayOn_eq_corestrict g y N ▸ rfl;
     · convert ScatFun.empty_reduces _ using 1;
   have h_red_gl : ScatFun.Reduces (ScatFun.gl (ScatFun.copiesSeq ![ScatFun.minFun lam hlam_lt, ScatFun.maxFun lam hlam_lt] ![1, 1])) (ScatFun.gl (fun i => Fb g B i)) := by
-    grind +suggestions;
+    grind [ScatFun.gl_reduces_of_pointwise];
   exact h_red_gl.trans h_equiv.2
 
 
@@ -121,7 +121,7 @@ lemma cbRank_corestrict_W_lt (g : ScatFun) (y : Baire) (lam : Ordinal.{0})
   have h_sup_lt : ⨆ n, CBRank ((g.restrict {z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n}).rayOn y Set.univ n).func < lam := by
     have h_sup_lt : ∀ n, CBRank ((g.restrict {z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n}).rayOn y Set.univ n).func ≤ CBRank (g.rayOn y Set.univ n).func := by
       intro n;
-      apply_rules [ ContinuouslyReduces.rank_monotone, corestrict_rayOn_reduces ]; all_goals grind +suggestions;
+      apply_rules [ ContinuouslyReduces.rank_monotone, corestrict_rayOn_reduces ]; all_goals grind [ScatFun.hScat];
     have h_sup_lt : ∀ n ∉ Jf, CBRank ((g.restrict {z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n}).rayOn y Set.univ n).func = 0 := by
       intro n hn_not_in_Jf
       have h_empty : {z : ↑(g.restrict {z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n}).domain | (g.restrict {z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n}).func z ∈ RaySet Set.univ y n} = ∅ := by
@@ -129,7 +129,7 @@ lemma cbRank_corestrict_W_lt (g : ScatFun) (y : Baire) (lam : Ordinal.{0})
         simp only [RaySet, ne_eq, mem_univ, true_and, mem_setOf_eq, mem_empty_iff_false, iff_false, not_and, Decidable.not_not];
         intro hz; have := z.2; simp_all +decide [ Set.mem_iUnion ] ;
         obtain ⟨ i, hi, hi' ⟩ := this.2; simp_all +decide [ RaySet ] ;
-        grind +suggestions;
+        grind [restrict_func_eq];
       simp_all +decide [ ScatFun.rayOn ];
       rw [ show ( univ ∩ { a : ↑ ( g.restrict { z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n } ).domain | ( g.restrict { z | g.func z ∈ ⋃ n ∈ Jf, RaySet univ y n } ).func a ∈ RaySet univ y n } ) = ∅ by simpa [ Set.ext_iff ] using h_empty ];
       unfold ScatFun.restrict; simp +decide [ CBRank ] ;
@@ -466,7 +466,7 @@ lemma cbRank_restrict_iUnion_finset_lt (g : ScatFun) (lam : Ordinal.{0}) (hlam_n
     intro i
     by_cases hi : i ∈ J;
     · convert restrict_restrict_realize_reduces g ( ⋃ i ∈ J, S i ) ( S i ) _ |> fun h => h.rank_monotone using 1;
-      · grind +suggestions;
+      · grind [ScatFun.hScat];
       · exact Set.subset_iUnion₂_of_subset i hi ( Set.Subset.refl _ );
     · have h_empty : {w : ↑(g.restrict (⋃ i ∈ J, S i)).domain | (g.restrictEquiv (⋃ i ∈ J, S i) w : ↑g.domain) ∈ S i} = ∅ := by
         ext w
@@ -476,7 +476,7 @@ lemma cbRank_restrict_iUnion_finset_lt (g : ScatFun) (lam : Ordinal.{0}) (hlam_n
         simp_all +decide [ ScatFun.restrict ];
         obtain ⟨ h, j, hj, hj' ⟩ := this; specialize hdisj i j; simp_all +decide [ Set.disjoint_left ] ;
         exact hdisj ( by rintro rfl; exact hi hj ) _ h hw hj';
-      grind +suggestions;
+      grind [CBRank_le_of_CBLevel_empty, cbLevel_block_iff];
   have hQ_sup_bound : ⨆ i, CBRank ((g.restrict (⋃ i ∈ J, S i)).restrict {w : ↑(g.restrict (⋃ i ∈ J, S i)).domain | (g.restrictEquiv (⋃ i ∈ J, S i) w : ↑g.domain) ∈ S i}).func < lam := by
     refine' lt_of_le_of_lt ( ciSup_le fun i => _ ) _;
     exact Finset.sup J ( fun i => CBRank ( g.restrict ( S i ) ).func );

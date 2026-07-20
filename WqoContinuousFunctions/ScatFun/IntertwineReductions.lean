@@ -333,7 +333,7 @@ theorem gl_gl_flatten_reduces (H : ℕ → ℕ → ScatFun) :
     · intro x; simp +decide [ gl ] ;
       unfold GluingFunVal glBlock; simp +decide ;
       simp +decide only [prepend, ↓reduceIte, Nat.unpair_pair, ↓dreduceIte];
-      grind +suggestions
+      grind [gl_domain, unprepend_prepend, Nat.unpair_pair]
 
 /-
 **Support reindexing of a plain gluing (identity payload).**  If a family `H` agrees with

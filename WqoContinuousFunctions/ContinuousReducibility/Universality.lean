@@ -18,7 +18,7 @@ A few general facts saying that a function reduces to an identity map, used to i
 * `reduces_to_id_of_domain_embedding` — `f ≤ id_Z` when the *domain* of `f` embeds in `Z`.
 
 These live in their own file (rather than `Defs`) so they do not enter the global environment
-of the `PointedGluing` developments, whose `grind +suggestions` proofs are sensitive to the
+of the `PointedGluing` developments, whose `grind` proofs are sensitive to the
 set of available declarations.
 
 The **universality of `CantorRat`** for countable metrizable spaces

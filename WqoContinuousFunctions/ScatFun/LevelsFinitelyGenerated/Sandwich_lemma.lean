@@ -28,7 +28,8 @@ lemma gl_ite_equiv_glList_map (I : Finset ℕ) (g : ℕ → ScatFun) :
     rotate_left;
     use fun n => if h : n ∈ I then List.idxOf n I.toList else I.card + n;
     · intro n m hnm; by_cases hn : n ∈ I <;> by_cases hm : m ∈ I <;> simp_all +decide [ List.idxOf_inj ] ;
-      · grind +suggestions;
+      · grind [List.idxOf_eq_length_iff, Finset.length_toList, Finset.mem_toList,
+          List.idxOf_lt_length_iff];
       · linarith [ List.idxOf_lt_length_iff.mpr ( show m ∈ I.toList from by simpa using hm ), show List.length I.toList = I.card from by simp +decide ];
     · split_ifs <;> simp_all +decide ;
   · obtain ⟨e, he⟩ : ∃ e : ℕ → ℕ, Function.Injective e ∧ ∀ k, (fun n => if n ∈ I then g n else empty) (e k) = (I.toList.map g).getD k empty := by

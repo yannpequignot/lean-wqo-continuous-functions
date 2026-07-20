@@ -101,7 +101,7 @@ private lemma pgl_tau_cwat_block (A B : Set (ℕ → ℕ))
       · intro x hx; obtain ⟨y, rfl⟩ := hx.1; simp +decide [PointedGluingFun] at *
         split_ifs at hx <;> simp_all +singlePass
         · exact False.elim <| hx.2.2 <| by rfl
-        · grind +suggestions
+        · grind [prependZerosOne_head_eq_zero, prependZerosOne_ne_zeroStream, firstNonzero_prependZerosOne, firstNonzero_val_ne, stripZerosOne_prependZerosOne]
         · exact False.elim <| hx.2.2 <| by simp +decide [zeroStream]
     · exact fun x hx => Set.mem_range_self _
   have h_g_eq : ∀ z ∈ R, z ∈ {x | (∀ k < i₀, x k = 0) ∧ x i₀ ≠ 0} → τ' z = g z := by

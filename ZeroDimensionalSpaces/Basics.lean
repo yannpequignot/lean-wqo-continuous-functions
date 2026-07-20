@@ -405,7 +405,7 @@ lemma exists_clopen_seq_basis {X : Type*} [TopologicalSpace X] [SeparableSpace X
     convert UniformSpace.secondCountable_of_separable X;
     any_goals exact pseudoMetrizableSpaceUniformity X
     any_goals exact pseudoMetrizableSpaceUniformity_countably_generated X
-    · grind +suggestions;
+    · grind;
     · infer_instance;
   obtain ⟨ s, hs₁, hs₂, hs₃ ⟩ := h_countable;
   have := hs₂.exists_eq_range;

@@ -58,8 +58,8 @@ lemma mem_generators_doubleSucc_of_mem_genStep (α : Ordinal.{0}) (_hα : α < o
   simp_all +decide [ ScatFun.Generators ];
   convert ScatFun.Generators_add_succ_eq ( show Order.IsSuccLimit ( Order.succ α |> Ordinal.limitPart ) ∨ ( Order.succ α |> Ordinal.limitPart ) = 0 from ?_ ) ( Order.succ α |> Ordinal.natPart ) using 1;
   · simp_all +decide [ ScatFun.Generators ];
-    grind +suggestions;
-  · grind +suggestions
+    grind [Ordinal.eq_limitPart_add_natPart];
+  · grind [Ordinal.limitPart_isLimit_or_zero]
 
 /-
 **Second case — membership of the wedge half** (`6_double_successor_memo.tex:305`). The

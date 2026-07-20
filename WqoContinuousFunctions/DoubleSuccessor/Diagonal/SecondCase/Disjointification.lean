@@ -115,7 +115,7 @@ lemma gl_restrict_reduces_into_of_disjoint_values (G : ScatFun) (B : ℕ → Set
       convert ScatFun.gl_func_prepend ( fun k => G.restrict ( B k ) ) k ⟨ unprepend x.val, hk.2 ⟩ _ using 1;
       congr! 1;
       exact Subtype.ext ( by simp +decide [ ← hk.1, prepend_unprepend ] );
-      grind +suggestions
+      grind [prepend_unprepend]
     generalize_proofs at *;
     have h_eq : G.func ⟨unprepend x.val, by
       assumption⟩ ∈ C k := by

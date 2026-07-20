@@ -249,7 +249,7 @@ theorem pointedGluingFun_preserves_injectivity
       split_ifs <;> simp_all +decide [Nat.find_eq_iff]
       rename_i h; specialize h i; aesop
     specialize hxy (by
-    grind +suggestions)
+    grind [strip_mem_of_pointedGluingSet])
     replace hxy := congr_fun hxy i ; simp_all +decide [zeroStream, prependZerosOne]
   · have := hxy (by
     have hx_mem : x.val ∈ ⋃ i, prependZerosOne i '' (A i) := by
@@ -496,7 +496,7 @@ theorem gluing_le_pointedGluing
         · intro z hz
           refine le_antisymm ?_ ?_ <;> simp_all +decide [firstNonzero]
           · split_ifs at * <;> simp_all +decide [Nat.find_eq_iff]
-            grind +suggestions
+            grind [Nat.find_le]
           · split_ifs at * <;> simp_all +decide [Nat.find_eq_iff]
       intro y hy
       obtain ⟨U, hU_open, hyU, hU_const⟩ := h_locally_const y hy
@@ -508,7 +508,7 @@ theorem gluing_le_pointedGluing
     refine h_cont.congr fun y hy => ?_
     unfold pointedToGluing; aesop
   · unfold GluingFunVal pointedToGluing PointedGluingFun gluingToPointed
-    grind +suggestions
+    grind [prependZerosOne_ne_zeroStream, firstNonzero_prependZerosOne, stripZerosOne_prependZerosOne, Subtype.mk_eq_mk]
 
 /-- At the first nonzero position of `z`, the value is indeed nonzero.
     This tiny fact was proved twice inline in the original; we lift it here. -/
@@ -709,7 +709,7 @@ lemma pointedGluing_scattered
       simp_all +decide [PointedGluingFun]
       rw [if_neg, if_neg]
       · rw [firstNonzero_eq_of_block _ _ hx.1.1, firstNonzero_eq_of_block _ _ hx'.1.1]
-        grind +suggestions
+        grind [strip_mem_of_block]
       · exact ne_zeroStream_of_block _ _ hx'.1.1
       · exact ne_zeroStream_of_block _ _ hx.1.1
 

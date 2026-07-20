@@ -91,8 +91,8 @@ lemma pgl_reduces_of_rays_based (G : ScatFun) (y : Baire) (S : Set ↑G.domain) 
       · refine' Continuous.continuousWithinAt _;
         exact continuous_pi fun _ => continuous_apply _;
   · intro a; dsimp only; split_ifs with hh <;> simp_all +decide [ raySigma0_func ]
-    · grind +suggestions
-    · grind +suggestions
+    · grind [prependZerosOne_ne_zeroStream]
+    · grind [firstNonzero_prependZerosOne, stripZerosOne_prependZerosOne]
   · rw [ tendsto_pi_nhds ];
     intro k; rw [ nhdsWithin ] ; simp +decide [ Filter.Tendsto ] ;
     refine Filter.mem_inf_principal.mpr ?_;
@@ -278,10 +278,10 @@ lemma wedge_slot_eq (G : ScatFun) (v : Fin n → ScatFun) (d : ScatFun) (y : Bai
   · have h_val : (wedgeDomFamily v d i).func (σb i ⟨x.val, ⟨x.2, partitionIndex_mem P hP_cover x⟩⟩) ∈ PointedGluingSet (fun _ : ℕ => (Set.univ : Set Baire)) := by
       have h_val : (wedgeDomFamily v d i) = pgl (fun _ => v ⟨i, h⟩) := by
         exact ScatFun.wedgeDomFamily_vertical v d ⟨ i, h ⟩;
-      grind +suggestions;
+      grind [pgl_func_mem];
     cases' h_val with h_val h_val;
     · have h_eq : G.func x = τb i zeroStream := by
-        grind +suggestions;
+        grind [restrict_func_eq];
       have h_eq : (wedge v d).func (wSigma G v d P hP_cover σb x) = retag n (prepend i zeroStream) := by
         convert congr_arg ( fun z => retag n z ) ( gl_func_prepend ( wedgeDomFamily v d ) i ( σb i ⟨ x.val, ⟨ x.2, partitionIndex_mem P hP_cover x ⟩ ⟩ ) _ ) using 1;
         rw [ Set.mem_singleton_iff.mp h_val ];
@@ -300,7 +300,7 @@ lemma wedge_slot_eq (G : ScatFun) (v : Fin n → ScatFun) (d : ScatFun) (y : Bai
         rw [ hz, wTau ];
         rw [ wUntag_retag_vertical ] <;> norm_num [ h ];
         split_ifs <;> simp_all +decide [ prepend ];
-        · grind +suggestions;
+        · grind [prependZerosOne_ne_zeroStream];
         · exact congr_arg _ ( by rw [ unprepend_prepend ] );
       · exact h;
   · have h_val : (wedge v d).func (wSigma G v d P hP_cover σb x) = prependZerosOne (i - n) (prepend n ((wedgeDomFamily v d i).func (σb i ⟨x.val, ⟨x.2, partitionIndex_mem P hP_cover x⟩⟩))) := by
@@ -681,7 +681,7 @@ lemma reduces_replicate_split (H d : ScatFun) (m : ℕ)
           refine h_cont.comp ( Continuous.continuousOn ?_ ) ?_;
           · exact continuous_prepend k;
           · simp +decide [ glList ];
-            grind +suggestions;
+            grind [gl_func_apply];
       have h_eq : ∀ w : {x : H.domain | (hred.choose x).val 0 = k}, H.func w.val = τ' (d.func (σ' w)) := by
         intro w
         have h_eq : (glList (List.replicate m d)).func (hred.choose w) = prepend k (d.func (σ' w)) := by
@@ -698,7 +698,7 @@ lemma reduces_replicate_split (H d : ScatFun) (m : ℕ)
             ext; simp [prepend, unprepend];
             grind;
           · grind +splitImp;
-        grind +suggestions;
+        grind;
       have h_cont : Reduces (H.restrict {x : H.domain | (hred.choose x).val 0 = k}) d := by
         have h_cont : ContinuouslyReduces (H.func ∘ (Subtype.val : {x : H.domain | (hred.choose x).val 0 = k} → H.domain)) d.func := by
           use σ', h_cont.1, τ', h_cont.2, h_eq
@@ -785,7 +785,7 @@ reduce to finitely many copies of `d` and whose images converge to `y`, there is
 partition `(Q s)` of the same region into single-`d` slots whose images still converge to
 `y` (deep slots come from deep blocks).
 -/
-set_option maxHeartbeats 2000000 in
+set_option maxHeartbeats 600000 in
 lemma diag_region_partition (G d : ScatFun) (y : Baire) (B : ℕ → Set ↑G.domain)
     (hB_clopen : ∀ t, IsClopen (B t))
     (hB_disj : ∀ s t, s ≠ t → Disjoint (B s) (B t))
@@ -833,7 +833,7 @@ lemma diag_region_partition (G d : ScatFun) (y : Baire) (B : ℕ → Set ↑G.do
       by_cases h : ∃ t, ( Finset.range t ).sum ( fun t => ( hB_red t ).choose ) ≤ s ∧ s < ( Finset.range t ).sum ( fun t => ( hB_red t ).choose ) + ( hB_red t ).choose <;> simp +decide [ h ];
       · exact hQt.2.2.2.2.1 _ _;
       · unfold Reduces; simp +decide [ ScatFun.restrict ] ;
-        grind +suggestions;
+        grind [ContinuouslyReduces.comp_homeomorph_left, continuouslyReduces_of_empty];
     · intro U hU hyU; rcases hB_conv U hU hyU with ⟨ N, hN ⟩ ; use ( Finset.range N ).sum ( fun t => ( hB_red t ).choose ) ; intro s hs; by_cases hs' : ∃ t, ( Finset.range t ).sum ( fun t => ( hB_red t ).choose ) ≤ s ∧ s < ( Finset.range t ).sum ( fun t => ( hB_red t ).choose ) + ( hB_red t ).choose <;> simp_all +decide ;
       · have h_t_ge_N : N ≤ hs'.choose := by
           contrapose! hs;
@@ -857,7 +857,7 @@ From the hypotheses of `wedge_upper_bound`, build the refined clopen partition `
 into slots of the wedge family, with block reductions and the based / convergence
 conditions.
 -/
-set_option maxHeartbeats 2000000 in
+set_option maxHeartbeats 1400000 in
 lemma wedge_refined_partition (G : ScatFun) (v : Fin n → ScatFun) (d : ScatFun)
     (y : Baire) (A : ℕ → Set ↑G.domain) (h_disj : G.IsDisjointUnion A)
     (h_vertical : ∀ (i : ℕ) (hi : i < n) (j : ℕ),
@@ -905,8 +905,8 @@ lemma wedge_refined_partition (G : ScatFun) (v : Fin n → ScatFun) (d : ScatFun
       · exact Continuous.subtype_mk ( continuous_subtype_val.comp τb ) _;
       · convert hτb.1 using 1;
         ext; simp;
-        grind +suggestions;
-      · grind +suggestions;
+        grind [wedgeDomFamily_diag];
+      · grind [wedgeDomFamily_diag];
     choose! σb τb hσb hτb hσbτb using h_vertical_block;
     choose! σb' τb' hσb' hτb' hσbτb' using h_diag_block;
     use fun i => if hi : i < n then σb i hi else σb' i hi, fun i => if hi : i < n then τb i else τb' i;

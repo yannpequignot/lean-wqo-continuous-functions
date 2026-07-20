@@ -300,7 +300,7 @@ lemma caseB_lower (G : ScatFun) (y : Baire) (x : ↑G.domain) (m j : ℕ)
       intro n; obtain ⟨ a, ha, ha' ⟩ := hx_1 n; use n; simp +decide;
       grind +splitImp;
   · unfold ScatFun.Reduces; simp +decide [ ScatFun.pgl, ScatFun.restrict ] ;
-    grind +suggestions
+    grind [ContinuouslyReduces.comp_homeomorph_right, ContinuouslyReduces.trans, ContinuouslyReduces.comp_homeomorph_left, ContinuouslyReduces.refl]
 
 /-- **Case B — the top point `x` is a center of its basin.**  Strengthening of `caseB_lower`:
 the lower reduction `pgl ρ ≤ G|_{caseB_U}` (built by `pgl_reduces_of_local` anchored at `x`)

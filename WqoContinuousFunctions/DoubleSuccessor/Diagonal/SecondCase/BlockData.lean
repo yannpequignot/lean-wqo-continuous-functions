@@ -43,7 +43,7 @@ theorem block_induced_isCPartition
     exact this ( by aesop_cat ) _ _ hPa hQa;
   · ext w
     simp only [coe_setOf, mem_setOf_eq, sUnion_image, mem_iUnion, exists_prop, mem_univ, iff_true];
-    grind +suggestions;
+    grind;
   · rintro _ ⟨ P, hP, rfl ⟩;
     convert isCentered_of_equiv _ ( ScatFun.restrict_restrict_equiv F A P ?_ ) using 1;
     · exact hA.centered P hP.choose;
@@ -66,7 +66,7 @@ theorem ScatFun.cocenter_restrict_restrict_eq (F : ScatFun) (D A0 : Set ↑F.dom
   have h_func_eq : ((F.restrict D).restrict {w | (F.restrictEquiv D w : ↑F.domain) ∈ A0}).func = (F.restrict A0).func ∘ (Homeomorph.setCongr (ScatFun.restrict_restrict_domain_eq F D A0 hA0D)) :=
     ScatFun.restrict_restrict_func_eq F D A0 hA0D
   have h_center_eq : IsCenterFor (F.restrict A0).func (Homeomorph.setCongr (ScatFun.restrict_restrict_domain_eq F D A0 hA0D) h1.choose) := by
-    grind +suggestions;
+    grind [IsCenterFor.comp_homeomorph];
   convert scatteredHaveCocenter ( F.restrict A0 ).func ( F.restrict A0 ).hScat _ _ h_center_eq h2.choose_spec using 1
 
 /-

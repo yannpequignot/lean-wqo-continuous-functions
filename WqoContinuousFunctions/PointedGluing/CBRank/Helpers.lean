@@ -154,7 +154,6 @@ lemma CBLevel_block_empty_above_rank
     apply CBLevel_eq_empty_at_rank; exact hf_scat n
   exact hstrip_empty.subset (CBLevel_antitone _ hβ hstrip_level)
 
-set_option maxHeartbeats 4000000 in
 /-- Backward direction: if `strip(x) ∈ CBLevel f_n β`, then `x ∈ CBLevel F β`. -/
 lemma CBLevel_block_backward
     (A B : ℕ → Set (ℕ → ℕ)) (f : ∀ i, A i → B i) (n : ℕ) (β : Ordinal.{0})
@@ -164,7 +163,7 @@ lemma CBLevel_block_backward
     x ∈ CBLevel (fun (y : PointedGluingSet A) => (PointedGluingFun A B f y : ℕ → ℕ)) β := by
   contrapose! hxCB with h
   induction' β using Ordinal.limitRecOn with β ih generalizing x
-  · grind +suggestions
+  · grind [CBLevel_zero]
   · contrapose! h
     simp_all +decide [CBLevel_succ']
     refine ⟨?_, ?_⟩
@@ -197,13 +196,13 @@ lemma CBLevel_block_backward
               · exact Eq.symm (stripZerosOne_prependZerosOne n _)
               · convert congr_arg (fun z => stripZerosOne n z) (pointedGluingFun_block_eq A B f n ⟨prependZerosOne n y.val, prependZerosOne_mem_pointedGluingSet A n y.val y.prop⟩ (prependZerosOne_mem_blockSet n y.val)) using 1
                 simp +decide [stripZerosOne_prependZerosOne]
-            · grind +suggestions
+            · grind [pointedGluingFun_block_eq, stripZerosOne_prependZerosOne]
           · convert CBLevel_block_forward A B f n β _ _ _ using 1
             rotate_left
             exact ⟨prependZerosOne n y.val, prependZerosOne_mem_pointedGluingSet A n y.val y.prop⟩
             exact prependZerosOne_mem_blockSet n y.val
-            · grind +suggestions
-            · grind +suggestions
+            · grind [prependZerosOne_mem_blockSet, stripZerosOne_prependZerosOne]
+            · grind [stripZerosOne_prependZerosOne, prependZerosOne_mem_blockSet]
   · rw [CBLevel_limit _ _ ‹_›] at h ⊢
     aesop
 
@@ -294,7 +293,7 @@ lemma zeroStream_mem_CBLevel_le
         exact prependZerosOne_mem_blockSet n a_n.val
       have := hU₀_const _ hy (hN n hnN _)
       have := pointedGluingFun_ne_zeroStream A B f n ⟨prependZerosOne n a_n.val, prependZerosOne_mem_pointedGluingSet A n a_n.val a_n.prop⟩ (prependZerosOne_mem_blockSet n a_n.val) ; simp_all +decide [PointedGluingFun]
-    grind +suggestions
+    grind [CBLevel_succ', Order.le_iff_eq_or_succ_le]
   · rw [CBLevel_limit _ _ ‹_›]
     exact Set.mem_iInter₂.2 fun γ hγ => by rename_i h; exact h γ hγ (le_trans hγ.le hβ)
 

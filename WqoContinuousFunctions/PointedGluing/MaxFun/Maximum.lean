@@ -232,7 +232,7 @@ A simple piece from the decomposition lemma reduces to MaxFun α.
     Uses CBLevel_homeomorph to transfer SimpleFun data from {a ∈ A | a.val ∈ U}
     to A ∩ U, then applies simple_reduces_to_MaxFun, then transfers back.
 -/
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 3200000 in
 lemma simple_piece_reduces_to_maxfun
     (α : Ordinal.{0}) (hα : α < omega1)
     (ih2 : ∀ (β : Ordinal.{0}), β < α → ∀ {A : Set (ℕ → ℕ)}
@@ -272,7 +272,7 @@ lemma simple_piece_reduces_to_maxfun
     convert Iff.rfl
     convert CBLevel_homeomorph (subtypeInterHomeo A U) (fun x => f ⟨x.val, x.prop.1⟩) (Order.succ β) using 1
     constructor <;> intro h <;> simp_all +decide [Set.ext_iff]
-    · grind +suggestions
+    · grind [CBLevel_homeomorph]
     · expose_names; exact (iff_false_left (hβ_empty a h_1 h_2)).mp (h a h_1 h_2)
   · convert hy_simple using 1
     constructor <;> intro h x hx

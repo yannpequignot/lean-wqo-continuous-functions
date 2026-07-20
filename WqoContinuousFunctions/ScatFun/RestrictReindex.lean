@@ -1,5 +1,7 @@
 import WqoContinuousFunctions.ScatFun.Basics
 
+set_option autoImplicit false
+
 /-!
 # Restricting to a reindexed subfamily
 

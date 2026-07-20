@@ -436,7 +436,7 @@ lemma cbRank_restrict_iUnion_le (G : ScatFun) (R : ℕ → Set ↑G.domain)
     have h_monotone : CBRank ((G.restrict (⋃ i, R i)).restrict {w | (G.restrictEquiv (⋃ i, R i) w : ↑G.domain) ∈ R i}).func ≤ CBRank (G.restrict (R i)).func := by
       apply_rules [ ContinuouslyReduces.rank_monotone ];
       · exact ((G.restrict (⋃ i, R i)).restrict {w | ↑((G.restrictEquiv (⋃ i, R i)) w) ∈ R i}).hScat;
-      · grind +suggestions;
+      · grind [hScat];
       · refine ⟨ ?_, ?_, ?_, ?_ ⟩;
         use fun x => ⟨ x.val, by
           convert x.2 using 1;
@@ -469,7 +469,7 @@ lemma cbRank_restrict_union_le (G : ScatFun) (P Q : Set ↑G.domain)
     · grind;
     · ext x; simp [Set.mem_iUnion];
       exact ⟨ fun ⟨ i, hi ⟩ => by rcases i with ( _ | _ | i ) <;> tauto, fun hx => hx.elim ( fun hx => ⟨ 0, hx ⟩ ) fun hx => ⟨ 1, hx ⟩ ⟩;
-    · grind +suggestions;
+    · grind [cbRank_restrict_eq, CBRank_le_of_CBLevel_empty, func.hcongr_1];
   convert ScatFun.cbRank_restrict_iUnion_le G R hR.1 hR.2.1 lam hR.2.2.2 using 1;
   rw [ hR.2.2.1 ] ; tauto;
 
@@ -683,7 +683,7 @@ lemma maxFun_reduces_centered_near_center (g : ScatFun) (lam : Ordinal.{0})
         obtain ⟨ z, rfl ⟩ := hx;
         use z;
         convert heq2 ( σB z ) using 1;
-    · grind +suggestions;
+    · grind [succMaxFun_eq];
     · intro z
       apply (hd (σB z) (by
       intro i hi; simp +decide [ hσBval, prependZerosOne ] ;
@@ -743,7 +743,7 @@ lemma diagonal_wedge_vertical (F : ScatFun) (A : ℕ → Set ↑F.domain)
   obtain ⟨x0f, hx0fval, hmain⟩ := maxFun_reduces_centered_near_center (F.restrict (A 0)) lam hlam_lt (y 0) (hrank 0) (hdistinguished 0) h0;
   refine ⟨ ⟨ x0f.val, ⟨ by
     exact x0f.2.1, by
-    grind +suggestions ⟩ ⟩, ?_, ?_ ⟩
+    grind [restrict_func_eq] ⟩ ⟩, ?_, ?_ ⟩
   all_goals generalize_proofs at *;
   · convert hx0fval using 1;
   · intro U' hU' hx0fU'

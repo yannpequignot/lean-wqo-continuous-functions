@@ -330,7 +330,7 @@ lemma pglFinset_mem_Centered_of_subset {lam : Ordinal.{0}}
   rcases n with ( _ | n ) <;> simp_all +decide [ CentBlock, centStep ];
   · rcases hlim with ( hlim | rfl ) <;> simp_all +decide [ Centered ];
     · have h_empty : lam.natPart = 0 := by
-        grind +suggestions;
+        grind [centBase1_of_limit, Ordinal.eq_limitPart_add_natPart, natPart_zero, limitPart_zero, Ordinal.limitPart_isLimit_or_zero, ordinal_limit_nat_decomposition_unique];
       simp_all +decide [ omegaImage ];
     · simp_all +decide [ omegaImage ];
   · refine Or.inr ⟨ F', ?_, rfl ⟩;

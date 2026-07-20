@@ -19,6 +19,110 @@ Relocated from `Theorems.lean` / `LocallyCentered`: consumes the §4.1
 `centeredAsPgluing_iff_monotone` and the helpers in `FinitenessHelpers.lean`.
 -/
 
+/-- `lam = 0` sub-case of `finitenessOfCenteredFunctions`: a monotone sequence of
+`FinGl B` blocks is either all-empty (so `g ≡ minFun 0`, left disjunct) or has a block
+with positive multiplicity (so `g ≡ pgl (repSeq (B∘ι))`, right disjunct). -/
+private lemma finiteness_finGl_blocks_zero
+    {m : ℕ} (B : Fin m → ScatFun) (hlam : (0 : Ordinal.{0}) < omega1)
+    (g : ScatFun) (s : ℕ → ScatFun) (hs_mono : IsMonotoneSeq s)
+    (hgequiv : ScatFun.Equiv g (ScatFun.pgl s))
+    (hblocks : ∀ i, s i ∈ ScatFun.FinGl B) :
+    ScatFun.Equiv g (ScatFun.minFun 0 hlam) ∨
+      ∃ (k : ℕ) (ι : Fin k → Fin m), 0 < k ∧
+        ScatFun.Equiv g (ScatFun.pgl (ScatFun.repSeq (B ∘ ι))) := by
+  have etrans : ∀ {a b c : ScatFun}, ScatFun.Equiv a b → ScatFun.Equiv b c → ScatFun.Equiv a c :=
+    fun h h' => ⟨ContinuouslyReduces.trans h.1 h'.1, ContinuouslyReduces.trans h'.2 h.2⟩
+  choose mult hmult1 hmult2 using hblocks
+  have ht_eq : ∀ i, ScatFun.Equiv (s i) (ScatFun.Gl B (mult i)) :=
+    fun i => ⟨hmult2 i, hmult1 i⟩
+  by_cases hS : ∃ i f, 0 < mult i f
+  · obtain ⟨k, ι, hk, hpgl⟩ := pgl_finGl_to_subfamily B s hs_mono mult ht_eq hS
+    exact Or.inr ⟨k, ι, hk, etrans hgequiv hpgl⟩
+  · push_neg at hS
+    have hempty : ∀ i, IsEmpty ↥(s i).domain := by
+      intro i
+      have hm0 : mult i = 0 := funext fun f => Nat.le_zero.mp (hS i f)
+      have hred : ScatFun.Reduces (s i) (ScatFun.Gl B (mult i)) := hmult2 i
+      rw [hm0] at hred
+      have hGl_empty : IsEmpty ↥(ScatFun.Gl B (0 : Fin m → ℕ)).domain := Gl_zero_isEmpty B
+      obtain ⟨σ, _, _⟩ := hred
+      exact ⟨fun z => hGl_empty.elim (σ z)⟩
+    exact Or.inl (etrans hgequiv (pgl_allEmpty_equiv_minFun_zero s hempty hlam))
+
+/-- Pointed-gluing sub-case of `finitenessOfCenteredFunctions` (`lam` a limit, some block
+already has rank `≥ lam`): the tail from the first such block realises `g` as a pointed
+gluing of a `B`-subfamily, giving the right disjunct. -/
+private lemma finiteness_finGl_blocks_limit_pgl
+    {lam : Ordinal.{0}} (hlamne : lam ≠ 0)
+    {m : ℕ} (B : Fin m → ScatFun)
+    (g : ScatFun) (s : ℕ → ScatFun) (hs_mono : IsMonotoneSeq s)
+    (hgequiv : ScatFun.Equiv g (ScatFun.pgl s))
+    (hcb_mono : ∀ a b : ℕ, a ≤ b → CBRank (s a).func ≤ CBRank (s b).func)
+    (hmem : ∀ i, lam ≤ CBRank (s i).func → s i ∈ ScatFun.FinGl B)
+    (hP : ∃ i, lam ≤ CBRank (s i).func) :
+    ∃ (k : ℕ) (ι : Fin k → Fin m), 0 < k ∧
+      ScatFun.Equiv g (ScatFun.pgl (ScatFun.repSeq (B ∘ ι))) := by
+  have etrans : ∀ {a b c : ScatFun}, ScatFun.Equiv a b → ScatFun.Equiv b c → ScatFun.Equiv a c :=
+    fun h h' => ⟨ContinuouslyReduces.trans h.1 h'.1, ContinuouslyReduces.trans h'.2 h.2⟩
+  have esymm : ∀ {a b : ScatFun}, ScatFun.Equiv a b → ScatFun.Equiv b a := fun h => ⟨h.2, h.1⟩
+  obtain ⟨i0, hi0⟩ := hP
+  set t := fun i => s (i + i0) with htdef
+  have ht_mono : IsMonotoneSeq t := fun a b hab => hs_mono _ _ (by omega)
+  have ht_mem : ∀ i, t i ∈ ScatFun.FinGl B := fun i =>
+    hmem (i + i0) (le_trans hi0 (hcb_mono i0 (i + i0) (by omega)))
+  choose mult hmult1 hmult2 using ht_mem
+  have ht_eq : ∀ i, ScatFun.Equiv (t i) (ScatFun.Gl B (mult i)) :=
+    fun i => ⟨hmult2 i, hmult1 i⟩
+  have hS : ∃ i f, 0 < mult i f := by
+    by_contra hcon
+    push_neg at hcon
+    have hm0 : mult 0 = 0 := funext fun f => Nat.le_zero.mp (hcon 0 f)
+    have ht0_eq : t 0 = s i0 := by simp [htdef]
+    have hrank_t0 : lam ≤ CBRank (t 0).func := by rw [ht0_eq]; exact hi0
+    have hGl_empty : IsEmpty ↥(ScatFun.Gl B (mult 0)).domain := by
+      rw [hm0]; exact Gl_zero_isEmpty B
+    have ht0_empty : IsEmpty ↥(t 0).domain := by
+      obtain ⟨σ, _, _⟩ := (ht_eq 0).1
+      exact ⟨fun z => hGl_empty.elim (σ z)⟩
+    have hrank0 : CBRank (t 0).func = 0 := by
+      have h0 : CBLevel (t 0).func 0 = ∅ := by
+        rw [CBLevel_zero]; exact Set.eq_empty_of_isEmpty _
+      exact le_antisymm (CBRank_le_of_CBLevel_empty _ _ h0) (zero_le _)
+    rw [hrank0] at hrank_t0
+    exact hlamne (le_antisymm hrank_t0 (zero_le _))
+  obtain ⟨k, ι, hk, hpgl⟩ := pgl_finGl_to_subfamily B t ht_mono mult ht_eq hS
+  exact ⟨k, ι, hk, etrans hgequiv (etrans (esymm (pgl_tail_equiv s hs_mono i0)) hpgl)⟩
+
+/-- Minimum-function sub-case of `finitenessOfCenteredFunctions` (`lam` a limit, every block
+has rank `< lam`): the supremum of block ranks equals `lam`, so `g ≡ minFun lam` (left
+disjunct) via the cofinal approximation of `minFun` at a limit. -/
+private lemma finiteness_finGl_blocks_limit_minFun
+    {lam : Ordinal.{0}} (hlam : lam < omega1) (hlim' : Order.IsSuccLimit lam) (hlamne : lam ≠ 0)
+    (g : ScatFun) (s : ℕ → ScatFun)
+    (hgequiv : ScatFun.Equiv g (ScatFun.pgl s))
+    (hrank : CBRank g.func = Order.succ (⨆ i, CBRank (s i).func))
+    (hge : lam ≤ CBRank g.func)
+    (hP : ∀ i, CBRank (s i).func < lam) :
+    ScatFun.Equiv g (ScatFun.minFun lam hlam) := by
+  have hβ_ge : lam ≤ ⨆ i, CBRank (s i).func := by
+    by_contra hlt
+    push_neg at hlt
+    exact absurd (hrank ▸ hge) (not_le.mpr (hlim'.succ_lt hlt))
+  have hβ_eq : (⨆ i, CBRank (s i).func) = lam := le_antisymm (ciSup_le' fun i => (hP i).le) hβ_ge
+  have hCBne : (CBLevel g.func lam).Nonempty :=
+    CBLevel_nonempty_below_rank g.func g.hScat lam (by rw [hrank, hβ_eq]; exact Order.lt_succ lam)
+  have hmin_le : ScatFun.Reduces (ScatFun.minFun lam hlam) g :=
+    minFun_is_minimum lam hlam g.domain g.func g.hCont g.hScat hCBne
+  have hg_le : ScatFun.Reduces g (ScatFun.minFun lam hlam) := by
+    have h1 : ScatFun.Reduces (ScatFun.pgl s)
+        (ScatFun.pgl (fun nn => ScatFun.minFun (cofinalSeq lam nn)
+          (lt_trans (cofinalSeq_lt lam hlim' hlamne nn) hlam))) :=
+      pgl_reduces_pgl s _ (fun i j₀ =>
+        reduces_minFun_cofinal lam hlam hlim' hlamne (s i) (hP i) j₀)
+    have h2 := (minFun_limit_equiv_pgl lam hlam hlim' hlamne).2
+    exact ContinuouslyReduces.trans hgequiv.1 (ContinuouslyReduces.trans h1 h2)
+  exact ⟨hg_le, hmin_le⟩
+
 /-- **Theorem 4.9 (Finitenessofcenteredfunctions).**
 If `lam` is `0` or a limit ordinal and `𝒞_{[lam, lam+n]}` is generated by a finite
 family `B` (i.e. `ScatFun.LevelInter lam (lam+n) ⊆ ScatFun.FinGl B`), then every
@@ -65,14 +169,8 @@ theorem finitenessOfCenteredFunctions
     ScatFun.Equiv g (ScatFun.minFun lam hlam) ∨
       ∃ (k : ℕ) (ι : Fin k → Fin m), 0 < k ∧
         ScatFun.Equiv g (ScatFun.pgl (ScatFun.repSeq (B ∘ ι))) := by
-  -- Transitivity / symmetry helpers for `ScatFun.Equiv`.
-  have etrans : ∀ {a b c : ScatFun}, ScatFun.Equiv a b → ScatFun.Equiv b c → ScatFun.Equiv a c :=
-    fun h h' => ⟨ContinuouslyReduces.trans h.1 h'.1, ContinuouslyReduces.trans h'.2 h.2⟩
-  have esymm : ∀ {a b : ScatFun}, ScatFun.Equiv a b → ScatFun.Equiv b a :=
-    fun h => ⟨h.2, h.1⟩
   -- A monotone sequence whose pointed gluing is equivalent to `g`.
-  obtain ⟨s, hs_mono, hequiv⟩ := (centeredAsPgluing_iff_monotone g).1 hg_cent
-  have hgequiv : ScatFun.Equiv g (ScatFun.pgl s) := hequiv
+  obtain ⟨s, hs_mono, hgequiv⟩ := (centeredAsPgluing_iff_monotone g).1 hg_cent
   have hs_reg : Preorder.IsRegularSeq ScatFun.Reduces s := IsMonotoneSeq.isRegularSeq s hs_mono
   have hrank : CBRank g.func = Order.succ (⨆ i, CBRank (s i).func) := by
     rw [cbRank_eq_of_equiv hgequiv, cbRank_pgl_regular s hs_reg]
@@ -81,93 +179,28 @@ theorem finitenessOfCenteredFunctions
     rintro _ ⟨i, rfl⟩
     exact ContinuouslyReduces.rank_monotone (s i).hScat (ScatFun.pgl s).hScat
       (block_reduces_pgl s i)
-  set β := ⨆ i, CBRank (s i).func with hβdef
-  have hsi_le_β : ∀ i, CBRank (s i).func ≤ β := fun i => le_ciSup hbdd i
+  have hsi_le_β : ∀ i, CBRank (s i).func ≤ ⨆ j, CBRank (s j).func := fun i => le_ciSup hbdd i
   have hcb_mono : ∀ a b : ℕ, a ≤ b → CBRank (s a).func ≤ CBRank (s b).func :=
     fun a b hab => ContinuouslyReduces.rank_monotone (s a).hScat (s b).hScat (hs_mono a b hab)
   obtain ⟨hge, hle⟩ := hg_lvl
-  have hβ_le : β ≤ lam + ↑n := by
-    have h1 : Order.succ β ≤ lam + ↑n + 1 := hrank ▸ hle
+  have hβ_le : (⨆ i, CBRank (s i).func) ≤ lam + ↑n := by
+    have h1 : Order.succ (⨆ i, CBRank (s i).func) ≤ lam + ↑n + 1 := hrank ▸ hle
     rw [Ordinal.add_one_eq_succ] at h1
     exact Order.succ_le_succ_iff.mp h1
+  -- A block of CB-rank `≥ lam` lies in `FinGl B` (its rank is then in `[lam, lam+n]`).
+  have hmem : ∀ i, lam ≤ CBRank (s i).func → s i ∈ ScatFun.FinGl B :=
+    fun i hi => hgen ⟨hi, le_trans (hsi_le_β i) hβ_le⟩
   rcases eq_or_ne lam 0 with hlam0 | hlamne
-  · -- `lam = 0`: every block lies in `FinGl B`.
-    subst hlam0
-    have hmem : ∀ i, s i ∈ ScatFun.FinGl B := fun i =>
-      hgen ⟨zero_le _, le_trans (hsi_le_β i) hβ_le⟩
-    choose mult hmult1 hmult2 using hmem
-    have ht_eq : ∀ i, ScatFun.Equiv (s i) (ScatFun.Gl B (mult i)) :=
-      fun i => ⟨hmult2 i, hmult1 i⟩
-    by_cases hS : ∃ i f, 0 < mult i f
-    · obtain ⟨k, ι, hk, hpgl⟩ := pgl_finGl_to_subfamily B s hs_mono mult ht_eq hS
-      exact Or.inr ⟨k, ι, hk, etrans hgequiv hpgl⟩
-    · push_neg at hS
-      have hempty : ∀ i, IsEmpty ↥(s i).domain := by
-        intro i
-        have hm0 : mult i = 0 := funext fun f => Nat.le_zero.mp (hS i f)
-        have hred : ScatFun.Reduces (s i) (ScatFun.Gl B (mult i)) := hmult2 i
-        rw [hm0] at hred
-        have hGl_empty : IsEmpty ↥(ScatFun.Gl B (0 : Fin m → ℕ)).domain := Gl_zero_isEmpty B
-        obtain ⟨σ, _, _⟩ := hred
-        exact ⟨fun z => hGl_empty.elim (σ z)⟩
-      exact Or.inl (etrans hgequiv (pgl_allEmpty_equiv_minFun_zero s hempty hlam))
-  · -- `lam` is a (nonzero) limit.
-    have hlim' : Order.IsSuccLimit lam := hlim.resolve_right hlamne
+  · subst hlam0
+    have hblocks : ∀ i, s i ∈ ScatFun.FinGl B := fun i => hmem i (zero_le _)
+    exact finiteness_finGl_blocks_zero B hlam g s hs_mono hgequiv hblocks
+  · have hlim' : Order.IsSuccLimit lam := hlim.resolve_right hlamne
     by_cases hP : ∃ i, lam ≤ CBRank (s i).func
-    · -- Pointed-gluing case: use the tail from the first block of rank `≥ lam`.
-      obtain ⟨i0, hi0⟩ := hP
-      set t := fun i => s (i + i0) with htdef
-      have ht_mono : IsMonotoneSeq t := fun a b hab => hs_mono _ _ (by omega)
-      have ht_mem : ∀ i, t i ∈ ScatFun.FinGl B := by
-        intro i
-        refine' hgen ⟨le_trans hi0 (hcb_mono i0 (i + i0) (by omega)), _⟩
-        exact le_trans (hsi_le_β _) hβ_le
-      choose mult hmult1 hmult2 using ht_mem
-      have ht_eq : ∀ i, ScatFun.Equiv (t i) (ScatFun.Gl B (mult i)) :=
-        fun i => ⟨hmult2 i, hmult1 i⟩
-      have hS : ∃ i f, 0 < mult i f := by
-        by_contra hcon
-        push_neg at hcon
-        have hm0 : mult 0 = 0 := funext fun f => Nat.le_zero.mp (hcon 0 f)
-        -- `t 0` would be empty, so its CB-rank is `0`, contradicting `lam ≤ CBRank (t 0)`.
-        have ht0_eq : t 0 = s i0 := by simp [htdef]
-        have hrank_t0 : lam ≤ CBRank (t 0).func := by rw [ht0_eq]; exact hi0
-        have hGl_empty : IsEmpty ↥(ScatFun.Gl B (mult 0)).domain := by
-          rw [hm0]; exact Gl_zero_isEmpty B
-        have ht0_empty : IsEmpty ↥(t 0).domain := by
-          obtain ⟨σ, _, _⟩ := (ht_eq 0).1
-          exact ⟨fun z => hGl_empty.elim (σ z)⟩
-        have hrank0 : CBRank (t 0).func = 0 := by
-          have h0 : CBLevel (t 0).func 0 = ∅ := by
-            rw [CBLevel_zero]; exact Set.eq_empty_of_isEmpty _
-          exact le_antisymm (CBRank_le_of_CBLevel_empty _ _ h0) (zero_le _)
-        rw [hrank0] at hrank_t0
-        exact hlamne (le_antisymm hrank_t0 (zero_le _))
-      obtain ⟨k, ι, hk, hpgl⟩ := pgl_finGl_to_subfamily B t ht_mono mult ht_eq hS
-      refine' Or.inr ⟨k, ι, hk, _⟩
-      exact etrans hgequiv (etrans (esymm (pgl_tail_equiv s hs_mono i0)) hpgl)
-    · -- Minimum-function case: every block has rank `< lam`, so `g ≡ k_{lam+1}`.
-      push_neg at hP
-      have hβ_ge : lam ≤ β := by
-        by_contra hlt
-        push_neg at hlt
-        exact absurd (hrank ▸ hge) (not_le.mpr (hlim'.succ_lt hlt))
-      have hβ_eq : β = lam := le_antisymm (ciSup_le' fun i => (hP i).le) hβ_ge
-      -- `minFun lam ≤ g`.
-      have hCBne : (CBLevel g.func lam).Nonempty :=
-        CBLevel_nonempty_below_rank g.func g.hScat lam (by rw [hrank, hβ_eq]; exact Order.lt_succ lam)
-      have hmin_le : ScatFun.Reduces (ScatFun.minFun lam hlam) g :=
-        minFun_is_minimum lam hlam g.domain g.func g.hCont g.hScat hCBne
-      -- `g ≤ minFun lam`.
-      have hg_le : ScatFun.Reduces g (ScatFun.minFun lam hlam) := by
-        have h1 : ScatFun.Reduces (ScatFun.pgl s)
-            (ScatFun.pgl (fun nn => ScatFun.minFun (cofinalSeq lam nn)
-              (lt_trans (cofinalSeq_lt lam hlim' hlamne nn) hlam))) :=
-          pgl_reduces_pgl s _ (fun i j₀ =>
-            reduces_minFun_cofinal lam hlam hlim' hlamne (s i) (hP i) j₀)
-        have h2 := (minFun_limit_equiv_pgl lam hlam hlim' hlamne).2
-        exact ContinuouslyReduces.trans hgequiv.1 (ContinuouslyReduces.trans h1 h2)
-      exact Or.inl ⟨hg_le, hmin_le⟩
+    · exact Or.inr
+        (finiteness_finGl_blocks_limit_pgl hlamne B g s hs_mono hgequiv hcb_mono hmem hP)
+    · push_neg at hP
+      exact Or.inl
+        (finiteness_finGl_blocks_limit_minFun hlam hlim' hlamne g s hgequiv hrank hge hP)
 
 /-! ## Corollary 4.10 (centeredSuccessor) — the limit case -/
 

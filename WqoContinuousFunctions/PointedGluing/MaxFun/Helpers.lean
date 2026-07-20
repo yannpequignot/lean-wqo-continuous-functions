@@ -25,7 +25,7 @@ lemma PointedGluingFun_id (A : ℕ → Set (ℕ → ℕ)) (x : PointedGluingSet 
   · exact h_eq.symm
   · exact strip_mem_of_pointedGluingSet A x hx
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 2000000 in
 /-- `Subtype.val` on `GluingSet` is scattered if each block function is scattered. -/
 lemma gluingSet_subtype_val_scattered
     (F : ℕ → Set (ℕ → ℕ))
@@ -71,7 +71,7 @@ lemma gluingSet_CBLevel_empty
         have h_cont : Continuous (fun x : ℕ → ℕ => x 0) := by
           exact continuous_apply 0
         exact h_cont.isOpen_preimage { n } (by simp +decide)
-      grind +suggestions
+      grind
     · rfl
   · exact fun x => ⟨_, rfl⟩
   · intro n
@@ -459,8 +459,8 @@ lemma MaxFun_monotone (α β: Ordinal.{0})
     (hl: α ≤ β):
     ContinuouslyReduces (MaxFun α) (MaxFun β) := by
   induction' β using Ordinal.limitRecOn with β ih generalizing α
-  · grind +suggestions
-  · grind +suggestions
+  · grind [ContinuouslyReduces.trans, Ordinal.add_sub_cancel_of_le, ContinuouslyReduces.refl, Ordinal.add_eq_zero_iff]
+  · grind [MaxFun.hcongr_1, ContinuouslyReduces.trans, Order.le_succ_and_le_iff, ContinuouslyReduces.refl, ContinuouslyReduces.hcongr_10, Order.le_and_le_succ_iff, Order.le_iff_eq_or_succ_le', Order.le_of_lt_succ, MaxFun_reduces_succ]
   · rename_i β hβ ih
     by_cases hαβ : α < β
     · have := enumBelow_surj β hβ (by aesop) ⟨α, hαβ⟩
@@ -476,7 +476,7 @@ lemma MinFun_monotone (α β: Ordinal.{0})
   induction' β using Ordinal.limitRecOn with β ih generalizing α
   · rw [le_antisymm hl bot_le]
     exact ContinuouslyReduces.refl (MinFun 0)
-  · grind +suggestions
+  · grind [instTopologicalSpaceSubtype.hcongr_3, ContinuouslyReduces.trans, Order.le_succ_and_le_iff, ContinuouslyReduces.refl, ContinuouslyReduces.hcongr_10, Order.le_and_le_succ_iff, Order.le_iff_eq_or_succ_le', Order.le_of_lt_succ, MinFun_reduces_succ]
   · rename_i β hβ ih
     by_cases hαβ : α < β
     · -- Since β is a limit ordinal, there exists some n such that α ≤ cofinalSeq β n.

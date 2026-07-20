@@ -363,7 +363,7 @@ lemma reduces_F_gl_of_codomain
       · grind;
     · intro a ha; specialize hτ_i; have := hτ_i.2 ( σ_raw ⟨ a, ha ⟩ 0 ) a ha; simp_all +decide [ prepend, ScatFun.glBlock ] ;
       convert this _ using 1;
-      grind +suggestions;
+      grind [unprepend_prepend, ScatFun.func.hcongr_2];
       obtain ⟨ i, hi ⟩ := Set.mem_iUnion.mp ( hB_cover.symm ▸ Set.mem_univ ( F.func ⟨ a, ha ⟩ ) ) ; specialize hσ_raw ; have := hσ_raw.2.1 i ⟨ ⟨ a, ha ⟩, hi ⟩ ; simp_all +decide [ prepend ] ;
       grobner
 

@@ -115,7 +115,7 @@ private lemma gluing_sigma_range_block
   have h_firstNonzero_eq : firstNonzero y = p n₀ := by
     apply firstNonzero_eq_of_block
     exact hy.2
-  grind +suggestions
+  grind [firstNonzero_prependZerosOne, stripZerosOne_prependZerosOne]
 
 /--
 τ' is ContinuousOn the range.
@@ -160,10 +160,10 @@ private lemma gluing_to_pgluing_tau_cont
           · intro z hz
             convert gluing_sigma_range_block A B p hp σ_n (invFun p (firstNonzero y)) z _ using 1
             · rw [invFun_eq (show ∃ n, p n = firstNonzero y from _)]
-              grind +suggestions
+              grind [firstNonzero_prependZerosOne]
             · rw [invFun_eq (show ∃ n, p n = firstNonzero y from _)]
               · exact hz
-              · grind +suggestions
+              · grind [firstNonzero_prependZerosOne]
         · exact fun _ _ => Set.mem_univ _
       · intro z hz
         have h_firstNonzero : firstNonzero z = firstNonzero y := by

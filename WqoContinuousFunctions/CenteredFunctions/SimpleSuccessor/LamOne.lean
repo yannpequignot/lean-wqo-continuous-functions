@@ -179,7 +179,7 @@ lemma RayFun_pgl_zeroStream_reduces_block (s : ℕ → ScatFun) (n : ℕ) :
         exact ⟨ ⟨ w, by aesop ⟩, by aesop ⟩)))
       generalize_proofs at *; (
       obtain ⟨ w, rfl ⟩ := h_block; simp +decide [ ScatFun.pgl_func_block ] ;
-      grind +suggestions))
+      grind [stripZerosOne_prependZerosOne]))
 
 
 /-
@@ -437,7 +437,7 @@ lemma lamOne_caseB_C1_reduces_minFun (g : ScatFun) (y : Baire)
     intro x hx;
     simp_all +decide [ ScatFun.rayOn, ScatFun.restrict ];
     obtain ⟨ a, ⟨ ha₁, i, hi₁, hi₂ ⟩, hi₃, hi₄ ⟩ := hx; use i; simp_all +decide [ ScatFun.restrictEquiv ] ;
-    grind +suggestions;
+    grind;
   exact Set.Finite.subset ( Set.Finite.biUnion ( Finset.finite_toSet ( Finset.range ( j + 1 ) ) ) fun i hi => hfin i j ) h_range
 
 
@@ -589,7 +589,7 @@ lemma lamOne_Gl_reduces_g (g : ScatFun) (hg_rank : CBRank g.func = 1 + 1)
       exact rayOn_eq_corestrict g y N ▸ rfl;
     · convert ScatFun.empty_reduces _ using 1;
   have h_red_gl : ScatFun.Reduces (ScatFun.gl (ScatFun.copiesSeq ![ScatFun.minFun 1 one_lt_omega1, ScatFun.maxFun 1 one_lt_omega1] ![1, 1])) (ScatFun.gl (fun i => Fb g B i)) := by
-    grind +suggestions;
+    grind [ScatFun.gl_reduces_of_pointwise];
   exact h_red_gl.trans h_equiv.2
 
 end

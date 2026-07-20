@@ -648,7 +648,7 @@ lemma reduces_gl_ite_glBin_replicate_omega (a c : ScatFun) (m : ℕ) :
     · constructor;
       swap;
       exact fun x => ⟨ x, by
-        grind +suggestions ⟩
+        grind ⟩
       generalize_proofs at *;
       refine ⟨ ?_, ?_ ⟩;
       · exact Continuous.subtype_mk ( continuous_subtype_val ) _;
@@ -674,7 +674,7 @@ lemma reduces_gl_mem_gl_lt (a c : ScatFun) (I : Finset ℕ) :
           have h_eq : Finset.filter (fun x => x < n) I ⊆ Finset.filter (fun x => x < m) I ∨ Finset.filter (fun x => x < m) I ⊆ Finset.filter (fun x => x < n) I := by
             grind;
           cases h_eq <;> [ exact Finset.eq_of_subset_of_card_le ‹_› ( by linarith ) ; exact Finset.eq_of_subset_of_card_le ‹_› ( by linarith ) |> Eq.symm ];
-        grind +suggestions;
+        grind [Finset.card_filter_eq_iff, Finset.filter_card_eq, Finset.filter_inj'];
       · exact fun h => absurd h ( by linarith [ show Finset.card ( Finset.filter ( fun x => x < n ) I ) < Finset.card I from Finset.card_lt_card ( Finset.filter_ssubset.mpr ⟨ n, by aesop ⟩ ) ] );
       · exact fun h => absurd h ( by linarith [ show Finset.card ( Finset.filter ( fun x => x < m ) I ) < I.card from Finset.card_lt_card ( Finset.filter_ssubset.mpr ⟨ m, hm, by aesop ⟩ ) ] );
     · intro n; split_ifs <;> simp_all +decide ;
@@ -838,7 +838,7 @@ lemma finGl_gl_ite_of_forall_mem {S : Finset ScatFun} (I : Finset ℕ) (g : ℕ 
     rotate_left;
     use fun n => if h : n ∈ I then List.idxOf n I.toList else I.card + n;
     · intro n m hnm; by_cases hn : n ∈ I <;> by_cases hm : m ∈ I <;> simp_all +decide [ List.idxOf_inj ] ;
-      · grind +suggestions;
+      · grind [List.idxOf_eq_length_iff, Finset.length_toList, Finset.mem_toList, List.idxOf_lt_length_iff];
       · linarith [ List.idxOf_lt_length_iff.mpr ( show m ∈ I.toList from by simpa using hm ), show List.length I.toList = I.card from by simp +decide ];
     · split_ifs <;> simp_all +decide ;
   convert finGl_of_equiv_glList _ _;
@@ -1457,7 +1457,7 @@ lemma cbRank_eq_add_one_of_levels {X : Type u} {Y : Type*}
       have h_le : CBLevel f lam ⊆ CBLevel f α := by
         apply CBLevel_antitone f;
         exact Order.le_of_lt_succ hne;
-      grind +suggestions
+      grind [CBLevel_eq_of_stable]
 
 /-
 **Per-block rank and distinguished value.**  For `F` of `CB`-rank `lam+1`, a clopen block `A`

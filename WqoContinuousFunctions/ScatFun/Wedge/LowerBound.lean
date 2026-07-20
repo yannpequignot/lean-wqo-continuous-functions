@@ -469,7 +469,7 @@ lemma wedge_lb_funeq (G : ScatFun) (v : Fin n → ScatFun) (d : ScatFun)
     have hz : wedgeTau G v d σV σD τV τD y = zeroStream := by
       apply dif_neg;
       exact fun h => by obtain ⟨ p, hp ⟩ := Set.mem_iUnion.mp h; exact hsep p <| subset_closure hp;
-    grind +suggestions;
+    grind [wedge_func_vertical_base];
   · convert ScatFun.wedgeTau_eq_on_img G v d σV σD τV τD hpart (Sum.inl (k, l)) (G.func (σV k l z')) _ using 1;
     · convert ScatFun.wedge_func_vertical_block v d k l z' _ using 1;
       exact congr_arg _ ( Subtype.ext hk );

@@ -213,7 +213,7 @@ lemma leastPt_succ_of_leastPt (x : X) (n : ℕ) (h : leastPt e (cellOf e x n) = 
   · split_ifs at * <;> simp_all +decide [ zeroChild ];
     · convert h using 2;
       refine le_antisymm ?_ ?_ <;> simp_all +decide;
-      grind +suggestions;
+      grind [ZeroDimensionalSpace.clopen_basis, Nat.find_le];
     · grind;
     · grind;
   · split_ifs at * <;> simp_all +decide [ zeroChild ];

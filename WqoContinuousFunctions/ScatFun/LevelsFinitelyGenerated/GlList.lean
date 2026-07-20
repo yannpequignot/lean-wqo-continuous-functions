@@ -185,7 +185,7 @@ lemma glList_perm_equiv {L L' : List ScatFun} (h : L.Perm L') :
           exact fun x => x;
           · exact continuousOn_id;
           · exact fun x => scatFun_func_cast (hσ ⟨i, hi⟩) x;
-      · grind +suggestions;
+      · grind [empty_reduces];
   · apply gl_reduces_of_blockEmbed;
     rotate_right;
     use fun i => if hi : i < L'.length then σ.symm ⟨ i, hi ⟩ else i + L.length;
@@ -324,7 +324,7 @@ lemma gl_flat_reduces_gl_gl (H : ℕ → ℕ → ScatFun) :
       obtain ⟨ j, rfl ⟩ := hi.1;
       obtain ⟨ y, hy, hy' ⟩ := hi.2;
       simp +decide only [gl_domain, ← hy', unprepend_prepend];
-      grind +suggestions⟩
+      grind [mem_gluingSet_prepend]⟩
   generalize_proofs at *;
   set τ : Baire → Baire := fun y => prepend (Nat.pair (y 0) (unprepend y 0)) (unprepend (unprepend y));
   refine ⟨ σ, ?_, τ, ?_, ?_ ⟩;

@@ -42,7 +42,7 @@ disconnected). A fully faithful formalization would require a notion of reductio
 `τ` is only defined on a subset of `Y`.
 -/
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 800000 in
 /-
 **Splitting Lemma.** If `g` is continuous and NLC from a pseudo-metric space to a
 T₂ space, then any metric ball can be split into two smaller sub-balls with disjoint
@@ -152,7 +152,6 @@ lemma cantor_scheme_exists {X Y : Type*}
   · intro l; specialize hε'_disjoint (F l |>.1) (F l |>.2.1) (hF₂ l) ; simp_all +decide [Set.disjoint_left]
   · intro l; specialize hU₀_image (F l |>.1) (F l |>.2.1) (hF₂ l) ; specialize hU₁_image (F l |>.1) (F l |>.2.1) (hF₂ l) ; simp_all +decide [Set.subset_def]
 
-set_option maxHeartbeats 4000000 in
 /-- The map `σ : CantorRat → X` defined by `σ(x) = c(prefix(x))` is an embedding,
 and `g ∘ σ` is also an embedding, given the Cantor scheme properties. -/
 lemma nlc_countable_embedding_concrete {X Y : Type*}

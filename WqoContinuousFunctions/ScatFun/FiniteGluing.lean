@@ -111,7 +111,7 @@ theorem Gl_mono (h : ∀ i, t i ≤ s i) : Reduces (Gl B t) (Gl B s) := by
       any_goals try infer_instance;
       simp +decide only [copiesList];
       split_ifs <;> simp_all +decide;
-      grind +suggestions;
+      grind [reduces_iff, ContinuouslyReduces.refl];
     · convert empty_reduces _ using 1;
       grind +locals
 

@@ -8,7 +8,7 @@
 A **Lean 4** formalization of the results in the preprint
 **[A well-quasi-order for continuous functions](https://arxiv.org/abs/2410.13150)**
 (R. Carroy & Y. Pequignot). The three main theorems and the central 2-BQO result are
-**fully proved and `sorry`-free**; a green [CI run](#-verification--auditing-for-reviewers) is a
+**fully proved and `sorry`-free**; a green [CI run](#-verification--auditing) is a
 machine-checked certificate of that claim (see below).
 
 ## 🧠 Mathematical overview
@@ -82,10 +82,9 @@ lists only the three standard axioms — no `sorryAx`.
 For the full proof tree — every lemma, and how the chapters fit together — see
 [STRUCTURE.md](STRUCTURE.md).
 
-## ✅ Verification & auditing (for reviewers)
+## ✅ Verification & auditing 
 
-This section is written for a mathematician who does **not** use Lean. The short version:
-the correctness of every proof here is checked *by a computer*, not by a human referee, and
+TL;DR: The correctness of every proof here is checked *by a computer*, not by a human referee, and
 you can see the result of that check without installing anything — the green **CI** badge at
 the top of this page.
 
@@ -236,7 +235,11 @@ def ScatteredFun {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
    EMS Surveys in Mathematical Sciences.
    [ems.press](https://ems.press/journals/emss/articles/15096).
 
-## 🙏 Acknowledgements
+## AI usage
 
-This formalization was developed with the assistance of frontier AI proof assistants,
-including **[Aristotle](https://aristotle.harmonic.fun)** (Harmonic), **Claude Code**.
+This formalization was developed with the assistance of AI proof assistants **[Aristotle](https://aristotle.harmonic.fun)** (Harmonic) and **Claude Code**.
+
+An honest self-assessment (Claude Opus 4.8) of the resulting code against Mathlib's contribution guidelines — both
+its verification integrity (0 `sorry`s, standard axioms only, certified by `AxiomAudit.lean`) and
+its mechanical style compliance, with metrics — is documented in
+[`MATHLIB_COMPLIANCE.md`](MATHLIB_COMPLIANCE.md).

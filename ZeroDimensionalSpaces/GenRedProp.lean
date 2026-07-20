@@ -3,6 +3,8 @@ import ZeroDimensionalSpaces.Basics
 open scoped Topology
 open Set Function TopologicalSpace
 
+set_option autoImplicit false
+
 /-!
 # Baire open reduction (relative version)
 

@@ -198,7 +198,7 @@ lemma cbRank_corestrict_W_le (g : ScatFun) (y : Baire) (lam : Ordinal.{0})
     refine le_trans ?_ ( hray_le n );
     apply_rules [ ContinuouslyReduces.rank_monotone ];
     · exact ScatFun.hScat _;
-    · grind +suggestions;
+    · grind [ScatFun.hScat];
     · refine ⟨ ?_, ?_, ?_ ⟩;
       use fun x => ⟨ x.val, by
         convert x.2 using 1;
@@ -305,8 +305,8 @@ lemma corestrict_W_equiv_maxFun (lam : Ordinal.{0}) (hlam_lt : lam < omega1)
   -- which is `ScatFun.Reduces (g.rayOn y Set.univ n) gW`. `ScatFun.Reduces` is `ContinuouslyReduces F.func G.func`.
   apply And.intro;
   · apply (maxFun_is_maximum lam hlam_lt).1;
-    · grind +suggestions;
-    · grind +suggestions;
+    · grind [ScatFun.hCont];
+    · grind [ScatFun.hScat];
     · -- By `cbRank_corestrict_W_le`, since `CBRank (g.rayOn y Set.univ n).func ≤ lam` for all `n`, we have `CBRank F.func ≤ lam`.
       have hCBRank_le : CBRank (g.restrict {z | g.func z ∈ ⋃ n ∈ Jf, RaySet Set.univ y n}).func ≤ lam := by
         apply cbRank_corestrict_W_le g y lam hray_le Jf;
@@ -563,7 +563,7 @@ lemma simpleFun_restrict_open_of_rank_eq {X Y : Type*} [TopologicalSpace X] [Top
       assumption;
     exact absurd ( hlevel_empty hx ) ( by simp +decide [ * ] )
   have hlevel_empty : CBLevel (g ∘ Subtype.val : ↥S → Y) (Order.succ α) = ∅ := by
-    grind +suggestions;
+    grind [CBLevel_const_succ_empty, CBLevel_open_restrict];
   refine ⟨ α, hlevel_ne, hlevel_empty, c, ?_ ⟩;
   intro x hx; specialize hc ( x : X ) ; simp_all +decide [ CBLevel_open_restrict ] ;
 
@@ -821,7 +821,7 @@ lemma cocenter_pgl_eq_zeroStream (s : ℕ → ScatFun)
   have h_center : ∃ z0 : ↑(ScatFun.pgl s).domain, z0.val = zeroStream ∧ IsCenterFor (ScatFun.pgl s).func z0 := by
     obtain ⟨z0, hz0⟩ : ∃ z0 : ↑(ScatFun.pgl s).domain, z0.val = zeroStream := by
       exact ⟨ ⟨ zeroStream, zeroStream_mem_pointedGluingSet _ ⟩, rfl ⟩;
-    grind +suggestions;
+    grind [pgluingOfRegularIsCentered];
   convert scatteredHaveCocenter ( ScatFun.pgl s ).func ( ScatFun.pgl s ).hScat ( hcent.choose ) ( h_center.choose ) hcent.choose_spec h_center.choose_spec.2 using 1;
   have := scatFun_pgl_func_eq_val s hval h_center.choose;
   exact this.symm ▸ h_center.choose_spec.1.symm
